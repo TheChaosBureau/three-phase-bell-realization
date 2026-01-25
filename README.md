@@ -1,2 +1,21 @@
 # three-phase-entanglement
 Interactive pedagogical paper for exploring quantum entanglement as modeled by three-phase power systems
+
+## Quickstart
+
+**NixOS (reccomended)**
+- `nix develop`
+- drops you into a poetry shell with the python deps installed
+
+**Non-NixOS or user-controlled env**
+- Just do `poetry install`
+- This is functionally similar to `pip install requirements`
+
+**Open the paper**
+- `paper/paper.qmd` or `paper/paper.ipynb` (same thing, different formats)
+
+## Context
+- This is not a package, but the folowing files capture env dependencies for deterministic reproducibility
+- There are **two layers** of environment and dependcy management:
+    - `flake.nix` for shell packages (eg poetry, python)
+    - `pyproject.toml` once inside shell, for python deps (eg matplotlib, numpy)
