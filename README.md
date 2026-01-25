@@ -19,3 +19,7 @@ Interactive pedagogical paper for exploring quantum entanglement as modeled by t
 - There are **two layers** of environment and dependcy management:
     - `flake.nix` for shell packages (eg poetry, python)
     - `pyproject.toml` once inside shell, for python deps (eg matplotlib, numpy)
+
+## Git hook
+- Run `git config core.hooksPath .githooks` once per clone so commits use the repository hook directory.
+- The `pre-commit` hook in `.githooks/` calls `scripts/clear_notebook_outputs.py` to strip outputs and execution counts from any staged `.ipynb` files, then restages them automatically before the commit proceeds.
