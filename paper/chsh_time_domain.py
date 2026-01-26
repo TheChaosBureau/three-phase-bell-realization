@@ -17,6 +17,7 @@ Author: David (with Claude)
 Date: January 2026
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -59,6 +60,18 @@ class SimConfig:
         return len(self.t)
 
 config = SimConfig()
+
+# ============================================================================
+# UTILITIES
+# ============================================================================
+
+def _prepare_save_path(save_path: str) -> str:
+    """Expand user and ensure parent directory exists for save_path."""
+    expanded = os.path.expanduser(save_path)
+    parent = os.path.dirname(expanded)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    return expanded
 
 # ============================================================================
 # TEST FRAMEWORK
@@ -969,8 +982,9 @@ def plot_round_trip_verification(result: dict, config: SimConfig, save_path: str
     plt.tight_layout()
     
     if save_path:
-        plt.savefig(save_path, dpi=150, bbox_inches='tight')
-        print(f"Saved: {save_path}")
+        resolved_path = _prepare_save_path(save_path)
+        plt.savefig(resolved_path, dpi=150, bbox_inches='tight')
+        print(f"Saved: {resolved_path}")
     
     return fig
 
@@ -1209,8 +1223,9 @@ def plot_chsh_results(results: dict, save_path: str = None):
     plt.tight_layout()
     
     if save_path:
-        plt.savefig(save_path, dpi=150, bbox_inches='tight')
-        print(f"Saved: {save_path}")
+        resolved_path = _prepare_save_path(save_path)
+        plt.savefig(resolved_path, dpi=150, bbox_inches='tight')
+        print(f"Saved: {resolved_path}")
     
     return fig
 
