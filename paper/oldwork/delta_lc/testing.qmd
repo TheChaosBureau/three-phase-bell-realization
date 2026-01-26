@@ -1,0 +1,458 @@
+---
+jupyter: python3
+---
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+from dataclasses import dataclass, field
+from typing import Tuple, Optional
+
+# ---- physical constants ----
+HBAR = 1.054_571_817e-34  # J·s
+Z0_FREE_SPACE = 376.730313668  # Ω (≈ 377)
+
+@dataclass
+class Photon:
+    """
+    Single-frequency resonant mode (“photon”) in power-systems form.
+
+    Essentials:
+      - E       : total peak electromagnetic energy of this mode [J]
+      - f       : frequency [Hz]
+      - Z_mode  : mode impedance, default ≈ impedance of free space [Ω]
+      - theta   : hidden global phase (rad)
+      - sigma   : handedness / sequence orientation (+1 or -1)
+
+    From (E, f, Z_mode) we compute:
+      - ω, L_mode = Z/ω,  C_mode = 1/(Z·ω)
+      - Vrms = sqrt(E / C_mode),  Irms = sqrt(E / L_mode)
+      - photon number n = E / (ħ ω)
+      - sequence phasors (q_plus, q_minus) with magnitude r = Vrms
+    """
+    E: float = 1.0
+    f: float = 60
+    Z_mode: float = Z0_FREE_SPACE
+    theta: float = 0.0
+    sigma: int = +1
+    entangled_id: Optional[int] = None
+
+    # derived (filled in post-init)
+    omega: float = field(init=False)
+    L_mode: float = field(init=False)
+    C_mode: float = field(init=False)
+    Vrms: float = field(init=False)
+    Irms: float = field(init=False)
+    n_quanta: float = field(init=False)
+
+    _rng: np.random.Generator = field(default_factory=np.random.default_rng, repr=False, compare=False)
+    _flip_positive_sequence_only: bool = False # used to create antisymmetric singlet analog
+
+    def __post_init__(self):
+        # frequency & mode reactance pairing
+        self.omega = 2*np.pi*self.f
+        # From ω^2 L C = 1 and Z = sqrt(L/C)  ->  L = Z/ω,  C = 1/(Z·ω)
+        self.L_mode = self.Z_mode / self.omega
+        self.C_mode = 1.0 / (self.Z_mode * self.omega)
+        # Energy-consistent amplitudes (RMS)
+        # E is the peak stored EM energy of the mode (at voltage or current maxima)
+        self.Vrms = np.sqrt(max(self.E, 0.0) / self.C_mode)
+        self.Irms = np.sqrt(max(self.E, 0.0) / self.L_mode)
+        # Photon number for intuition (dimensionless)
+        self.n_quanta = (self.E / (HBAR * self.omega)) if self.omega > 0 else np.inf
+
+    # -----------------------------------------
+    # convenience constructors / mutators
+    # -----------------------------------------
+    @classmethod
+    def new(cls, E: float, f: float = 60.0, Z_mode: float = Z0_FREE_SPACE,
+            rng: Optional[np.random.Generator] = None):
+        rng = np.random.default_rng() if rng is None else rng
+        theta = rng.uniform(0, 2*np.pi)
+        sigma = +1 if rng.random() < 0.5 else -1
+        return cls(E=E, f=f, Z_mode=Z_mode, theta=theta, sigma=sigma, entangled_id=None, _rng=rng)
+
+    def with_energy(self, E: float) -> "Photon":
+        """Return a copy with updated energy and recomputed amplitudes."""
+        return Photon(E=E, f=self.f, Z_mode=self.Z_mode, theta=self.theta,
+                      sigma=self.sigma, entangled_id=self.entangled_id, _rng=self._rng)
+
+    # -----------------------------------------
+    # sequence phasors (positive/negative)
+    # -----------------------------------------
+    def sequence_phasors(self) -> Tuple[complex, complex]:
+        """
+        Returns (q_plus, q_minus) complex phasors for positive/negative sequence
+        components. Magnitude r is chosen as Vrms so that power/energy scaling
+        is consistent with the LC mode energy.
+        """
+        r = self.Vrms
+        th = self.theta
+        s  = self.sigma
+        q_plus  =  s * r * np.exp(+1j * th)
+        q_minus =  s * r * np.exp(-1j * th)
+
+        # If this half is marked as flipped, invert only q_plus
+        if self._flip_positive_sequence_only:
+            q_plus *= -1
+
+        return q_plus, q_minus
+
+
+    # -------------------------------
+    # Split: produce two entangled Photon instances (unique objects)
+    # -------------------------------
+    def split(self) -> Tuple["Photon", "Photon"]:
+        """
+        Split this photon into two spatially separated halves (an entangled pair).
+        - They share the same hidden phase 'theta'
+        - They have opposite handedness (sigma, -sigma)
+        - Energy divides (default equally: E/2 each). Adjust if you prefer otherwise.
+        Returns: (half1, half2) as independent Photon objects.
+        """
+        pair_id = int(self._rng.integers(1, 2**31-1))
+        E_half = self.E / 2.0
+        # half 1 keeps sigma, half 2 gets -sigma
+        half1 = Photon(E=E_half, theta=self.theta, sigma=self.sigma,   entangled_id=pair_id, _rng=self._rng)
+        half2 = Photon(E=E_half, theta=self.theta, sigma=-self.sigma,  entangled_id=pair_id, _rng=self._rng)
+        
+        # flip positive sequence of half1 or half2 to ensure antisymmetric singlet analog
+        if self._rng.random() < 0.5:
+            half1._flip_positive_sequence_only = True   # flag for sequence_phasors()
+        else:
+            half2._flip_positive_sequence_only = True   # flag for sequence_phasors()
+
+        return half1, half2
+
+
+    # -----------------------------------------
+    # dq analyzer (Park frame) + square-law detection
+    # -----------------------------------------
+    @staticmethod
+    def analyze(q_plus: complex, q_minus: complex, theta_an: float) -> Tuple[float, float]:
+        """
+        Rotate into dq by theta_an and do square-law detection in two orthogonal channels.
+        Returns:
+            S = P_d - P_q  (differential/signed reactive content)
+            T = P_d + P_q  (total/apparent intensity)
+        """
+        alpha = 2.0 * theta_an  # polarization doubling
+        a_d = (np.exp(-1j*alpha/2)*q_plus + np.exp(+1j*alpha/2)*q_minus) / np.sqrt(2)
+        a_q = (np.exp(-1j*(alpha+np.pi)/2)*q_plus + np.exp(+1j*(alpha+np.pi)/2)*q_minus) / np.sqrt(2)
+        P_d, P_q = abs(a_d)**2, abs(a_q)**2
+        return (P_d - P_q), (P_d + P_q)
+
+    def S_normalized(self, theta_an: float, eps: float = 1e-15) -> float:
+        """Normalized differential power S_norm ∈ [-1,1] at analyzer angle theta_an."""
+        qp, qm = self.sequence_phasors()
+        S, T = self.analyze(qp, qm, theta_an)
+        return S / (T + eps)
+
+    # -------------------------------
+    # ABC and Time Domain Projections
+    # -------------------------------
+    def abc_voltages(self):
+        """
+        Map this Photon's sequence phasors (q_plus=V1, q_minus=V2, V0=0)
+        into phase phasors [Va, Vb, Vc]^T = A * [V0, V1, V2]^T.
+        """
+        V1, V2 = self.sequence_phasors()   # positive, negative sequence
+        V0 = 0.0 + 0.0j                    # no zero-sequence in this model (LC tank in delta-configuration)
+        # Clarke Transform
+        # 120° operator and sequence->abc map (no zero-seq)
+        a = np.exp(1j*2*np.pi/3)
+        A_seq_to_abc = np.array([
+            [1, 1,    1   ],
+            [1, a**2, a   ],
+            [1, a,    a**2]
+        ], dtype=complex)
+        Vabc = A_seq_to_abc @ np.array([V0, V1, V2], dtype=complex)
+        Va, Vb, Vc = Vabc
+        return Va, Vb, Vc
+
+    def synthesize_voltages(self, f=60.0, cycles=2, n=2000):
+        """
+        Time-domain three-phase voltages from abc phasors.
+        va(t) = sqrt(2)|Va| cos(ωt + ∠Va), etc.
+        """
+        Va, Vb, Vc = self.abc_voltages()
+        w = 2*np.pi*f
+        t = np.linspace(0, cycles/f, n, endpoint=False)
+        va = np.sqrt(2)*np.abs(Va)*np.cos(w*t + np.angle(Va))
+        vb = np.sqrt(2)*np.abs(Vb)*np.cos(w*t + np.angle(Vb))
+        vc = np.sqrt(2)*np.abs(Vc)*np.cos(w*t + np.angle(Vc))
+        return t, va, vb, vc
+
+    # -------------------------------
+    # Impedence
+    # -------------------------------
+    def set_LC(f0=60.0, pick="L", value=3e-3):
+        """Choose L or C and compute the other so ω0^2 L C = 1."""
+        w0 = 2*np.pi*f0
+        if pick.lower()=="c":
+            C = float(value)
+            L = 1.0/(w0*w0*C)
+        elif pick.lower()=="l":
+            L = float(value)
+            C = 1.0/(w0*w0*L)
+        else:
+            raise ValueError("pick must be 'C' or 'L'")
+        self.L = L
+        self.C = C
+        return L, C
+
+    # -------------------------------
+    # Currents
+    # -------------------------------
+    def abc_currents(self, Z1, Z2):
+        """
+        Phase CURRENT phasors using sequence impedances:
+          I1 = V1 / Z1,  I2 = V2 / Z2,  I0 = 0
+          [Ia, Ib, Ic]^T = A * [I0, I1, I2]^T
+        """
+        V1, V2 = self.sequence_phasors()
+        I1 = V1 / Z1
+        I2 = V2 / Z2
+        I0 = 0.0 + 0.0j
+        # Clarke Transform
+        # 120° operator and sequence->abc map (no zero-seq)
+        a = np.exp(1j*2*np.pi/3)
+        A_seq_to_abc = np.array([
+            [1, 1,    1   ],
+            [1, a**2, a   ],
+            [1, a,    a**2]
+        ], dtype=complex)
+        Iabc = A_seq_to_abc @ np.array([I0, I1, I2], dtype=complex)
+        Ia, Ib, Ic = Iabc
+        return Ia, Ib, Ic
+
+    def synthesize_currents(self, Z1, Z2, f=60.0, cycles=2, n=2000):
+        """
+        Time-domain three-phase currents from abc current phasors via Z1,Z2.
+        """
+        Ia, Ib, Ic = self.abc_currents(Z1, Z2)
+        w = 2*np.pi*f
+        t = np.linspace(0, cycles/f, n, endpoint=False)
+        ia = np.sqrt(2)*np.abs(Ia)*np.cos(w*t + np.angle(Ia))
+        ib = np.sqrt(2)*np.abs(Ib)*np.cos(w*t + np.angle(Ib))
+        ic = np.sqrt(2)*np.abs(Ic)*np.cos(w*t + np.angle(Ic))
+        return t, ia, ib, ic
+ 
+    # -------------------------------
+    # Plotters
+    # -------------------------------
+    def plot_phasors_abc(Pa, Pb, Pc, type=["V", "I"][0], title="Phasor diagram (abc)"):
+        """Neat phasor plot with labels and autoscaled limits."""
+        fig, ax = plt.subplots(figsize=(6,6))
+        for P, name, color in [(Pa, f'{type}a','C0'), (Pb, f'{type}b','C1'), (Pc, f'{type}c','C2')]:
+            ax.plot([0, np.real(P)], [0, np.imag(P)], lw=2, color=color)
+            ax.text(1.05*np.real(P), 1.05*np.imag(P), name, color=color, fontsize=12)
+        r = 1.2*max(np.abs([Pa,Pb,Pc])) if max(np.abs([Pa,Pb,Pc]))>0 else 1.0
+        circ = plt.Circle((0,0), max(np.abs([Pa,Pb,Pc])), fill=False, ls='--', color='gray')
+        ax.add_artist(circ)
+        ax.set_xlim(-r, r); ax.set_ylim(-r, r); ax.set_aspect('equal', 'box')
+        ax.set_xlabel('Real'); ax.set_ylabel('Imag')
+        ax.grid(True); ax.set_title(title)
+        plt.show()
+
+    def plot_three_phase(t, xa, xb, xc, ylabel="Voltage", title="Three-phase waveforms"):
+        fig, ax = plt.subplots(figsize=(9,4))
+        ax.plot(t, xa, label='a'); ax.plot(t, xb, label='b'); ax.plot(t, xc, label='c')
+        ax.set_xlabel('Time [s]'); ax.set_ylabel(ylabel); ax.set_title(title)
+        ax.grid(True); ax.legend(); plt.tight_layout(); plt.show()
+
+# ---------------------------------------------
+# Correlation helpers using Photon instances
+# ---------------------------------------------
+def corr_power(photon_energy: float, theta1: float, theta2: float, n: int = 2000) -> float:
+    """
+    Power-normalized correlation:
+      E = < (S1/T1) * (S2/T2) >  over trials.
+    Produces half-amplitude law: E(Δ) ≈ -0.5 cos(Δ), with Δ = 2(θ1-θ2) in this mapping.
+    """
+    num = den = 0.0
+    rng = np.random.default_rng()
+    for _ in range(n):
+        # New parent photon, random phase & handedness each trial
+        parent = Photon.new(E=photon_energy, rng=rng)
+        h1, h2 = parent.split()
+        # Analyze each half
+        q1p, q1m = h1.sequence_phasors()
+        q2p, q2m = h2.sequence_phasors()
+        S1, T1 = Photon.analyze(q1p, q1m, theta1)
+        S2, T2 = Photon.analyze(q2p, q2m, theta2)
+        num += (S1/T1) * (S2/T2)
+        den += 1.0
+    return num / den
+
+def corr_unitvar(photon_energy: float, theta1: float, theta2: float, n: int = 2000) -> float:
+    """
+    Unit-variance (z-scored) correlation:
+      E = < (S1/σ1) * (S2/σ2) >, where σi is RMS of Si across trials.
+    Produces full amplitude: E(Δ) ≈ -cos(Δ).
+    """
+    S1s, S2s = [], []
+    rng = np.random.default_rng()
+    for _ in range(n):
+        parent = Photon.new(E=photon_energy, rng=rng)
+        h1, h2 = parent.split()
+        S1s.append(h1.S_normalized(theta1))  # S/T normalization already inside
+        S2s.append(h2.S_normalized(theta2))
+    S1s, S2s = np.array(S1s), np.array(S2s)
+    # de-mean (covariance form); numerically these are mean~0 already
+    S1s -= S1s.mean()
+    S2s -= S2s.mean()
+    return (S1s*S2s).mean() / (S1s.std()*S2s.std() + 1e-15)
+
+# ---------------------------------------------
+# Minimal CHSH example (no “Alice/Bob” labels)
+# ---------------------------------------------
+if __name__ == "__main__":
+    E_ph = 1.0  # set photon energy (scales amplitude; statistics are invariant under global scaling)
+
+    deg = np.pi/180
+    # Standard optics angles: remember analyzer uses alpha = 2*theta mapping internally
+    th1, th1p = 0*deg, 45*deg
+    th2, th2p = 22.5*deg, -22.5*deg
+
+    # Half-amplitude (power-normalized)
+    Eab   = corr_power(E_ph, th1,  th2)
+    Eabp  = corr_power(E_ph, th1,  th2p)
+    Eapb  = corr_power(E_ph, th1p, th2)
+    Eapbp = corr_power(E_ph, th1p, th2p)
+    S = Eab + Eabp + Eapb - Eapbp
+    print("[power]   ", f"E={Eab:.3f},{Eabp:.3f},{Eapb:.3f},{Eapbp:.3f}  S={S:.3f}")
+
+    # Full-amplitude (unit-variance)
+    Eab   = corr_unitvar(E_ph, th1,  th2)
+    Eabp  = corr_unitvar(E_ph, th1,  th2p)
+    Eapb  = corr_unitvar(E_ph, th1p, th2)
+    Eapbp = corr_unitvar(E_ph, th1p, th2p)
+    S = Eab + Eabp + Eapb - Eapbp
+    print("[unit-var]", f"E={Eab:.3f},{Eabp:.3f},{Eapb:.3f},{Eapbp:.3f}  S={S:.3f}")
+```
+
+```{python}
+def measure_field_spin(ph: Photon, theta_an: float, dither=1e-12):
+    # use your complex baseband amplitudes
+    qp, qm = ph.sequence_phasors()
+    alpha = 2.0*theta_an
+    a_d = (np.exp(-1j*alpha/2)*qp + np.exp(+1j*alpha/2)*qm)/np.sqrt(2)
+    a_q = (np.exp(-1j*(alpha+np.pi)/2)*qp + np.exp(+1j*(alpha+np.pi)/2)*qm)/np.sqrt(2)
+    # linear projection along analyzer axis = |a_d|^2 - |a_q|^2, but
+    # to get full-contrast ±1 outcomes, use it only as a *bias*:
+    S_cont = (np.abs(a_d)**2 - np.abs(a_q)**2) / (np.abs(a_d)**2 + np.abs(a_q)**2 + dither)
+    # convert to dichotomic ±1 with the correct expectation
+    return +1 if np.random.random() < (1 + S_cont)/2 else -1
+
+def chsh_field(E_ph=1.0, N=10000):
+    # standard angles: α=2θ mapping already in your analyzer
+    A, Ap = 0.0, np.pi/4
+    B, Bp =  np.pi/8, -np.pi/8
+    Es = dict(ab=0, abp=0, apb=0, apbp=0)
+    for _ in range(N):
+        parent = Photon.new(E=E_ph)
+        h1, h2 = parent.split()        # shared hidden phase, opposite handedness
+        # outcomes are *anti*-correlated (singlet): flip sign on the second half
+        x  =  measure_field_spin(h1, A)
+        y  = -measure_field_spin(h2, B)
+        Es['ab'] += x*y
+        x  =  measure_field_spin(h1, A)
+        y  = -measure_field_spin(h2, Bp)
+        Es['abp'] += x*y
+        x  =  measure_field_spin(h1, Ap)
+        y  = -measure_field_spin(h2, B)
+        Es['apb'] += x*y
+        x  =  measure_field_spin(h1, Ap)
+        y  = -measure_field_spin(h2, Bp)
+        Es['apbp'] += x*y
+    for k in Es: Es[k] /= N
+    S = Es['ab'] + Es['abp'] + Es['apb'] - Es['apbp']
+    return Es, S
+    
+chsh_field()
+```
+
+```{python}
+Photon()
+```
+
+```{python}
+# Create a photon (single mode) and split, or just inspect one half
+parent = Photon.new(E=1.0)        # random hidden phase & handedness
+# half1, half2 = parent.split()     # two separate Photon objects
+half1 = parent
+
+# 1) Phasor diagram of voltages (abc) for one photon half
+Va, Vb, Vc = half1.abc_voltages()
+Photon.plot_phasors_abc(Va, Vb, Vc, type="V", title=f"Photon half (σ={half1.sigma}) voltages")
+
+# 2) Three-phase voltages in time
+t, va, vb, vc = half1.synthesize_voltages(f=60.0, cycles=2, n=2000)
+Photon.plot_three_phase(t, va, vb, vc, ylabel="Voltage [arb]",
+                        title="Photon half: three-phase voltages")
+
+# 3) Three-phase currents (choose sequence impedances Z1, Z2)
+Z1 = 1.0 + 0.0j   # positive-sequence impedance
+Z2 = 1.0 + 0.0j   # negative-sequence impedance  (change to see unbalance effects)
+Ia, Ib, Ic = half1.abc_currents(Z1, Z2)
+Photon.plot_phasors_abc(Ia, Ib, Ic, type="I", title="Photon half currents (abc)")
+
+t, ia, ib, ic = half1.synthesize_currents(Z1, Z2, f=60.0, cycles=2, n=2000)
+Photon.plot_three_phase(t, ia, ib, ic, ylabel="Current [arb]",
+                        title="Photon half: three-phase currents")
+```
+
+```{python}
+import numpy as np
+
+def delta_branch_Zs(f=60.0, L=1e-3, C=10e-6, R=0.5):
+    """All three delta branches identical → same Z."""
+    Z = branch_impedance(f,L,C,R)
+    return Z, Z, Z
+
+def abc_from_sequences(V1, V2):
+    """Build (Va,Vb,Vc) from sequence phasors (assume V0=0)."""
+    Vabc = A_seq_to_abc @ np.array([0+0j, V1, V2], dtype=complex)
+    return tuple(Vabc)  # Va,Vb,Vc
+
+def delta_branch_Vs_from_abc(Va, Vb, Vc):
+    """Line-to-line (branch) voltages in the delta."""
+    return Va - Vb, Vb - Vc, Vc - Va  # Vab, Vbc, Vca
+
+def delta_branch_Is(Vab, Vbc, Vca, Zab, Zbc, Zca):
+    """Branch currents from branch voltages and impedances."""
+    eps = 1e-15
+    Iab = Vab / (Zab + eps)
+    Ibc = Vbc / (Zbc + eps)
+    Ica = Vca / (Zca + eps)
+    return Iab, Ibc, Ica
+```
+
+```{python}
+parent.abc_voltages() / parent.abc_currents()
+```
+
+```{python}
+# Suppose your "photon" half gave you sequence phasors:
+V1, V2 = parent.sequence_phasors()
+# V1 = 277*np.exp(1j*0)                # positive-seq phasor
+# V2 =  30*np.exp(1j*np.deg2rad(20))   # some negative-seq content
+
+# 1) Choose C, compute L for resonance at 60 Hz
+L, C = design_series_LC_for_resonance(f0=60.0, pick="C", value=8e-6)
+
+# 2) Choose a practical branch resistance (sets Q and limits current)
+R = 0.8  # ohms, example
+
+# 3) Build branch impedances and voltages
+Zab, Zbc, Zca = delta_branch_Zs(f=60.0, L=L, C=C, R=R)
+Va, Vb, Vc = abc_from_sequences(V1, V2)
+Vab, Vbc, Vca = delta_branch_Vs_from_abc(Va, Vb, Vc)
+
+# 4) Compute branch currents at 60 Hz (finite because R>0)
+Iab, Ibc, Ica = delta_branch_Is(Vab, Vbc, Vca, Zab, Zbc, Zca)
+
+print(L, C)
+```
+

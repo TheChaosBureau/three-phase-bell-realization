@@ -1,0 +1,40 @@
+## **Paper II — “Three-Phase Δ LC Networks as Classical Analogues of Bell Correlations”**
+
+### **Abstract**
+
+We extend the power-detection framework to a balanced three-phase delta LC network and show that its internal symmetry reproduces the cosine correlation pattern of quantum spin-½ singlets.
+Eliminating the zero-sequence mode leaves two conjugate helicities (σ = ±1) that transform under SU(2) rotations.
+Local phase analyzers acting through Park/Clarke transforms yield the correlation
+(E(θ_A,θ_B)=−\cos2(θ_A−θ_B)), saturating the Tsirelson bound without nonlocal signaling.
+The result demonstrates that Bell-type violations can emerge from continuous, locally coherent classical fields whose topology mirrors spinor geometry.
+
+### **Outline**
+
+1. **Introduction – From Born Rule to Bell Geometry**
+
+   * Motivating extension from U(1) to SU(2) symmetry.
+2. **Three-Phase Delta LC Topology**
+
+   * Kirchhoff constraints, elimination of zero sequence.
+3. **Sequence Components and SU(2) Representation**
+
+   * Fortescue transform → (V₊,V₋) helicities; rotation operator (U(θ)).
+4. **Reactive Power and Helicity Balance**
+
+   * (Q_+=−Q_−) as photon-like resonance condition.
+5. **Local Analyzer Model and Correlation Derivation**
+
+   * (E(θ_A,θ_B)=−\cos2(θ_A−θ_B)); CHSH evaluation to (S=2√2).
+6. **Interpretation**
+
+   * Non-Boolean measurement space (S¹×Z₂); locality preserved, coherence extended.
+7. **Simulations and Experimental Design**
+
+   * Two coupled delta LC networks; reactive power measurements.
+8. **Discussion and Outlook**
+
+   * Connection to polarization optics, quantum information pedagogy, and coherent classical fields.
+
+### **Pedagogical Takeaway**
+
+Three-phase systems show *how* coherent classical fields can reproduce **quantum-like correlations**—the geometric side of Bell’s theorem.

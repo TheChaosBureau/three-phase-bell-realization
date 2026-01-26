@@ -1,0 +1,370 @@
+# Three-Phase Circuits as a Model for Quantum Entanglement
+## A Pedagogical Bridge from Power Systems to Bell's Theorem
+
+---
+
+## Part 1: Classical Foundations (Build Intuition)
+
+### 1.0 Review: Ohms-law
+- In DC circuits, V=IR
+
+### 1.1 Review: Single-Phase AC Circuits
+- Ohm's law with complex impedance: V = IZ
+- Phasor representation: V = |V|e^(jωt+φ)
+- Interactive: Sliders for R, L, C → see phasor rotation
+- Visualization: Phasor diagram, V and I relationship
+
+### 1.2 Power in AC Circuits - The Complex Picture
+**[This is where we introduce S = VI*]**
+
+#### Real and Reactive Power
+- **Apparent power**: S = VI* (complex)
+- **Real power**: P = Re(S) = VI cos(φ) - actual energy transfer
+- **Reactive power**: Q = Im(S) = VI sin(φ) - energy oscillating between L and C
+
+Interactive visualization:
+- Show V and I phasors
+- Animate energy flow: P (steady), Q (oscillating)
+- Four quadrants: Leading/lagging, inductive/capacitive
+
+**Key insight for later:**
+> In a pure LC circuit (R=0), all power is reactive - energy sloshes between L and C but never dissipates. This is like quantum unitary evolution - reversible, information-preserving oscillation.
+
+#### Why Conjugate?
+- S = VI* ensures P is real (energy transfer rate must be real)
+- Geometric interpretation: inner product ⟨V|I⟩
+- **This math structure will reappear in quantum mechanics**
+
+Interactive example:
+- Series LC circuit: show Q_L = -Q_C (energy transfer between L and C)
+- Total P = 0 (no dissipation)
+- Energy conservation: U_total = U_L + U_C = constant
+
+### 1.3 Three-Phase Balanced Systems
+- Why three phases? (Historical: power transmission efficiency)
+- Three sinusoids 120° apart
+- Phasor diagram for balanced system
+- Interactive: Animate three-phase voltages over time
+
+### 1.4 Symmetrical Components (Fortescue Transform)
+**[The mathematical key to everything]**
+
+#### The Transform
+```
+[I₀]   [1   1   1 ] [I_a]
+[I₁] = [1   α   α²] [I_b]  where α = e^(j2π/3)
+[I₂]   [1   α²  α ] [I_c]
+```
+
+- **Positive sequence** (I₁): rotates forward (ABC)
+- **Negative sequence** (I₂): rotates backward (ACB)  
+- **Zero sequence** (I₀): all in phase
+
+Interactive:
+- Sliders for I_a, I_b, I_c
+- Real-time display of I₀, I₁, I₂
+- Visualization: Show all three sequences simultaneously
+
+**Physical meaning:**
+- I₁: "right-hand circular" component
+- I₂: "left-hand circular" component
+- I₀: "common mode" component
+
+#### Why This Transform?
+- **Diagonalizes rotation operator**
+- Under 120° rotation: I₁ → αI₁, I₂ → α²I₂, I₀ → I₀
+- These are **eigenvalues** of rotation!
+- (Mathematical aside: This is the DFT for N=3)
+
+### 1.5 The Park Transform - Rotating Reference Frames
+- Extension of Fortescue: rotate to arbitrary angle θ
+- I_d-q frame (direct-quadrature)
+- Used in motor control, power electronics
+
+**This is how we'll implement "measurement at angle θ"**
+
+Interactive:
+- Rotating frame visualization
+- Show how θ changes I_d, I_q
+- Connection to choosing measurement basis
+
+---
+
+## Part 2: Mapping to Quantum Concepts (Build Bridges)
+
+### 2.1 From Phasors to Quantum States
+
+**The key correspondence:**
+
+| Classical Three-Phase | Quantum Polarization |
+|----------------------|---------------------|
+| Positive sequence I₁ | Right circular \|R⟩ |
+| Negative sequence I₂ | Left circular \|L⟩ |
+| Zero sequence I₀ | Linear polarization |
+| Park angle θ | Measurement basis |
+| Complex amplitude | Probability amplitude |
+| \|I\|² | Probability |
+
+**Crucial difference:**
+- Classical: Can measure I_a, I_b, I_c simultaneously
+- Quantum: Measuring I(θ) **prevents** measuring I(φ) for θ≠φ
+
+This is **complementarity** - we'll implement it with projection.
+
+### 2.2 Single Photon as Three-Phase Oscillation
+
+Model a single photon polarization state:
+- Horizontal: |H⟩ = (|R⟩ + |L⟩)/√2 ↔ (I₁ + I₂)/√2
+- Vertical: |V⟩ = (|R⟩ - |L⟩)/(j√2) ↔ (I₁ - I₂)/(j√2)
+- General: |θ⟩ = cos(θ)|H⟩ + sin(θ)|V⟩
+
+In three-phase circuit:
+- Set initial conditions: I₁(0), I₂(0), I₀(0)
+- Let circuit oscillate
+- "Measure at angle θ" → Apply Park transform → Get I_d(θ)
+
+Interactive simulation:
+- Set polarization state
+- Choose measurement angle θ
+- See phasor projections
+- Display |⟨θ|ψ⟩|² probability
+
+**Energy interpretation:**
+- Total energy: E = ½L|I₁|² + ½L|I₂|² + ½L|I₀|²
+- This is **conserved** (unitary evolution)
+- Measurement couples to reactive power Q at angle θ
+- Irreversible collapse → P flows out (photon detected)
+
+### 2.3 LC Circuits and Quantum Oscillators
+
+**Deep connection:**
+
+Harmonic oscillator Hamiltonian:
+H = p²/2m + ½mω²x²
+
+LC circuit energy:
+H = ½LI² + ½(1/C)Q² where Q = ∫I dt
+
+**These are identical!** With correspondence:
+- Current I ↔ momentum p
+- Charge Q ↔ position x
+- Inductance L ↔ mass m
+- 1/C ↔ spring constant k
+
+**For three-phase:**
+- Each sequence is a **harmonic oscillator mode**
+- I₁, I₂, I₀ are **normal modes** (diagonalize Hamiltonian)
+- This is like **quantizing** three independent oscillators
+
+Energy in each mode:
+- E₁ = ½L|I₁|² + ½(1/C)|Q₁|²
+- E₂ = ½L|I₂|² + ½(1/C)|Q₂|²
+- E₀ = ½L|I₀|² + ½(1/C)|Q₀|²
+
+**No energy transfer between modes** (they're decoupled after Fortescue transform).
+
+This explains why photon number is conserved - each mode's energy is conserved!
+
+---
+
+## Part 3: Two-Photon Entanglement (The Main Event)
+
+### 3.1 Creating Entangled Photon Pairs
+
+**Physical setup:**
+- Common three-phase source
+- Splits to two separate delta LC circuits (A and B)
+- Circuits propagate independently
+- No coupling after separation
+
+**Bell state creation:**
+|Ψ⁻⟩ = (|HV⟩ - |VH⟩)/√2
+
+In three-phase:
+- Circuit A: I₁^A with initial phase φ_A
+- Circuit B: I₁^B with initial phase φ_B = φ_A + π (opposite)
+- Correlation: I₂^A·I₁^B - I₁^A·I₂^B
+
+Interactive:
+- Visualize two circuits side-by-side
+- Show initial conditions from common source
+- Animate independent evolution
+- Highlight: No coupling after separation!
+
+**Energy perspective:**
+- Total energy E_total = E_A + E_B = constant
+- But **how energy is partitioned** into sequences is correlated
+- Real power: P_A + P_B = 0 (closed system)
+- Reactive power: Q_A and Q_B oscillate but correlation persists
+
+### 3.2 Measurement and Correlations
+
+**Measurement protocol:**
+1. Choose angle θ on circuit A (Park transform)
+2. Choose angle φ on circuit B (Park transform)
+3. Project phasor amplitudes → get ±1 outcomes
+4. Correlation: E(θ,φ) = ⟨measurement_A(θ) · measurement_B(φ)⟩
+
+**Circuit implementation:**
+- Park transform at angle θ: mix phases to get I_d(θ)
+- Threshold detector: I_d > 0 → output +1, else -1
+- Repeat many times (ensemble)
+- Compute correlation
+
+**Power flow during measurement:**
+- Before: All reactive (energy in LC oscillation)
+- During: Detector impedance couples
+- After: Real power flows to detector → irreversible
+- **This is measurement-induced collapse**
+
+Interactive simulation:
+- Set θ and φ sliders
+- Run 1000 measurement cycles
+- Plot correlation E(θ,φ) vs (θ - φ)
+- Compare to quantum: -cos(θ - φ)
+
+### 3.3 Bell's Theorem Violation
+
+**The classical bound (CHSH):**
+|E(θ₁,φ₁) - E(θ₁,φ₂) + E(θ₂,φ₁) + E(θ₂,φ₂)| ≤ 2
+
+**Your three-phase model:**
+- Choose θ₁=0°, θ₂=45°, φ₁=22.5°, φ₂=67.5°
+- Simulate correlations
+- Compute CHSH = ?
+- Should get: CHSH ≈ 2√2 ≈ 2.83 > 2
+
+**Why does it violate?**
+- Classical hidden variable: A(θ) ∈ {±1} predetermined
+- Three-phase phasor: A(θ) = I_d(θ) **continuous**, then thresholded
+- **Superposition** of phases before measurement gives stronger correlations
+
+Visualization:
+- Plot CHSH vs angles
+- Show maximal violation region
+- Compare classical vs three-phase model
+
+**Power perspective on Bell violations:**
+- Classical model: Real power P(θ) predetermined at source
+- Three-phase: Reactive power Q oscillates, **projection** determines P
+- The **conjugate structure** (VI*) enables quantum correlations!
+
+### 3.4 Why No Faster-Than-Light Signaling
+
+**The concern:**
+Measuring circuit A seems to instantly determine result on B (when same angle).
+
+**Resolution:**
+- Measuring A reveals **pre-existing correlation**
+- Doesn't change B's state
+- Local marginal: ∫E(θ,φ)dφ = 0
+- A's results look random without B's data
+
+Circuit analysis:
+- I_A(θ) measurement: real power flows P_A
+- Circuit B: still oscillating with reactive power Q_B
+- No real power flows to B during A's measurement
+- **No energy transfer A→B**
+
+Interactive:
+- Show P_A(t), P_B(t), P_total(t)
+- Measure A at various times
+- Plot: Does P_B change? (No)
+- Plot: Do statistics of B outcomes change? (No)
+
+**This is the clearest proof of no-FTL:**
+Energy conservation + causality → can't signal
+
+---
+
+## Part 4: Advanced Topics (Extensions)
+
+### 4.1 Different Entangled States
+
+Build circuits for:
+- |Φ⁺⟩ = (|HH⟩ + |VV⟩)/√2 (same polarization)
+- |Φ⁻⟩ = (|HH⟩ - |VV⟩)/√2
+- |Ψ⁺⟩ = (|HV⟩ + |VH⟩)/√2
+
+Each requires different initial phase relationships in three-phase model.
+
+### 4.2 GHZ States (3+ Photons)
+
+- Three coupled three-phase circuits
+- |GHZ⟩ = (|000⟩ + |111⟩)/√2
+- Greenberger-Horne-Zeilinger paradox
+- Even stronger violation than Bell
+
+### 4.3 Decoherence and Mixed States
+
+Add resistance R to circuits:
+- Real power dissipation → energy loss
+- Phasor amplitudes decay exponentially
+- **This is decoherence!**
+- Correlation E(θ,φ) decreases over time
+
+Interactive:
+- Add R slider
+- Watch correlations decay
+- Compare: Pure state vs mixed state statistics
+
+### 4.4 Quantum Dense Coding / Teleportation
+
+Can we use three-phase model to understand:
+- Dense coding (send 2 bits with 1 qubit using shared entanglement)
+- Teleportation (transfer quantum state using entanglement + classical bits)
+
+These might require additional circuit operations (phase shifters, beam splitters).
+
+---
+
+## Part 5: Connecting to Spacetime Structure (Optional/Advanced)
+
+### 5.1 From Circuits to Fields
+- Transmission line → continuous field
+- Lattice spacing a → 0
+- Recover Maxwell's equations?
+
+### 5.2 Lattice Geometry
+- Why hexagonal lattice emerges from three-phase
+- Minimality proof (from our SymPy verification)
+- Connection to graphene, frustrated magnets
+
+### 5.3 Spin and Statistics
+- Fermions vs bosons on lattice
+- Why spin-½ might need "half" of three-phase structure
+- Speculation on geometric origin of spin
+
+---
+
+## Appendices
+
+### A. Mathematical Details
+- Fortescue transform derivation
+- Park transform
+- CHSH inequality calculation
+- Proof that correlation is -cos(θ-φ)
+
+### B. QUCS-S Circuit Files
+- Single three-phase circuit
+- Coupled delta LC for Bell state
+- Parameter files for different entangled states
+
+### C. Comparison to Standard QM Formalism
+- How does this relate to density matrices?
+- Connection to Jones vectors
+- Relation to path integral formulation
+
+---
+
+## Interactive Elements Throughout
+
+**Embedded visualizations:**
+1. **Phasor animator**: Real-time three-phase rotation
+2. **Fortescue decomposer**: Input phases → see sequences
+3. **Bell correlation plotter**: θ,φ sliders → E(θ,φ) surface plot
+4. **QUCS-S integration**: Embed circuit schematics, run simulations
+5. **Energy flow animator**: Show P and Q in real-time
+6. **Measurement simulator**: Click to "measure" → see collapse
+
+---

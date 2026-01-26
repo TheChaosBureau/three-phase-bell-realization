@@ -1,0 +1,51 @@
+---
+editor:
+  render-on-save: true
+---
+## Background
+- ["[Maxwell] established the connection to the speed of light and concluded that light is a form of electromagnetic radiation."](https://en.wikipedia.org/wiki/History_of_Maxwell%27s_equations")
+- Then my brain asks: "if light is an EM wave, and space has impedance, what does polarization and entanglement look like in a circuit? we should be able to make a circuit for that."
+
+```{mermaid}
+flowchart LR
+  PHASORS("Particle as Phasor (State) <br/>Representation / mathematical object: V=IZ")
+  EB("E & B Fields in time</br>ie: E(t), B(t)")
+  
+  PHASORS -- "time domain projection" --> EB
+
+  PHASORS --> PARK
+  
+  PARK("Park Transform (DQO)<br/>more text") --> B(DQO Frame</br>object: DQO, vector of 3 real numbers)
+  CLARKE("Clarke Transform (αβγ)")
+  
+  FORT("Fortescue Transform (PNZ)") 
+  PHASORS --> FORT
+
+  click FORT "https://en.wikipedia.org/wiki/Symmetrical_components" _blank
+  click A "https://google.com" _blank
+  click Clarke "https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_transformation" _blank
+  click PARK "https://en.wikipedia.org/wiki/Direct-quadrature-zero_transformation" _blank
+```
+
+\newpage
+
+## Transform Overview
+
+Fortescue: Decomposes by ROTATION DIRECTION
+  → Spin basis (circular polarization states)
+  → Uses COMPLEX numbers
+  → Eigenstates of angular momentum
+  
+Park: Rotates measurement frame by angle θ
+  → Used for projecting onto detector axis  
+  → Uses REAL coordinates
+  → Converts oscillating to constant (if synchronized)
+  
+Clarke: Projects onto stationary 2D axes
+  → Like standard x-y coordinates
+  → Uses REAL coordinates
+  → Special case of Park with θ=0
+
+## Helpful Links
+- https://quarto.org/docs/authoring/diagrams.html
+  

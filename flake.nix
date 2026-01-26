@@ -15,12 +15,14 @@
             poetry
             git
             quarto            # ipynb / qmd / markdown / pdf converter
+            zlib
             stdenv.cc.cc.lib  # needed b/c I'm keeping nix env deps separate from python deps (poetry)
           ];
         
         shellHook = ''
           export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
             pkgs.stdenv.cc.cc.lib
+            pkgs.zlib
           ]}:$LD_LIBRARY_PATH
 
           # Ensure Poetry uses an in-project virtualenv: ./\.venv
