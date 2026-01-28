@@ -1,0 +1,344 @@
+```{python}
+# Let's create the visualizations the user asked for using matplotlib (no seaborn, no custom colors).
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1) Spinor components vs theta (to show 4π periodicity)
+theta = np.linspace(0, 4*np.pi, 1000)
+spinor_up = np.cos(theta/2)
+spinor_down = np.sin(theta/2)
+
+plt.figure(figsize=(8,4))
+plt.plot(theta, spinor_up, label=r'$\cos(\theta/2)$')
+plt.plot(theta, spinor_down, label=r'$\sin(\theta/2)$')
+plt.xlabel(r'$\theta$')
+plt.ylabel('Spinor components')
+plt.title('Spinor components vs. orientation (showing $4\\pi$ periodicity)')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# 2) Overlap heatmap A(a,theta) = cos((a - theta)/2)
+a = np.linspace(0, 2*np.pi, 400)
+th = np.linspace(0, 2*np.pi, 400)
+A, TH = np.meshgrid(a, th)
+overlap = np.cos((A - TH)/2)
+
+plt.figure(figsize=(6,5))
+plt.imshow(overlap, extent=[0, 2*np.pi, 0, 2*np.pi], origin='lower', aspect='auto')
+plt.colorbar(label='Overlap amplitude')
+plt.xlabel(r'$a$')
+plt.ylabel(r'$\theta$')
+plt.title(r'Overlap $\,\cos\!\left(\frac{a-\theta}{2}\right)$')
+plt.tight_layout()
+plt.show()
+
+# 3) Probability heatmap P = cos^2((a - theta)/2)
+prob = overlap**2
+
+plt.figure(figsize=(6,5))
+plt.imshow(prob, extent=[0, 2*np.pi, 0, 2*np.pi], origin='lower', aspect='auto')
+plt.colorbar(label='Probability')
+plt.xlabel(r'$a$')
+plt.ylabel(r'$\theta$')
+plt.title(r'Probability $\,\cos^2\!\left(\frac{a-\theta}{2}\right)$')
+plt.tight_layout()
+plt.show()
+
+# 4) Line plots vs Delta = a - theta
+Delta = np.linspace(-2*np.pi, 2*np.pi, 1000)
+overlap_line = np.cos(Delta/2)
+prob_line = np.cos(Delta/2)**2
+
+plt.figure(figsize=(8,4))
+plt.plot(Delta, overlap_line, label=r'Overlap $\,\cos(\Delta/2)$')
+plt.plot(Delta, prob_line, label=r'Probability $\,\cos^2(\Delta/2)$')
+plt.xlabel(r'$\Delta = a - \theta$')
+plt.ylabel('Value')
+plt.title('Overlap vs. Probability as functions of relative angle')
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+## Torus
+```{python}
+%matplotlib widget
+# Create advanced visualizations for the user's intuition.
+# 1) 3D surface: Overlap as a function of a, theta
+# 2) Torus colored by overlap (since (a,theta) live on S1 x S1)
+# 3) Bloch-sphere equator view showing the half-angle geometry
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+# 1) 3D surface: overlap vs (a, theta)
+a = np.linspace(0, 2*np.pi, 120)
+th = np.linspace(0, 2*np.pi, 120)
+A, TH = np.meshgrid(a, th)
+overlap = np.cos((A - TH)/2)
+
+fig = plt.figure(figsize=(8,5))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(A, TH, overlap, rstride=2, cstride=2, linewidth=0, antialiased=True, cmap='viridis')
+ax.set_xlabel(r'$a$')
+ax.set_ylabel(r'$\theta$')
+ax.set_zlabel('Overlap')
+ax.set_title(r'3D surface: $\,\cos\!\left(\frac{a-\theta}{2}\right)$')
+plt.tight_layout()
+plt.show()
+
+# 2) Torus colored by overlap
+# Parametric torus: major radius R, minor radius r
+R, r = 2.0, 0.7
+# Use 'a' as the toroidal angle and 'theta' as the poloidal angle
+A_t, TH_t = np.meshgrid(np.linspace(0, 2*np.pi, 150), np.linspace(0, 2*np.pi, 60))
+X = (R + r*np.cos(TH_t)) * np.cos(A_t)
+Y = (R + r*np.cos(TH_t)) * np.sin(A_t)
+Z = r * np.sin(TH_t)
+C = np.cos((A_t - TH_t)/2)  # color by overlap
+
+fig = plt.figure(figsize=(7,6))
+ax = fig.add_subplot(111, projection='3d')
+torus = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=plt.cm.viridis((C - C.min())/(C.max()-C.min())), linewidth=0, antialiased=True)
+m = plt.cm.ScalarMappable(cmap='viridis')
+m.set_array(C)
+plt.colorbar(m, ax=ax, shrink=0.6, pad=0.1, label='Overlap amplitude')
+ax.set_title(r'Torus view of $(a,\theta)\in S^1\times S^1$ colored by $\,\cos\!\left(\frac{a-\theta}{2}\right)$')
+ax.set_axis_off()
+plt.show()
+
+# 3) Bloch-sphere equator view
+# We'll draw a unit sphere and emphasize the equator (phi=0 great circle). Place two state vectors at angles a and theta on the equator.
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
+# sphere
+u = np.linspace(0, 2*np.pi, 60)
+v = np.linspace(0, np.pi, 30)
+xs = np.outer(np.cos(u), np.sin(v))
+ys = np.outer(np.sin(u), np.sin(v))
+zs = np.outer(np.ones_like(u), np.cos(v))
+
+# Choose two angles on the equator
+a0 = np.deg2rad(40.0)
+th0 = np.deg2rad(-20.0)
+Delta = a0 - th0
+
+# Equator param
+eq = np.linspace(0, 2*np.pi, 400)
+xeq = np.cos(eq)
+yeq = np.sin(eq)
+zeq = np.zeros_like(eq)
+
+# Vectors on equator
+va = np.array([np.cos(a0), np.sin(a0), 0.0])
+vth = np.array([np.cos(th0), np.sin(th0), 0.0])
+
+# Mid-angle and half-angle arc points
+half_arc = np.linspace(th0, a0, 100)
+xarc = np.cos(half_arc)
+yarc = np.sin(half_arc)
+zarc = np.zeros_like(half_arc)
+
+fig = plt.figure(figsize=(7,6))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(xs, ys, zs, rstride=2, cstride=2, alpha=0.15, linewidth=0)  # faint sphere
+ax.plot(xeq, yeq, zeq)  # equator
+
+# State vectors
+ax.quiver(0,0,0, va[0], va[1], va[2], length=1.0, normalize=False)
+ax.quiver(0,0,0, vth[0], vth[1], vth[2], length=1.0, normalize=False)
+
+# Arc showing Delta on equator
+ax.plot(xarc, yarc, zarc)
+
+# Text annotations
+ax.text(va[0]*1.1, va[1]*1.1, va[2]*1.1, r'$a$')
+ax.text(vth[0]*1.1, vth[1]*1.1, vth[2]*1.1, r'$\theta$')
+ax.text(0.2, 0.2, 0.9, r'Overlap $= \cos(\Delta/2)$', zdir=None)
+
+ax.set_title('Bloch sphere: overlap from half-angle on the equator')
+ax.set_axis_off()
+ax.view_init(elev=20, azim=40)
+plt.tight_layout()
+plt.show()
+```
+
+## Probability Torus
+```{python}
+# Generate the extra visuals the user asked for using matplotlib only (no seaborn).
+# 1) Probability torus colored by cos^2((a - theta)/2)
+# 2) CHSH comparison: quantum cosine vs a polygonal hidden-variable curve, plus S-values
+# 3) A simple animation: Δ sweeping across, with a marker on overlap and probability curves
+
+%matplotlib widget
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+# ---------- (1) Probability torus ----------
+R, r = 0.0, 1.0 # sphere
+# R, r = 1.0, 1.0 # torus
+A_t, TH_t = np.meshgrid(np.linspace(0, 2*np.pi, 100), np.linspace(0, 2*np.pi, 20))
+X = -(R + r*np.cos(TH_t)) * np.cos(A_t)
+Y = -(R + r*np.cos(TH_t)) * np.sin(A_t)
+Z = r * np.sin(TH_t)
+prob = np.cos((A_t - TH_t)/2.0)**2
+
+fig = plt.figure(figsize=(7,6))
+ax = fig.add_subplot(111, projection='3d')
+# Normalize prob to [0,1] for colormap
+normed = (prob - prob.min()) / (prob.max() - prob.min())
+ax.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=plt.cm.Greys(normed), linewidth=0, antialiased=True)
+# m = plt.cm.ScalarMappable(cmap='viridis')
+m = plt.cm.ScalarMappable(cmap='Greys')
+m.set_array(prob)
+plt.colorbar(m, ax=ax, shrink=0.6, pad=0.1, label='Probability')
+ax.set_title(r'Probability torus: $(a,\theta)\in S^1\times S^1$ with $\,\cos^2\!\left(\frac{a-\theta}{2}\right)$')
+ax.set_axis_off()
+
+
+# ax.view_init(elev=0, azim=180, roll=0) # side view
+# ax.view_init(elev=0, azim=0, roll=0) # overlap
+ax.view_init(elev=-90, azim=0, roll=90) # looks like: Simplified form of Lai Zhide's "Taiji River Diagram" (1599)
+# ax.view_init(elev=90, azim=-90, roll=0) # looks like: Simplified form of Lai Zhide's "Taiji River Diagram" (1599)
+ax.set_box_aspect((1, 1, 1))     # equal scaling on x,y,z
+L = R + r
+ax.set_xlim(-L, L); ax.set_ylim(-L, L); ax.set_zlim(-L, L)
+ax.set_proj_type('ortho')        # optional, avoids perspective squish
+
+plt.tight_layout()
+plt.show()
+```
+
+## ---------- (2) CHSH comparison ----------
+```{python}
+# Define quantum correlation and a simple polygonal LHV correlation function
+def E_qm(delta):
+    return -np.cos(delta)
+
+# Polygonal LHV model: a  π-periodic triangle wave between +1 and -1.
+# One convenient closed form: E_lhv(Δ) = 1 - (4/π)*|Δ| for |Δ|∈[0,π/2],
+# then reflect to make it π-periodic and odd around ±π/2. Implement via sawtooth helper.
+def triangle_periodic(delta):
+    # Map to [0, 2π)
+    d = (delta + 2*np.pi) % (2*np.pi)
+    # Fold into [0, π]
+    if np.isscalar(d):
+        d = np.array([d])
+    D = np.where(d > np.pi, 2*np.pi - d, d)
+    # Piecewise linear from +1 at 0 to -1 at π
+    return 1.0 - 2.0*D/np.pi  # linear slope -2/π from +1 to -1 over [0,π]
+
+def E_lhv(delta):
+    # Make it π-periodic (since outcomes depend on axis modulo π)
+    d = (delta + np.pi) % (np.pi)  # in [0, π)
+    # Linear from +1 at 0 to -1 at π
+    return 1.0 - 2.0*d/np.pi
+
+Delta = np.linspace(-np.pi, np.pi, 2000)
+eq = E_qm(Delta)
+el = E_lhv(Delta)
+
+plt.figure(figsize=(8,4))
+plt.plot(Delta, eq, label='Quantum: $E(\\Delta)=-\\cos\\Delta$')
+plt.plot(Delta, el, label='LHV polygonal (π-periodic linear)')
+plt.xlabel(r'$\Delta = a-b$')
+plt.ylabel('Correlation')
+plt.title('CHSH-style comparison: smooth sinusoid vs polygonal hidden-variable curve')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Compute S values for standard optimal CHSH choices
+a = 0.0
+a_p = np.pi/2
+b = np.pi/4
+b_p = -np.pi/4
+
+def S_from_E(Efunc):
+    return abs(Efunc(a-b) + Efunc(a-b_p) + Efunc(a_p-b) - Efunc(a_p-b_p))
+
+S_qm = S_from_E(E_qm)
+S_lhv = S_from_E(E_lhv)
+
+# Display S on a small text figure
+plt.figure(figsize=(5,2.5))
+plt.axis('off')
+plt.text(0.02, 0.65, r'$S_{\rm QM}$' + f' = {S_qm:.4f}  (→ $2\\sqrt{{2}}$ ≈ {2*np.sqrt(2):.4f})')
+plt.text(0.02, 0.35, r'$S_{\rm LHV}$' + f' = {S_lhv:.4f}  (≤ 2)')
+plt.title('CHSH S-values for standard angles')
+plt.tight_layout()
+plt.show()
+
+```
+
+
+## Spirographs
+```{python}
+# Re-run: Spirograph renderings colored by P_same(a,b) and by overlap cos((a - theta)/2)
+# Using default matplotlib settings; no custom colors/styles.
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+
+# Parameters
+R = 3.0
+q = (np.sqrt(5) - 1.0) / 2.0
+r = R / (1.0 + q)
+d = 1.0
+T = 400*np.pi
+N = 120000
+
+tau = np.linspace(0, T, N)
+phi1 = tau
+phi2 = q * tau
+a = np.mod(phi1, 2*np.pi)
+b = np.mod(phi2, 2*np.pi)
+theta = b
+
+# Spirograph embedding (hypotrochoid)
+x = (R - r) * np.cos(phi1) + d * np.cos((R - r) / r * phi1)
+y = (R - r) * np.sin(phi1) - d * np.sin((R - r) / r * phi1)
+
+def colored_path(x, y, scalar, title, cbar_label, filename=None):
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segs = np.concatenate([points[:-1], points[1:]], axis=1)
+    vals = 0.5*(scalar[:-1] + scalar[1:])
+    lc = LineCollection(segs)
+    lc.set_array(vals)
+    lc.set_linewidth(0.8)
+
+    fig, ax = plt.subplots(figsize=(7,7))
+    ax.add_collection(lc)
+    ax.autoscale()
+    ax.set_aspect('equal', 'box')
+    ax.set_xticks([]); ax.set_yticks([])
+    ax.set_title(title)
+    cbar = plt.colorbar(lc, ax=ax)
+    cbar.set_label(cbar_label)
+    plt.tight_layout()
+    if filename is not None:
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
+    plt.show()
+
+# (1) P_same(a,b)
+Delta = a - b
+E = -np.cos(Delta)
+P_same = 0.5*(1.0 - np.cos(Delta))
+colored_path(x, y, P_same, 
+             title=r'Spirograph colored by $P_{\rm same}(a,b)=\frac{1-\cos(a-b)}{2}$',
+             cbar_label=r'$P_{\rm same}$',
+             filename=None)
+
+# (2) Overlap cos((a - theta)/2)
+overlap = np.cos((a - theta)/2.0)
+colored_path(x, y, overlap,
+             title=r'Spirograph colored by overlap $\cos\!\left(\frac{a-\theta}{2}\right)$',
+             cbar_label='Overlap amplitude',
+             filename=None)
+
+```
