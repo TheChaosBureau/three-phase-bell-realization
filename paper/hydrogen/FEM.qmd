@@ -1,0 +1,97 @@
+---
+title: Frequency Primacy and the FEM Ontology
+author:
+  - name: David Nobles
+abstract: |
+  This paper introduces **Axiom 2 of the TRUST framework: Frequency Primacy.**
+  We propose frequency as the fundamental physical primitive, with energy
+  ($E=h\nu$) and mass ($E=mc^2$) as derived quantities. This yields the
+  **Frequency–Energy–Mass (FEM) ontology**, where mass is stored frequency
+  and energy is expressed frequency.
+bibliography: refs.bib
+format:
+  pdf:
+    pdf-engine: tectonic
+    number-sections: true
+    shift-heading-level-by: -1
+    toc: false
+    fontsize: 11pt
+    geometry: margin=1in
+jupyter: python3
+---
+
+
+## Introduction  
+Physics traditionally treats **mass** and **energy** as fundamental, with frequency appearing as a derived quantum property.  
+Here we invert the order:  
+
+- **Frequency is primary.**  
+- Energy and mass are *secondary units*, conversion layers built from frequency.  
+
+This shift simplifies ontology: every coherent system is defined by **how often it repeats**.  
+
+Historically, the two inputs are well known:  
+- Planck’s quantization of energy [@planck1901], $E=h\nu$.  
+- Einstein’s inertia–energy equivalence [@einstein1905], $E=mc^2$.  
+
+Together, they imply **mass is stored frequency**.  
+
+---
+
+## Axiom 2 — Frequency Primacy (CC0)  
+**Every physical system is fundamentally characterized by a frequency $\nu$.**  
+
+Energy and mass are derived quantities:  
+
+$$
+E = h\nu, \qquad m = \frac{h\nu}{c^2}.
+$$  
+
+The constants $h$ and $c$ serve only as universal conversion factors linking frequency to traditional measures.  
+
+---
+
+## Derivation of $E=mc^2$ via Frequency  
+
+1. **Quantum postulate (Planck):**  
+From blackbody quantization [@planck1901],  
+$$
+E = h\nu.
+$$  
+
+2. **Relativity postulate (Einstein):**  
+From the inertia–energy relation [@einstein1905],  
+$$
+E = mc^2.
+$$  
+
+3. **Equating:**  
+$$
+m = \frac{h\nu}{c^2}.
+$$  
+
+Thus mass is *stored frequency* and energy is *frequency in motion*.  
+
+---
+
+## The FEM Ontology (Frequency–Energy–Mass)  
+- **Frequency ($\nu$):** intrinsic, universal, irreducible.  
+- **Energy ($E$):** frequency expressed in dynamical units.  
+- **Mass ($m$):** frequency expressed in rest units.  
+
+This trinity compresses physical ontology to a single primitive (frequency), with energy and mass as derived shadows of it.  
+
+---
+
+## Implications  
+- **Universality:** photons (massless) and matter (massive) both fit naturally.  
+- **Simplicity:** no need to assume separate “mass postulate” or “energy axiom.”  
+- **Unification:** frequency is invariant across quantum and relativistic frameworks.  
+
+---
+
+## Summary  
+From Axiom 2 (Frequency Primacy):  
+- Every system is characterized by $\nu$.  
+- $E = h\nu$ [@planck1901] and $E = mc^2$ [@einstein1905] together yield $m = h\nu/c^2$.  
+- Physics is compressed: **mass = stored frequency, energy = expressed frequency.**  

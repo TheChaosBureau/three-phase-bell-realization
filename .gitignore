@@ -210,3 +210,6 @@ __marimo__/
 # misc
 *.csv
 **/mermaid_flowchart_files/**
+*.png
+*.gif
+*.html
