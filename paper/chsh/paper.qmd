@@ -1,0 +1,434 @@
+---
+title: "Energy, Projection, and Constraint in Three-Phase Linear Networks"
+author: "David et al."
+date: "2026-02-19"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    shift-heading-level-by: -1
+    colorlinks: true
+execute:
+  echo: false
+  warning: false
+  message: false
+jupyter: python3
+---
+
+## Abstract
+
+We present a rigorously specified classical-field model that separates three claims often conflated in foundational discussions of quantum measurement. First, we prove that the Born-form dependence $\cos^2(\phi-\theta)$ arises exactly as a normalized energy projection in a rotated mode basis of a linear two-dimensional internal space. Second, we show in a transmission-line realization that a measurement intervention is naturally represented as a boundary-condition change, which instantaneously changes the admissible global modal decomposition while leaving all physical propagation causal and finite-speed. Third, we evaluate Clauser-Horne-Shimony-Holt (CHSH) correlations under explicit detector models and verify numerically that local deterministic dynamics with all trials counted satisfy $S\le 2$, whereas setting-dependent post-selection can produce apparent violations. The contribution is therefore not a hidden-variable replacement for quantum theory, but a transparent and auditable classical analog that sharply distinguishes geometric projection, boundary-constraint update, and genuinely nonclassical structure.
+
+## Introduction
+
+The main objective of this paper is to construct a single, internally consistent framework in which:
+
+1. projection geometry and energy extraction are mathematically explicit,
+2. measurement interventions are represented by physical boundary constraints,
+3. causality is enforced by hyperbolic dynamics, and
+4. Bell-inequality assumptions are tracked at the level of implementation.
+
+This yields a precise boundary between what can be captured by classical linear-wave models and what cannot.
+
+### Scope and claims
+
+The model captures:
+
+1. exact Born-form projection weights in a rotated internal basis,
+2. collapse-like update as a change in admissible mode space,
+3. strict finite-speed signal and energy propagation.
+
+The model does not capture:
+
+1. tensor-product Hilbert-space nonlocality,
+2. general noncommutative operator algebras,
+3. loophole-free Bell violations under local realism.
+
+## Theoretical framework
+
+### Internal mode space and energy inner product
+
+Let the internal two-mode field be
+
+$$
+\mathbf v(t)=\begin{pmatrix}v_\alpha(t)\\ v_\beta(t)\end{pmatrix},
+\qquad
+\mathbf v(t)=\Re\{\mathbf c e^{i\omega t}\},
+$$
+
+with $\mathbf c\in\mathbb C^2$. Define the time-averaged quadratic form
+
+$$
+\langle \mathbf v,\mathbf w\rangle_T=\frac1T\int_0^T \mathbf v(t)^\top\mathbf w(t)\,dt.
+$$
+
+For narrowband steady-state signals,
+
+$$
+\langle \mathbf v,\mathbf v\rangle_T\propto \|\mathbf c\|_2^2,
+$$
+
+so the internal space inherits a Euclidean inner-product structure.
+
+### Rotated analyzer and projection theorem
+
+Let the analyzer angle be $\theta$ with rotation
+
+$$
+R(\theta)=
+\begin{pmatrix}
+\cos\theta & -\sin\theta\\
+\sin\theta & \cos\theta
+\end{pmatrix},
+\qquad
+\mathbf v' = R(-\theta)\mathbf v.
+$$
+
+Assume a dissipative element extracts energy from the $\alpha'$ channel only. If the internal phasor direction is $\phi$, then the extracted energy fraction is
+
+$$
+W_\theta
+= \frac{\int (v'_{\alpha})^2 dt}{\int \|\mathbf v\|_2^2 dt}
+=\cos^2(\phi-\theta).
+$$
+
+This is algebraically identical to the Born-form squared projection amplitude in a real two-dimensional state space.
+
+### Three-phase embedding via Clarke coordinates
+
+For balanced three-phase voltages $(v_a,v_b,v_c)^\top$, define the power-invariant Clarke map
+
+$$
+\begin{pmatrix}v_\alpha\\v_\beta\\v_0\end{pmatrix}
+=
+\underbrace{\begin{pmatrix}
+\sqrt{\frac23} & -\frac1{\sqrt6} & -\frac1{\sqrt6}\\
+0 & \frac1{\sqrt2} & -\frac1{\sqrt2}\\
+\frac1{\sqrt3} & \frac1{\sqrt3} & \frac1{\sqrt3}
+\end{pmatrix}}_{T_C}
+\begin{pmatrix}v_a\\v_b\\v_c\end{pmatrix}.
+$$
+
+In balanced operation $v_0\approx 0$, so the relevant internal space is the $\alpha\beta$ plane.
+
+## Measurement as boundary constraint in a causal wave system
+
+### Transmission-line dynamics
+
+Let $\mathbf v(x,t),\mathbf i(x,t)\in\mathbb R^3$ satisfy
+
+$$
+\partial_x\mathbf v = -L'\partial_t\mathbf i,
+\qquad
+\partial_x\mathbf i = -C'\partial_t\mathbf v,
+$$
+
+with $L',C'>0$ and propagation speed $c=1/\sqrt{L'C'}$.
+
+Define energy density and flux
+
+$$
+u=\frac12 C'\|\mathbf v\|_2^2+\frac12 L'\|\mathbf i\|_2^2,
+\qquad
+S=\mathbf v^\top\mathbf i,
+$$
+
+so $\partial_t u+\partial_x S=0$.
+
+### Detector boundary condition
+
+At a boundary port, the detector is a conductance matrix $G_{abc}(\theta)\succeq0$:
+
+$$
+\mathbf i(x_{\mathrm{port}},t)=G_{abc}(\theta)\,\mathbf v(x_{\mathrm{port}},t).
+$$
+
+Absorbed power is nonnegative:
+
+$$
+P_{\mathrm{abs}}(t)=\mathbf v^\top G_{abc}(\theta)\mathbf v\ge 0.
+$$
+
+A measurement action is modeled as switching $G_{abc}$ at time $t_0$, i.e. a change in boundary constraints.
+
+### Domain update versus signal propagation
+
+Let $\mathcal D_{\mathrm{old}}$ and $\mathcal D_{\mathrm{new}}$ denote field domains satisfying old and new boundary conditions. At $t_0^+$, the admissible modal decomposition changes from $\mathcal D_{\mathrm{old}}$ to $\mathcal D_{\mathrm{new}}$. This update is instantaneous at the level of description (function space constraints), but does not imply superluminal transfer of energy or information. Physical changes at distance $d$ require at least $d/c$.
+
+## Reproducible computational experiments
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    "figure.dpi": 130,
+    "font.size": 10,
+    "axes.grid": True,
+    "grid.alpha": 0.25,
+})
+
+rng = np.random.default_rng(20260219)
+```
+
+### Figure 1: projection geometry in internal mode space
+
+```{python}
+phi = np.deg2rad(35)
+theta = np.deg2rad(-20)
+
+u = np.array([np.cos(phi), np.sin(phi)])
+e_theta = np.array([np.cos(theta), np.sin(theta)])
+proj = np.dot(u, e_theta) * e_theta
+
+fig, ax = plt.subplots(figsize=(5.2, 4.6))
+ax.axhline(0, color="0.5", lw=0.8)
+ax.axvline(0, color="0.5", lw=0.8)
+
+ax.arrow(0, 0, u[0], u[1], width=0.01, head_width=0.05, length_includes_head=True, color="#005f73")
+ax.arrow(0, 0, e_theta[0], e_theta[1], width=0.008, head_width=0.045, length_includes_head=True, color="#ca6702")
+ax.arrow(0, 0, proj[0], proj[1], width=0.008, head_width=0.04, length_includes_head=True, color="#0a9396")
+
+ax.plot([u[0], proj[0]], [u[1], proj[1]], "--", color="0.35", lw=1)
+ax.set_aspect("equal")
+ax.set_xlim(-1.2, 1.2)
+ax.set_ylim(-1.2, 1.2)
+ax.set_title("Internal vector, analyzer axis, and projected component")
+ax.set_xlabel(r"$v_\alpha$")
+ax.set_ylabel(r"$v_\beta$")
+
+ax.text(u[0] + 0.04, u[1] + 0.03, r"$\mathbf{u}(\phi)$", color="#005f73")
+ax.text(e_theta[0] + 0.04, e_theta[1] - 0.06, r"$\hat e_\theta$", color="#ca6702")
+ax.text(proj[0] + 0.03, proj[1] + 0.03, r"proj$_\theta(\mathbf{u})$", color="#0a9396")
+plt.show()
+```
+
+The extracted fraction is $\|\mathrm{proj}_\theta(\mathbf u)\|_2^2=\cos^2(\phi-\theta)$.
+
+### Figure 2: Born-form energy law
+
+```{python}
+phi = np.deg2rad(30)
+th = np.linspace(-np.pi, np.pi, 800)
+w = np.cos(phi - th) ** 2
+
+sample_th = np.linspace(-np.pi, np.pi, 24)
+sample_w = np.cos(phi - sample_th) ** 2
+
+fig, ax = plt.subplots(figsize=(6.0, 3.8))
+ax.plot(th, w, lw=2, color="#005f73", label=r"$W_\theta = \cos^2(\phi-\theta)$")
+ax.scatter(sample_th, sample_w, color="#bb3e03", s=18, zorder=3, label="discrete evaluations")
+ax.set_xlabel(r"Analyzer angle $\theta$ (rad)")
+ax.set_ylabel("Normalized extracted energy")
+ax.set_ylim(-0.02, 1.02)
+ax.legend(frameon=False)
+ax.set_title("Exact squared-projection dependence")
+plt.show()
+```
+
+### Figure 3: boundary switch and finite-speed causality
+
+```{python}
+def simulate_line(switch=False, *, N=401, L=1.0, Lp=1.0, Cp=1.0, cfl=0.4,
+                  t_end=3.0, t_switch=1.0, G_after=4.0):
+    dx = L / (N - 1)
+    c = 1.0 / np.sqrt(Lp * Cp)
+    dt = cfl * dx / c
+    steps = int(t_end / dt)
+
+    v = np.zeros(N)
+    i = np.zeros(N - 1)
+
+    Cn = Cp * dx
+    Ls = Lp * dx
+
+    src = N // 3
+    f0 = 6.0
+
+    t = np.arange(steps) * dt
+    v_right = np.zeros(steps)
+
+    for n, tn in enumerate(t):
+        i += (dt / Ls) * (v[:-1] - v[1:])
+
+        div = np.zeros(N)
+        div[1:-1] = i[:-1] - i[1:]
+        div[0] = -i[0]
+        div[-1] = i[-1]
+
+        i_src = 0.8 * np.sin(2 * np.pi * f0 * tn) * np.exp(-((tn - 0.5) / 0.7) ** 2)
+        div[src] += i_src
+
+        G_left = G_after if (switch and tn >= t_switch) else 0.0
+        div[0] -= G_left * v[0]
+
+        v += (dt / Cn) * div
+        v_right[n] = v[-1]
+
+    return t, v_right, c
+
+
+t, vr_ref, c = simulate_line(switch=False)
+_, vr_switch, _ = simulate_line(switch=True)
+
+delta = np.abs(vr_switch - vr_ref)
+t_switch = 1.0
+L = 1.0
+arrival_bound = t_switch + L / c
+
+mask = t >= t_switch
+above = np.where(mask & (delta > 2e-4))[0]
+first_detect = t[above[0]] if len(above) else np.nan
+
+fig, ax = plt.subplots(figsize=(6.3, 4.0))
+ax.plot(t, vr_ref, lw=1.5, color="#005f73", label="right-end voltage (no switch)")
+ax.plot(t, vr_switch, lw=1.2, color="#9b2226", alpha=0.9, label="right-end voltage (left boundary switched)")
+ax.axvline(t_switch, color="0.35", ls="--", lw=1.1, label=r"switch at $t_0$")
+ax.axvline(arrival_bound, color="#ca6702", ls="--", lw=1.1, label=r"causal lower bound $t_0+L/c$")
+ax.set_xlabel("Time")
+ax.set_ylabel("Right-end voltage")
+ax.set_title("Remote boundary response appears only after finite propagation delay")
+ax.legend(frameon=False, loc="upper right")
+plt.show()
+
+print(f"First detectable right-end deviation: t = {first_detect:.3f}")
+print(f"Causal lower bound (t0 + L/c):       t = {arrival_bound:.3f}")
+```
+
+The observed first deviation should not precede $t_0+L/c$; in this run it is delayed until approximately that bound (within discretization tolerance).
+
+### Figure 4: CHSH audit under explicit counting rules
+
+```{python}
+def sgn(x):
+    return np.where(x >= 0.0, 1, -1)
+
+# Local deterministic hidden variable model
+N = 400_000
+lam = rng.uniform(0.0, 2 * np.pi, N)
+
+def A(theta):
+    return sgn(np.cos(theta - lam))
+
+def B(theta):
+    return -sgn(np.cos(theta - lam))
+
+# CHSH settings chosen to saturate the local bound
+# a=0, a'=pi/2, b=pi/4, b'=-pi/4
+a, ap = 0.0, np.pi / 2
+b, bp = np.pi / 4, -np.pi / 4
+
+pairs = [(a, b), (a, bp), (ap, b), (ap, bp)]
+labels = ["E(a,b)", "E(a,b')", "E(a',b)", "E(a',b')"]
+
+
+def correlation(thetaA, thetaB, postselect=False, tau=0.0):
+    AA = A(thetaA)
+    BB = B(thetaB)
+    if not postselect:
+        return np.mean(AA * BB), 1.0
+
+    # Detection-loophole toy model:
+    # keep only events whose local analyzer overlap exceeds threshold tau.
+    keep = (np.abs(np.cos(thetaA - lam)) > tau) & (np.abs(np.cos(thetaB - lam)) > tau)
+    return np.mean((AA * BB)[keep]), np.mean(keep)
+
+E_clean = [correlation(x, y, postselect=False)[0] for x, y in pairs]
+S_clean = abs(E_clean[0] + E_clean[1] + E_clean[2] - E_clean[3])
+
+E_loophole = [correlation(x, y, postselect=True, tau=0.60)[0] for x, y in pairs]
+eta_loophole = [correlation(x, y, postselect=True, tau=0.60)[1] for x, y in pairs]
+S_loophole = abs(E_loophole[0] + E_loophole[1] + E_loophole[2] - E_loophole[3])
+
+fig, ax = plt.subplots(figsize=(6.4, 4.0))
+x = np.arange(4)
+ax.bar(x - 0.18, E_clean, width=0.36, color="#005f73", label="all trials counted")
+ax.bar(x + 0.18, E_loophole, width=0.36, color="#bb3e03", label="post-selected coincidences")
+ax.axhline(0, color="0.35", lw=0.8)
+ax.set_xticks(x)
+ax.set_xticklabels(labels)
+ax.set_ylim(-1.05, 1.05)
+ax.set_ylabel("Correlation")
+ax.set_title("CHSH correlators with and without post-selection")
+ax.legend(frameon=False)
+plt.show()
+
+print(f"S (all trials counted):        {S_clean:.3f}")
+print(f"S (post-selected sample only): {S_loophole:.3f}")
+print(f"Mean coincidence efficiency in post-selected run: {np.mean(eta_loophole):.3f}")
+```
+
+## Results
+
+### Born-form identity
+
+Figure 2 confirms the exact law $W_\theta=\cos^2(\phi-\theta)$, derived directly from Euclidean projection in the rotated internal basis. No stochastic postulate is required for this identity.
+
+### Boundary-switch causality
+
+Figure 3 demonstrates two separate facts:
+
+1. the boundary change is applied at $t=t_0$;
+2. a remote observable changes only after at least $L/c$.
+
+Thus the model supports instantaneous update of admissible modal constraints while preserving strict finite-speed physical propagation.
+
+### CHSH audit
+
+In the all-counted local deterministic run, the computed CHSH value saturates the classical limit ($S\approx2$ within Monte Carlo error), as required by Bell assumptions. In the post-selected run with setting-dependent efficiency, $S$ can exceed 2 substantially while coincidence efficiency falls, identifying explicit sampling bias rather than nonlocal dynamics.
+
+## Discussion
+
+### What is reconstructed
+
+The framework reconstructs three structural elements often associated with quantum measurement:
+
+1. squared-projection weighting,
+2. basis dependence of outcomes,
+3. global-state reinterpretation under measurement constraints.
+
+### What remains genuinely nonclassical
+
+The construction does not reproduce the full architecture of quantum theory. In particular, it does not produce loophole-free Bell violations under locality and deterministic hidden variables, and it does not provide a replacement for noncommutative operator structure on tensor-product Hilbert spaces.
+
+### Methodological value
+
+The practical value is diagnostic: by making propagation, detector physics, and event-selection rules explicit, the model prevents conceptual slippage between geometric projection effects, boundary-constraint updates, and claims of nonlocal physical signaling.
+
+## Limitations and future work
+
+1. The current numerical experiment uses a scalar TL envelope for the causality figure; extending to fully coupled $3\times3$ per-unit-length matrices $(\mathbf L,\mathbf C)$ is straightforward and should be done for higher-fidelity engineering correspondence.
+2. Detector electronics are represented by linear shunt conductances and a stylized threshold coincidence rule. Future work should include transient front-end dynamics and noise models calibrated to hardware.
+3. The CHSH loophole figure is intentionally didactic. A full detection-loophole phase map $S(\eta,\Delta,T)$ with confidence intervals should be reported in a dedicated simulation paper.
+
+## Conclusion
+
+This paper establishes a rigorous classical-field bridge with three precise outputs:
+
+1. Born-form dependence emerges exactly as normalized projection energy in a rotated internal mode basis.
+2. Collapse-like update is formally represented as a boundary-domain change in admissible global modes.
+3. Causality is preserved at the dynamical level, and Bell limits remain intact under local all-counted assumptions.
+
+The framework is therefore best interpreted as a structural analog and clarification tool, not as a reduction of quantum mechanics to classical circuitry.
+
+## Appendix A: Minimal derivation of the projection law
+
+Let a unit internal vector be $\mathbf u=(\cos\phi,\sin\phi)^\top$ and analyzer axis $\hat e_\theta=(\cos\theta,\sin\theta)^\top$. Then
+
+$$
+\mathrm{proj}_{\theta}(\mathbf u)=(\mathbf u\cdot\hat e_\theta)\hat e_\theta,
+$$
+
+and
+
+$$
+\|\mathrm{proj}_{\theta}(\mathbf u)\|_2^2=(\mathbf u\cdot\hat e_\theta)^2
+=(\cos\phi\cos\theta+\sin\phi\sin\theta)^2
+=\cos^2(\phi-\theta).
+$$
+
+## Appendix B: Reproducibility notes
+
+1. All figures are generated in-document by Python code blocks.
+2. Random sampling is seeded (`rng = np.random.default_rng(20260219)`).
+3. The CHSH example is intentionally split into all-counted and post-selected regimes to keep assumptions explicit.

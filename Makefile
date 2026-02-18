@@ -7,7 +7,7 @@ ipynb:
 	quarto convert paper/paper.qmd
 
 pdf:
-	quarto render paper/paper.qmd \
+	QUARTO_PYTHON=.venv/bin/python quarto render paper/chsh/paper.qmd \
 		--to pdf \
 		--execute \
 		--no-execute-daemon \
