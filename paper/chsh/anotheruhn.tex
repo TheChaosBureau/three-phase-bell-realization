@@ -1,0 +1,233 @@
+\appendix
+\section{Exact Arc-Intersection Algebra for Threshold--Coincidence Selection (Option A)}
+\label{app:optionA}
+
+\subsection{Purpose}
+
+This appendix provides an exact, piecewise arc-intersection formulation for the conditioned correlations used in the main text. The result validates the effective half-width surrogate by exhibiting the precise dependence of the correlations on the underlying angular acceptance sets. The same formulas also provide a benchmark for numerical simulation.
+
+We proceed in two stages:
+\begin{enumerate}
+    \item Threshold selection (exact), yielding $\mathcal{E}(\Delta\theta)$ as an overlap ratio of arcs.
+    \item Threshold \emph{plus} coincidence selection, obtained by intersecting the threshold acceptance arcs with coincidence arcs defined by an explicit timing filter.
+\end{enumerate}
+
+Throughout, all integrals are arc-length measures on $\phi \in [0,\pi)$ (mod $\pi$), and all functions take values in $\{+1,-1,0\}$, where $0$ indicates ``no click'' (discarded trial).
+
+%------------------------------------------------------------
+\subsection{Threshold-Only Acceptance Sets}
+
+Let $\phi \in [0,\pi)$ denote the hidden polarization angle, and let $\theta$ be the analyzer setting. Define $\delta=\phi-\theta$ modulo $\pi$ and represent $\delta \in [-\pi/2,\pi/2)$.
+
+Channel energies are
+\begin{equation}
+E_\parallel(\phi,\theta)=E_0\cos^2(\delta),\qquad
+E_\perp(\phi,\theta)=E_0\sin^2(\delta).
+\end{equation}
+With normalized threshold $t=\eta/E_0$, define
+\begin{equation}
+a(t)=\arccos(\sqrt{t}),\qquad
+b(t)=\arcsin(\sqrt{t})=\frac{\pi}{2}-a(t).
+\end{equation}
+The decision rule is
+\begin{equation}
+A_t(\phi;\theta)=
+\begin{cases}
++1, & \cos^2(\phi-\theta)>t \ \wedge\ \sin^2(\phi-\theta)\le t,\\
+-1, & \sin^2(\phi-\theta)>t \ \wedge\ \cos^2(\phi-\theta)\le t,\\
+0, & \text{otherwise}.
+\end{cases}
+\end{equation}
+
+Define the threshold half-width
+\begin{equation}
+m_{\mathrm{thr}}(t)=\min\{a(t),b(t)\}\in[0,\pi/4].
+\end{equation}
+
+\paragraph{Canonical representation.}
+For all $t\in[0,1]$, the acceptance sets can be written using $m=m_{\mathrm{thr}}(t)$ as:
+\begin{align}
+P_\theta &= \{\phi:\ |\phi-\theta|_\pi < m \},\\
+M_\theta &= \{\phi:\ |\phi-(\theta+\tfrac{\pi}{2})|_\pi < m \},
+\end{align}
+where $|\cdot|_\pi$ denotes wrap-around distance on the circle of circumference $\pi$.
+Then
+\begin{equation}
+A_t(\phi;\theta)=
+\begin{cases}
++1, & \phi\in P_\theta,\\
+-1, & \phi\in M_\theta,\\
+0, & \text{otherwise}.
+\end{cases}
+\end{equation}
+Each of $P_\theta$ and $M_\theta$ is an arc of length $2m$, and they are separated by $\pi/2$.
+
+%------------------------------------------------------------
+\subsection{Exact Conditioned Correlation as Overlap Ratios}
+
+Let Alice and Bob settings be $\theta_A,\theta_B$, and define $\Delta=\theta_A-\theta_B$ modulo $\pi$, with $|\Delta|\in[0,\pi/2]$.
+
+Define
+\begin{equation}
+A(\phi)=A_t(\phi;\theta_A),\qquad B(\phi)=A_t(\phi;\theta_B).
+\end{equation}
+
+The \emph{double-click} set is
+\begin{equation}
+\Omega_{\Delta}=
+\{\phi:\ A(\phi)\neq 0 \ \wedge\ B(\phi)\neq 0\}.
+\end{equation}
+
+Define arc-length overlap measures
+\begin{align}
+L_{PP}(\Delta) &= |P_{\theta_A}\cap P_{\theta_B}|,\\
+L_{PM}(\Delta) &= |P_{\theta_A}\cap M_{\theta_B}|,\\
+L_{MP}(\Delta) &= |M_{\theta_A}\cap P_{\theta_B}|,\\
+L_{MM}(\Delta) &= |M_{\theta_A}\cap M_{\theta_B}|,
+\end{align}
+where $|\cdot|$ denotes arc length on $[0,\pi)$ with wrap-around.
+
+Then the denominator (double-click measure) and numerator (signed overlap) are
+\begin{align}
+D(\Delta) &= L_{PP}+L_{PM}+L_{MP}+L_{MM},\\
+N(\Delta) &= (L_{PP}+L_{MM})-(L_{PM}+L_{MP}).
+\end{align}
+
+Thus the exact conditioned correlation is
+\begin{equation}
+\boxed{
+\mathcal{E}_t(\Delta)=\frac{N(\Delta)}{D(\Delta)}.
+}
+\end{equation}
+
+\paragraph{Closed forms for $L_{ij}$.}
+Because $P_\theta$ and $M_\theta$ are arcs of half-width $m$ separated by $\pi/2$, all overlaps reduce to intersections of length-$2m$ arcs at angular separations $|\Delta|$ and $\pi/2-|\Delta|$. One obtains
+\begin{align}
+L_{PP}(\Delta) &= [2m-|\Delta|]_+,\\
+L_{MM}(\Delta) &= [2m-|\Delta|]_+,\\
+L_{PM}(\Delta) &= [2m-(\tfrac{\pi}{2}-|\Delta|)]_+,\\
+L_{MP}(\Delta) &= [2m-(\tfrac{\pi}{2}-|\Delta|)]_+,
+\end{align}
+where $[x]_+=\max\{x,0\}$.
+Substituting yields the compact exact formula
+\begin{equation}
+\boxed{
+\mathcal{E}_t(\Delta)=
+\frac{[2m-|\Delta|]_+ - [2m-(\tfrac{\pi}{2}-|\Delta|)]_+}
+{[2m-|\Delta|]_+ + [2m-(\tfrac{\pi}{2}-|\Delta|)]_+}
+\quad\text{with}\quad m=m_{\mathrm{thr}}(t).
+}
+\end{equation}
+
+%------------------------------------------------------------
+\subsection{Including Coincidence Selection: Exact Set Intersection Formulation}
+
+We now incorporate a coincidence constraint based on click-time differences. Let the (channel) click time be a deterministic function $t_c(u)$ of the projection strength $u=\cos^2(\phi-\theta)$, e.g.\ from threshold crossing of a Gaussian-integrated energy model:
+\begin{equation}
+t_c(u)=\sigma\,\mathrm{erf}^{-1}\!\left(\frac{\beta}{u}-1\right),
+\end{equation}
+defined for $u\ge u_{\min}=\beta/2$ (otherwise no click). This yields a coincidence constraint
+\begin{equation}
+|t_c(u_A)-t_c(u_B)|\le \Delta.
+\end{equation}
+
+\paragraph{Coincidence acceptance set.}
+Define
+\begin{equation}
+C_{\theta_A,\theta_B}(\Delta)=
+\left\{
+\phi\in[0,\pi):
+\left|
+t_c\!\left(\cos^2(\phi-\theta_A)\right)
+-
+t_c\!\left(\cos^2(\phi-\theta_B)\right)
+\right|
+\le \Delta
+\right\}.
+\end{equation}
+This is an explicit measurable set in $\phi$.
+
+\paragraph{Exact conditioned correlation with coincidence.}
+Define the modified double-click set
+\begin{equation}
+\Omega_{\Delta}^{\mathrm{(coin)}}=
+\left\{
+\phi:\ A(\phi)\neq 0,\ B(\phi)\neq 0,\ \phi\in C_{\theta_A,\theta_B}(\Delta)
+\right\}.
+\end{equation}
+
+Define modified overlap measures
+\begin{align}
+\tilde L_{PP}(\Delta) &= |P_{\theta_A}\cap P_{\theta_B}\cap C_{\theta_A,\theta_B}(\Delta)|,\\
+\tilde L_{PM}(\Delta) &= |P_{\theta_A}\cap M_{\theta_B}\cap C_{\theta_A,\theta_B}(\Delta)|,\\
+\tilde L_{MP}(\Delta) &= |M_{\theta_A}\cap P_{\theta_B}\cap C_{\theta_A,\theta_B}(\Delta)|,\\
+\tilde L_{MM}(\Delta) &= |M_{\theta_A}\cap M_{\theta_B}\cap C_{\theta_A,\theta_B}(\Delta)|.
+\end{align}
+
+Then
+\begin{align}
+\tilde D(\Delta) &= \tilde L_{PP}+\tilde L_{PM}+\tilde L_{MP}+\tilde L_{MM},\\
+\tilde N(\Delta) &= (\tilde L_{PP}+\tilde L_{MM})-(\tilde L_{PM}+\tilde L_{MP}),
+\end{align}
+and the exact coincidence-conditioned correlation is
+\begin{equation}
+\boxed{
+\mathcal{E}_t^{\mathrm{(coin)}}(\Delta)
+=
+\frac{\tilde N(\Delta)}{\tilde D(\Delta)}.
+}
+\end{equation}
+
+\subsection{Practical Piecewise Evaluation (Arc Decomposition)}
+
+To evaluate $\tilde L_{ij}$ exactly, decompose the coincidence set $C_{\theta_A,\theta_B}(\Delta)$ into a finite union of arcs.
+For the Gaussian threshold-crossing model, $t_c(u)$ is monotone in $u$, hence the coincidence condition defines a set of the form
+\begin{equation}
+C_{\theta_A,\theta_B}(\Delta)=\bigcup_{k=1}^{K} I_k,
+\end{equation}
+where each $I_k$ is an interval (arc) in $\phi$ and $K$ is finite (typically $K\le 4$ over $\phi\in[0,\pi)$ due to periodicity and symmetry).
+
+Then each $\tilde L_{ij}$ reduces to finite arc intersections:
+\begin{equation}
+\tilde L_{PP}(\Delta)=\sum_{k=1}^{K} |P_{\theta_A}\cap P_{\theta_B}\cap I_k|,
+\end{equation}
+and similarly for $\tilde L_{PM},\tilde L_{MP},\tilde L_{MM}$.
+
+Each term is the length of an intersection of at most three arcs, computable by endpoints with wrap-around. This provides an exact benchmark for simulation and for validating the effective half-width approximation in the main text.
+
+%------------------------------------------------------------
+\subsection{CHSH Benchmark}
+
+For CHSH settings
+\begin{equation}
+\theta_A\in\{0,\pi/4\},
+\qquad
+\theta_B\in\{\pi/8,3\pi/8\},
+\end{equation}
+only $|\Delta|\in\{\pi/8,3\pi/8\}$ appear. Thus one computes
+\begin{equation}
+\mathcal{E}_t^{\mathrm{(coin)}}(\pi/8),\qquad
+\mathcal{E}_t^{\mathrm{(coin)}}(3\pi/8),
+\end{equation}
+and then
+\begin{equation}
+\boxed{
+S=
+\left|
+3\,\mathcal{E}_t^{\mathrm{(coin)}}(\pi/8)
+-
+\mathcal{E}_t^{\mathrm{(coin)}}(3\pi/8)
+\right|.
+}
+\end{equation}
+
+This appendix supplies an exact evaluation route:
+\begin{enumerate}
+    \item Construct $P_\theta, M_\theta$ from $m_{\mathrm{thr}}(t)$.
+    \item Construct coincidence arcs $I_k$ from $C_{\theta_A,\theta_B}(\Delta)$.
+    \item Compute $\tilde L_{ij}$ by finite arc intersections.
+    \item Obtain $\mathcal{E}_t^{\mathrm{(coin)}}(\Delta)$ and $S$ exactly.
+\end{enumerate}
+
+\paragraph{Remark.}
+If coincidence selection is removed (i.e.\ $C_{\theta_A,\theta_B}(\Delta)=[0,\pi)$), the formulas reduce to the closed form in the threshold-only section of this appendix, providing an internal consistency check.
