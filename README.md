@@ -23,6 +23,3 @@ Interactive pedagogical paper for exploring quantum entanglement as modeled by t
 ## Git hook
 - Run `git config core.hooksPath .githooks` once per clone so commits use the repository hook directory.
 - The `pre-commit` hook in `.githooks/` calls `scripts/clear_notebook_outputs.py` to strip outputs and execution counts from any staged `.ipynb` files, then restages them automatically before the commit proceeds.
-
-## Prompts
-- can you help me write the paper paper.qmd? it's just a rough draft right now. Rigorously write it and fill it out until it is ready for publication. It is a qmd file, so you can write python code which will generate figures, so include figures where appropriate. Pretend you are the author of this paper, a rigorous scientist.
