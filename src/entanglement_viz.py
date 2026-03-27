@@ -1,13 +1,26 @@
 """
-Notebook-grounded Clarke-surface model:
-v_abc(θ) = [2V cos θ, -V cos θ, -V cos θ] is the balanced equal-sequence
-construction used in the notebook. The Clarke map sends v_abc -> (v_α, v_β, v_0),
-and with resistive normalization i_α = v_α / R, i_β = v_β / R the normalized
-surface height is p_αβ(θ) = v_α i_α + v_β i_β ∝ cos²(θ - φ). The Dash scene treats
-that Clarke-space energy as vertical relief, so integrated relief reads as volume.
-A 180° azimuth flip, φ -> φ + π, preserves the same surface and can be read as the
-partner viewpoint, while the helix handedness sign selects positive-sequence (CCW)
-versus negative-sequence (CW) convention for the whole pair.
+Rigorous Clarke-space entanglement view.
+
+The app now keeps geometry and accounting separate:
+
+- The 3D scene uses z only as a propagation coordinate.
+- Detector planes are flat disks whose colors encode the literal analyzer response.
+- A linked accounting plot shows the actual theta-dependent power profiles.
+
+Because the paper currently uses two related but not identical constructions, the app
+exposes them explicitly:
+
+1. Sequence response (paper Sec. 4):
+   P_A(theta) = cos^2(theta - phi_A)
+   P_B(theta) = sin^2(theta - phi_B)
+
+2. Three-party closure (paper Sec. 6):
+   P_A(theta) = cos^2(theta - phi_A)
+   P_B(theta) = cos^2(theta - phi_B)
+   P_0(theta) = 1 - P_A(theta) - P_B(theta)
+
+The Bell correlation readout E(a,b) = -cos(2Δφ) is retained as an analytic overlay
+and is labeled as such in the UI.
 """
 
 import numpy as np
@@ -17,57 +30,73 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 
 # ── Constants ──────────────────────────────────────────────────────
-N_HELIX = 600
-N_BOWL_TH = 120
-N_BOWL_R = 40
+N_PATH = 600
+N_DISK_TH = 160
+N_DISK_R = 48
 N_TURNS = 5
 T_MAX = 1.0
-BOWL_H = 0.10
 HELIX_R = 0.85
-FADE_DUR = 0.06
+DISK_R = 1.0
 TICK_MS = 40
 
-BREATH_AMP = 0.08
-BREATH_CYCLES = 3.0
-HELIX_BREATH_GAIN = 0.45
-SUPER_BREATH_GAIN = 0.65
-SURFACE_BREATH_GAIN = 1.75
-SURFACE_RIM_GAIN = 0.35
-TIP_BREATH_GAIN = 1.25
+MODEL_SEQUENCE = "sequence"
+MODEL_CLOSURE = "closure"
 
-PRIMARY_COLOR = "#1565C0"
-PARTNER_COLOR = "#C62828"
+POSITIVE_COLOR = "#1565C0"
+NEGATIVE_COLOR = "#C62828"
 SUPER_COLOR = "#2E7D32"
+A_COLOR = "#0D47A1"
+B_COLOR = "#B71C1C"
+CHANNEL_COLOR = "#FF8F00"
+RESIDUAL_COLOR = "#616161"
+PRIMARY_COLOR = A_COLOR
+PARTNER_COLOR = B_COLOR
+
+# Retained for compatibility with earlier helpers and tests; the rigorous scene does
+# not use any breathing modulation.
+BREATH_AMP = 0.0
+BREATH_CYCLES = 0.0
+HELIX_BREATH_GAIN = 0.0
+SUPER_BREATH_GAIN = 0.0
+SURFACE_BREATH_GAIN = 0.0
+SURFACE_RIM_GAIN = 0.0
+TIP_BREATH_GAIN = 0.0
+BOWL_H = 0.10
+FADE_DUR = 0.06
 
 # ── Static grids ───────────────────────────────────────────────────
-_t_helix = np.linspace(0.0, T_MAX, N_HELIX)
-_bowl_theta = np.linspace(0.0, 2.0 * np.pi, N_BOWL_TH)
-_bowl_r = np.linspace(0.0, 1.0, N_BOWL_R)
-_TH, _RR = np.meshgrid(_bowl_theta, _bowl_r)
-_BX = _RR * np.cos(_TH)
-_BY = _RR * np.sin(_TH)
+_path_t = np.linspace(0.0, T_MAX, N_PATH)
+_profile_theta = np.linspace(0.0, 2.0 * np.pi, 721)
+_disk_theta = np.linspace(0.0, 2.0 * np.pi, N_DISK_TH)
+_disk_r = np.linspace(0.0, DISK_R, N_DISK_R)
+_TH, _RR = np.meshgrid(_disk_theta, _disk_r)
+_DISK_X = _RR * np.cos(_TH)
+_DISK_Y = _RR * np.sin(_TH)
 
 
-# ── Model helpers ──────────────────────────────────────────────────
+# ── Legacy-compatible helpers ──────────────────────────────────────
 def phase_progression(time, handedness=1):
-    """Helix phase as a function of propagation time and sequence sign."""
+    """Phase angle as a function of normalized propagation coordinate."""
     time = np.asarray(time, dtype=float)
     return handedness * N_TURNS * 2.0 * np.pi * time / T_MAX
 
 
 def breathing_envelope(sim_time):
-    """Global positive breathing factor used throughout the animation."""
+    """Legacy helper; the rigorous view uses no non-physical breathing."""
     sim_time = np.asarray(sim_time, dtype=float)
-    return 1.0 + BREATH_AMP * np.sin(2.0 * np.pi * BREATH_CYCLES * sim_time / T_MAX)
+    return np.ones_like(sim_time, dtype=float)
 
 
 def breathing_scale(sim_time, gain=1.0):
-    """Convert the shared envelope into a gain-specific scale."""
-    return 1.0 + gain * (breathing_envelope(sim_time) - 1.0)
+    return np.ones_like(np.asarray(sim_time, dtype=float), dtype=float)
 
 
 def helix_coords(time, handedness, branch_sign=1, radius_scale=1.0):
-    """Partner helices are the same winding seen with a 180° azimuth flip."""
+    """
+    Legacy helper retained for continuity.
+
+    branch_sign = -1 produces a pi azimuth shift at fixed handedness.
+    """
     phase = phase_progression(time, handedness=handedness)
     radius = HELIX_R * np.asarray(radius_scale, dtype=float)
     x = branch_sign * radius * np.cos(phase)
@@ -76,7 +105,7 @@ def helix_coords(time, handedness, branch_sign=1, radius_scale=1.0):
 
 
 def superposition_coords(time, radius_scale=1.0):
-    """The notebook's balanced Clarke trace stays on the α axis."""
+    """Equal positive and negative sequences collapse to a fixed alpha-axis swing."""
     phase = phase_progression(time, handedness=1)
     radius = HELIX_R * np.asarray(radius_scale, dtype=float)
     x = radius * np.cos(phase)
@@ -88,21 +117,28 @@ def viewpoint_flipped_angle(phi):
     return (np.asarray(phi, dtype=float) + np.pi) % (2.0 * np.pi)
 
 
+def handedness_label(handedness):
+    return "positive-sequence / CCW" if handedness > 0 else "negative-sequence / CW"
+
+
 def clarke_energy_profile(theta, phi):
-    """Normalized p_αβ profile from the equal-sequence Clarke construction."""
     theta = np.asarray(theta, dtype=float)
     return np.cos(theta - phi) ** 2
 
 
 def analyzer_surface_height(theta, phi, measurement_time, inverted=False, breathing=1.0, height_scale=1.0):
-    """Energy height at analyzer azimuth φ, offset around the measurement plane."""
+    """
+    Legacy helper retained so the prior surface interpretation can still be inspected.
+
+    The rigorous Dash scene no longer uses height as energy.
+    """
     direction = -1.0 if inverted else 1.0
     return measurement_time + direction * BOWL_H * height_scale * breathing * clarke_energy_profile(theta, phi)
 
 
 def analyzer_surface(phi, measurement_time, inverted=False, breathing=1.0, height_scale=1.0, radius_scale=1.0):
-    x = radius_scale * _BX
-    y = radius_scale * _BY
+    x = radius_scale * _DISK_X
+    y = radius_scale * _DISK_Y
     z = analyzer_surface_height(
         _TH,
         phi,
@@ -132,14 +168,10 @@ def complementary_surface_sum(theta, phi, measurement_time=0.5, breathing=1.0, h
     )
 
 
-def handedness_label(handedness):
-    return "positive-sequence / CCW" if handedness > 0 else "negative-sequence / CW"
-
-
 def measurement_opacity(sim_time, measurement_time):
     if sim_time < measurement_time:
         return 0.0
-    fade = min(1.0, (sim_time - measurement_time) / FADE_DUR)
+    fade = min(1.0, (sim_time - measurement_time) / max(FADE_DUR, 1e-9))
     return 0.18 + 0.66 * fade
 
 
@@ -157,6 +189,48 @@ def simulation_phase(sim_time, t_a, t_b, a_enabled, b_enabled):
     return "both measured", a_measured, b_measured
 
 
+# ── Rigorous model helpers ─────────────────────────────────────────
+def positive_sequence_coords(time, radius_scale=1.0):
+    phase = phase_progression(time, handedness=1)
+    radius = HELIX_R * np.asarray(radius_scale, dtype=float)
+    return radius * np.cos(phase), radius * np.sin(phase)
+
+
+def negative_sequence_coords(time, radius_scale=1.0):
+    phase = phase_progression(time, handedness=-1)
+    radius = HELIX_R * np.asarray(radius_scale, dtype=float)
+    return radius * np.cos(phase), radius * np.sin(phase)
+
+
+def complementary_energy_profile(theta, phi):
+    theta = np.asarray(theta, dtype=float)
+    return np.sin(theta - phi) ** 2
+
+
+def sequence_response_profiles(theta, phi_a, phi_b):
+    p_a = clarke_energy_profile(theta, phi_a)
+    p_b = complementary_energy_profile(theta, phi_b)
+    residual = 1.0 - p_a - p_b
+    return p_a, p_b, residual
+
+
+def three_party_profiles(theta, phi_a, phi_b):
+    p_a = clarke_energy_profile(theta, phi_a)
+    p_b = clarke_energy_profile(theta, phi_b)
+    p_0 = 1.0 - p_a - p_b
+    return p_a, p_b, p_0
+
+
+def current_hidden_phase(sim_time):
+    return float(np.mod(phase_progression(sim_time, handedness=1), 2.0 * np.pi))
+
+
+def periodic_value(theta_star, phi, complementary=False):
+    if complementary:
+        return float(complementary_energy_profile(theta_star, phi))
+    return float(clarke_energy_profile(theta_star, phi))
+
+
 def bell_metrics(phi_a, phi_b):
     delta = abs(np.degrees(phi_a - phi_b))
     corr = np.cos(phi_a - phi_b) ** 2
@@ -168,135 +242,375 @@ def clamp_time(sim_time):
     return max(0.0, min(float(sim_time), T_MAX))
 
 
-def surface_trace_bundle(phi, t_meas, inverted, colorscale, name, sim_time, surface_scale):
-    opacity = measurement_opacity(sim_time, t_meas)
-    if opacity <= 0.0:
-        return []
-
-    radius_scale = 1.0 + SURFACE_RIM_GAIN * (surface_scale - 1.0)
-    x, y, z = analyzer_surface(
-        phi,
-        t_meas,
-        inverted=inverted,
-        breathing=1.0,
-        height_scale=surface_scale,
-        radius_scale=radius_scale,
-    )
-    theta = _bowl_theta
-    rim_energy = analyzer_surface_height(
-        theta,
-        phi,
-        t_meas,
-        inverted=inverted,
-        breathing=1.0,
-        height_scale=surface_scale,
-    )
-    rim_x = radius_scale * np.cos(theta)
-    rim_y = radius_scale * np.sin(theta)
-    rim_width = 4.5 + 12.0 * abs(surface_scale - 1.0) / max(BREATH_AMP * SURFACE_BREATH_GAIN, 1e-9)
-    traces = [
-        go.Surface(
-            x=x,
-            y=y,
-            z=z,
-            surfacecolor=clarke_energy_profile(_TH, phi),
-            colorscale=colorscale,
-            opacity=opacity,
-            showscale=False,
-            name=name,
-            hoverinfo="skip",
-        ),
-        go.Scatter3d(
-            x=rim_x,
-            y=rim_y,
-            z=rim_energy,
-            mode="lines",
-            line=dict(color=colorscale[-1][1], width=rim_width),
-            showlegend=False,
-            hoverinfo="skip",
-        ),
-        go.Scatter3d(
-            x=1.02 * np.cos(theta),
-            y=1.02 * np.sin(theta),
-            z=np.full_like(theta, t_meas),
-            mode="lines",
-            line=dict(color="rgba(90,90,90,0.28)", width=2.0),
-            showlegend=False,
-            hoverinfo="skip",
-        ),
-    ]
-    return traces
-
-
-def info_panel_children(phase, delta_phi, e_ab, handedness, breathing_value, surface_scale):
-    phase_colors = {
-        "ready": "#888",
-        "propagating": "#43A047",
-        "A measured": PRIMARY_COLOR,
-        "B measured": PARTNER_COLOR,
-        "both measured": "#6A1B9A",
+def model_metadata(model_key):
+    if model_key == MODEL_CLOSURE:
+        return {
+            "name": "Three-party closure",
+            "formula": "P_A = cos²(θ-φ_A),  P_B = cos²(θ-φ_B),  P_0 = 1 - P_A - P_B",
+            "extra_label": "P_0(θ)",
+            "extra_name": "channel / P_0",
+        }
+    return {
+        "name": "Sequence response",
+        "formula": "P_A = cos²(θ-φ_A),  P_B = sin²(θ-φ_B)",
+        "extra_label": "1 - P_A - P_B",
+        "extra_name": "closure residual",
     }
 
-    children = [
-        html.B("Clarke-space model"),
-        html.Br(),
-        f"Handedness: {handedness_label(handedness)}.",
-        html.Br(),
-        "The partner read is the same rim after a 180° azimuth flip.",
-        html.Br(),
-        html.Br(),
-        html.B("Bell correlation"),
-        html.Br(),
-        f"E(a,b) = -cos(2Δφ) = {e_ab:.4f}",
-        html.Br(),
-        html.Br(),
-        html.B("Phase: "),
-        html.Span(phase, style={"color": phase_colors.get(phase, "#333"), "fontWeight": "bold"}),
-        html.Br(),
-        html.Br(),
-        html.B("Breathing envelope"),
-        html.Br(),
-        f"Global pulse = {breathing_value:.3f}×, energy surfaces = {surface_scale:.3f}× height.",
-        html.Br(),
-        html.Br(),
-        html.B("What you're seeing"),
-        html.Br(),
-    ]
 
-    if phase == "ready":
-        children.append("Press Play to launch the Clarke-space pair and its shared breathing envelope.")
-    elif phase == "propagating":
-        children.append(
-            "Pre-measurement geometry is a propagating entangled pair in Clarke space; the dotted α trace is the balanced three-phase superposition."
-        )
-    elif phase == "A measured":
-        children.append("Analyzer A has projected a Clarke-energy surface. Height tracks instantaneous pαβ and its bowl volume reads the accumulated energy.")
-    elif phase == "B measured":
-        children.append("Analyzer B has projected the partner energy surface. The inverted relief keeps the conservation read secondary to the energy volume.")
-    elif delta_phi == 0:
-        children.append("Aligned analyzers preserve the same energy ridge, so the partner view is a pure inversion about the measurement plane.")
-    elif delta_phi == 90:
-        children.append("Orthogonal analyzers rotate the Clarke energy ridge by 90°, flattening the Bell correlation.")
-    elif delta_phi == 45:
-        children.append("At 45° the paired surfaces are offset by the CHSH-optimal angle while still sharing the same Clarke-space volume story.")
-    else:
-        children.append(f"The analyzer rims are offset by {delta_phi:.0f}°, so the rotated energy surfaces encode the current correlation.")
-
-    children.extend(
-        [
-            html.Br(),
-            html.Br(),
-            html.B("Conservation"),
-            html.Br(),
-            "Upright and inverted surfaces are complementary around the measurement plane, so the flat-sum reference remains a secondary conservation cue.",
-        ]
+def detector_plane_trace(z_plane, surfacecolor, name, colorscale, cmin, cmax, opacity=0.95):
+    theta_deg = np.degrees(_TH) % 360.0
+    return go.Surface(
+        x=_DISK_X,
+        y=_DISK_Y,
+        z=np.full_like(_DISK_X, z_plane),
+        surfacecolor=surfacecolor,
+        colorscale=colorscale,
+        cmin=cmin,
+        cmax=cmax,
+        opacity=opacity,
+        showscale=False,
+        name=name,
+        customdata=theta_deg,
+        hovertemplate=f"{name}<br>θ=%{{customdata:.1f}}°<br>value=%{{surfacecolor:.4f}}<extra></extra>",
     )
-    return children
+
+
+def disk_outline_trace(z_plane, color, name):
+    theta = _disk_theta
+    return go.Scatter3d(
+        x=DISK_R * np.cos(theta),
+        y=DISK_R * np.sin(theta),
+        z=np.full_like(theta, z_plane),
+        mode="lines",
+        line=dict(color=color, width=4.0),
+        name=name,
+        hoverinfo="skip",
+        showlegend=False,
+    )
+
+
+def detector_axis_trace(phi, z_plane, color, label):
+    length = 1.12 * DISK_R
+    return go.Scatter3d(
+        x=[-length * np.cos(phi), length * np.cos(phi)],
+        y=[-length * np.sin(phi), length * np.sin(phi)],
+        z=[z_plane, z_plane],
+        mode="lines+text",
+        line=dict(color=color, width=6, dash="dash"),
+        text=["", label],
+        textposition="top center",
+        textfont=dict(size=11, color=color),
+        showlegend=False,
+        hoverinfo="skip",
+    )
+
+
+def hidden_phase_marker(theta_star, z_plane, color, name):
+    return go.Scatter3d(
+        x=[DISK_R * np.cos(theta_star)],
+        y=[DISK_R * np.sin(theta_star)],
+        z=[z_plane],
+        mode="markers",
+        marker=dict(size=6, color=color, line=dict(width=1, color="white")),
+        name=name,
+        showlegend=False,
+        hovertemplate=f"{name}<br>θ*={np.degrees(theta_star):.1f}°<extra></extra>",
+    )
+
+
+def build_scene_figure(sim_time, phi_a, phi_b, z_a, z_b, model_key, show_super, show_channel, show_axes):
+    theta_star = current_hidden_phase(sim_time)
+    model = model_metadata(model_key)
+
+    fig = go.Figure()
+
+    pos_x, pos_y = positive_sequence_coords(_path_t)
+    neg_x, neg_y = negative_sequence_coords(_path_t)
+    fig.add_scatter3d(
+        x=pos_x,
+        y=pos_y,
+        z=_path_t,
+        mode="lines",
+        line=dict(color=POSITIVE_COLOR, width=4.0),
+        name="positive sequence (+)",
+    )
+    fig.add_scatter3d(
+        x=neg_x,
+        y=neg_y,
+        z=_path_t,
+        mode="lines",
+        line=dict(color=NEGATIVE_COLOR, width=4.0),
+        name="negative sequence (-)",
+    )
+
+    if show_super:
+        sup_x, sup_y = superposition_coords(_path_t)
+        fig.add_scatter3d(
+            x=sup_x,
+            y=sup_y,
+            z=_path_t,
+            mode="lines",
+            line=dict(color=SUPER_COLOR, width=3.0, dash="dot"),
+            name="equal-sequence superposition",
+        )
+
+    sample_x_pos, sample_y_pos = positive_sequence_coords(np.array([sim_time]))
+    sample_x_neg, sample_y_neg = negative_sequence_coords(np.array([sim_time]))
+    fig.add_scatter3d(
+        x=sample_x_pos,
+        y=sample_y_pos,
+        z=[sim_time],
+        mode="markers",
+        marker=dict(size=7, color=POSITIVE_COLOR, line=dict(width=1, color="white")),
+        name="sample on + sequence",
+        showlegend=False,
+    )
+    fig.add_scatter3d(
+        x=sample_x_neg,
+        y=sample_y_neg,
+        z=[sim_time],
+        mode="markers",
+        marker=dict(size=7, color=NEGATIVE_COLOR, line=dict(width=1, color="white")),
+        name="sample on - sequence",
+        showlegend=False,
+    )
+
+    p_a_disk = clarke_energy_profile(_TH, phi_a)
+    if model_key == MODEL_CLOSURE:
+        p_b_disk = clarke_energy_profile(_TH, phi_b)
+        p_extra_disk = 1.0 - p_a_disk - p_b_disk
+    else:
+        p_b_disk = complementary_energy_profile(_TH, phi_b)
+        p_extra_disk = 1.0 - p_a_disk - p_b_disk
+
+    fig.add_trace(
+        detector_plane_trace(
+            z_a,
+            p_a_disk,
+            "A plane: P_A",
+            [[0.0, "#E3F2FD"], [0.6, "#64B5F6"], [1.0, A_COLOR]],
+            0.0,
+            1.0,
+        )
+    )
+    fig.add_trace(disk_outline_trace(z_a, A_COLOR, "A outline"))
+    fig.add_trace(hidden_phase_marker(theta_star, z_a, A_COLOR, "A θ*"))
+
+    fig.add_trace(
+        detector_plane_trace(
+            z_b,
+            p_b_disk,
+            "B plane: P_B",
+            [[0.0, "#FFEBEE"], [0.6, "#EF5350"], [1.0, B_COLOR]],
+            0.0,
+            1.0,
+        )
+    )
+    fig.add_trace(disk_outline_trace(z_b, B_COLOR, "B outline"))
+    fig.add_trace(hidden_phase_marker(theta_star, z_b, B_COLOR, "B θ*"))
+
+    if show_channel and model_key == MODEL_CLOSURE:
+        z_mid = 0.5 * (z_a + z_b)
+        fig.add_trace(
+            detector_plane_trace(
+                z_mid,
+                p_extra_disk,
+                "channel plane: P_0",
+                [[0.0, "#6D4C41"], [0.5, "#FFF3E0"], [1.0, "#1B5E20"]],
+                -1.0,
+                1.0,
+                opacity=0.92,
+            )
+        )
+        fig.add_trace(disk_outline_trace(z_mid, CHANNEL_COLOR, "channel outline"))
+        fig.add_trace(hidden_phase_marker(theta_star, z_mid, CHANNEL_COLOR, "P_0 θ*"))
+
+    if show_axes:
+        fig.add_trace(detector_axis_trace(phi_a, z_a, A_COLOR, f"φ_A={np.degrees(phi_a):.0f}°"))
+        fig.add_trace(detector_axis_trace(phi_b, z_b, B_COLOR, f"φ_B={np.degrees(phi_b):.0f}°"))
+
+    title = (
+        "Propagation in Clarke α-β space; detector disks encode response by color"
+        if model_key == MODEL_SEQUENCE
+        else "Propagation in Clarke α-β space with explicit three-party closure disk"
+    )
+
+    fig.update_layout(
+        scene=dict(
+            xaxis_title="α",
+            yaxis_title="β",
+            zaxis_title="propagation z",
+            aspectmode="manual",
+            aspectratio=dict(x=1, y=1, z=1.55),
+            camera=dict(eye=dict(x=1.7, y=1.35, z=0.85), up=dict(x=0, y=0, z=1)),
+            xaxis=dict(range=[-1.35, 1.35], showgrid=True, gridcolor="#ececec"),
+            yaxis=dict(range=[-1.35, 1.35], showgrid=True, gridcolor="#ececec"),
+            zaxis=dict(range=[0.0, T_MAX], showgrid=True, gridcolor="#ececec"),
+            bgcolor="white",
+        ),
+        margin=dict(l=0, r=0, t=45, b=0),
+        paper_bgcolor="white",
+        title=dict(text=title, x=0.5, font=dict(size=14, family="monospace")),
+        legend=dict(
+            x=0.01,
+            y=0.99,
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="#ddd",
+            borderwidth=1,
+            font=dict(size=11),
+        ),
+        uirevision="locked",
+    )
+    return fig
+
+
+def build_accounting_figure(sim_time, phi_a, phi_b, model_key):
+    theta = _profile_theta
+    theta_deg = np.degrees(theta)
+    theta_star = current_hidden_phase(sim_time)
+    theta_star_deg = np.degrees(theta_star)
+    model = model_metadata(model_key)
+
+    if model_key == MODEL_CLOSURE:
+        p_a, p_b, p_extra = three_party_profiles(theta, phi_a, phi_b)
+        extra_name = model["extra_label"]
+        extra_color = CHANNEL_COLOR
+    else:
+        p_a, p_b, p_extra = sequence_response_profiles(theta, phi_a, phi_b)
+        extra_name = model["extra_label"]
+        extra_color = RESIDUAL_COLOR
+
+    p_a_star = periodic_value(theta_star, phi_a, complementary=False)
+    p_b_star = periodic_value(theta_star, phi_b, complementary=(model_key == MODEL_SEQUENCE))
+    p_extra_star = float(1.0 - p_a_star - p_b_star)
+
+    fig = go.Figure()
+    fig.add_scatter(
+        x=theta_deg,
+        y=p_a,
+        mode="lines",
+        line=dict(color=A_COLOR, width=3),
+        name="P_A(θ)",
+    )
+    fig.add_scatter(
+        x=theta_deg,
+        y=p_b,
+        mode="lines",
+        line=dict(color=B_COLOR, width=3),
+        name="P_B(θ)",
+    )
+    fig.add_scatter(
+        x=theta_deg,
+        y=p_extra,
+        mode="lines",
+        line=dict(color=extra_color, width=2.5, dash="dash"),
+        name=extra_name,
+    )
+
+    fig.add_vline(x=theta_star_deg, line_dash="dot", line_color="#424242", line_width=1.5)
+    for y_val, color, name in (
+        (p_a_star, A_COLOR, "P_A(θ*)"),
+        (p_b_star, B_COLOR, "P_B(θ*)"),
+        (p_extra_star, extra_color, f"{extra_name} at θ*"),
+    ):
+        fig.add_scatter(
+            x=[theta_star_deg],
+            y=[y_val],
+            mode="markers",
+            marker=dict(size=8, color=color, line=dict(width=1, color="white")),
+            name=name,
+            showlegend=False,
+        )
+
+    fig.add_hline(y=0.0, line_dash="dot", line_color="#bdbdbd", line_width=1)
+    fig.add_hline(y=1.0, line_dash="dot", line_color="#bdbdbd", line_width=1)
+
+    fig.update_layout(
+        title=dict(text=model["formula"], x=0.5, font=dict(size=13, family="monospace")),
+        margin=dict(l=55, r=20, t=48, b=45),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        xaxis=dict(
+            title="hidden phase θ (degrees)",
+            range=[0, 360],
+            dtick=45,
+            showgrid=True,
+            gridcolor="#efefef",
+        ),
+        yaxis=dict(
+            title="normalized power / residual",
+            range=[-1.1, 1.1],
+            showgrid=True,
+            gridcolor="#efefef",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.0,
+            bgcolor="rgba(255,255,255,0.9)",
+        ),
+    )
+    return fig
+
+
+def info_panel_children(sim_time, phi_a, phi_b, model_key):
+    theta_star = current_hidden_phase(sim_time)
+    delta_phi, corr, e_ab = bell_metrics(phi_a, phi_b)
+    model = model_metadata(model_key)
+
+    if model_key == MODEL_CLOSURE:
+        p_a, p_b, p_extra = three_party_profiles(_profile_theta, phi_a, phi_b)
+        extra_name = "P_0"
+        closure_error = np.max(np.abs(p_a + p_b + p_extra - 1.0))
+    else:
+        p_a, p_b, p_extra = sequence_response_profiles(_profile_theta, phi_a, phi_b)
+        extra_name = "1 - P_A - P_B"
+        closure_error = np.max(np.abs((p_a + p_b + p_extra) - 1.0))
+
+    p_a_star = periodic_value(theta_star, phi_a, complementary=False)
+    p_b_star = periodic_value(theta_star, phi_b, complementary=(model_key == MODEL_SEQUENCE))
+    p_extra_star = float(1.0 - p_a_star - p_b_star)
+
+    return [
+        html.B("Rigorous mapping"),
+        html.Br(),
+        f"Model: {model['name']}.",
+        html.Br(),
+        model["formula"],
+        html.Br(),
+        html.Br(),
+        html.B("Current sample"),
+        html.Br(),
+        f"z = {sim_time:.3f}, θ* = {np.degrees(theta_star):.1f}°.",
+        html.Br(),
+        f"P_A(θ*) = {p_a_star:.4f}, P_B(θ*) = {p_b_star:.4f}, {extra_name}(θ*) = {p_extra_star:.4f}.",
+        html.Br(),
+        html.Br(),
+        html.B("Averaged quantities"),
+        html.Br(),
+        f"⟨P_A⟩ = {np.mean(p_a):.4f}, ⟨P_B⟩ = {np.mean(p_b):.4f}.",
+        html.Br(),
+        f"{extra_name} range = [{np.min(p_extra):.4f}, {np.max(p_extra):.4f}].",
+        html.Br(),
+        f"Closure check max|P_A + P_B + extra - 1| = {closure_error:.2e}.",
+        html.Br(),
+        html.Br(),
+        html.B("Analytic overlay"),
+        html.Br(),
+        f"Δφ = {delta_phi:.1f}°, cos²(Δφ) = {corr:.4f}.",
+        html.Br(),
+        f"E(a,b) = -cos(2Δφ) = {e_ab:.4f}.",
+        html.Br(),
+        "The Bell value is displayed as the paper's analytic quadratic-correlation law; this app does not simulate binary outcomes.",
+    ]
 
 
 # ── Dash app ───────────────────────────────────────────────────────
 app = dash.Dash(__name__)
-app.title = "Clarke-Space Entanglement"
+app.title = "Rigorous Clarke-Space Entanglement"
 
 section_style = {
     "padding": "14px",
@@ -321,12 +635,12 @@ app.layout = html.Div(
         dcc.Store(id="is-playing", data=False),
         dcc.Interval(id="tick", interval=TICK_MS, n_intervals=0, disabled=True),
         html.H2(
-            "Clarke-Space Entanglement Surface",
+            "Rigorous Clarke-Space Entanglement",
             style={"textAlign": "center", "fontFamily": "monospace", "marginBottom": "4px"},
         ),
         html.P(
-            "The propagating pair lives in Clarke α-β space; analyzer bowls are pαβ energy projections, and a 180° azimuth flip reads the partner view.",
-            style={"textAlign": "center", "color": "#666", "fontSize": "14px", "marginTop": "0"},
+            "Propagation is shown in Clarke α-β-z geometry; detector planes encode literal analyzer response by color, and the lower plot shows the full θ-dependent accounting.",
+            style={"textAlign": "center", "color": "#555", "fontSize": "14px", "marginTop": "0"},
         ),
         html.Div(
             [
@@ -350,15 +664,7 @@ app.layout = html.Div(
                                     ],
                                     style={"marginBottom": "12px"},
                                 ),
-                                html.Label("Helix convention", style={"fontWeight": "bold", "fontSize": "13px"}),
-                                dcc.Checklist(
-                                    id="handedness-toggle",
-                                    options=[{"label": " Negative handedness (CW / negative sequence)", "value": "negative"}],
-                                    value=[],
-                                    inputStyle={"marginRight": "4px"},
-                                    labelStyle={"display": "block", "marginBottom": "8px", "marginTop": "4px"},
-                                ),
-                                html.Label("Speed", style={"fontWeight": "bold", "fontSize": "13px"}),
+                                html.Label("Propagation speed", style={"fontWeight": "bold", "fontSize": "13px"}),
                                 dcc.Slider(
                                     id="speed",
                                     min=0.2,
@@ -368,62 +674,50 @@ app.layout = html.Div(
                                     marks={0.2: "0.2×", 1: "1×", 2: "2×", 3: "3×"},
                                     tooltip={"placement": "bottom"},
                                 ),
-                                html.Div(
-                                    [
-                                        dcc.Checklist(
-                                            id="loop",
-                                            options=[{"label": " Loop", "value": "loop"}],
-                                            value=["loop"],
-                                            inputStyle={"marginRight": "4px"},
-                                            style={"display": "inline-block"},
-                                        ),
-                                    ],
-                                    style={"marginTop": "4px"},
+                                dcc.Checklist(
+                                    id="loop",
+                                    options=[{"label": " Loop propagation sample", "value": "loop"}],
+                                    value=["loop"],
+                                    inputStyle={"marginRight": "4px"},
+                                    style={"marginTop": "6px"},
                                 ),
                                 html.Div(
-                                    [
-                                        html.Div(
-                                            id="time-bar-fill",
-                                            style={
-                                                "width": "0%",
-                                                "height": "6px",
-                                                "backgroundColor": "#43A047",
-                                                "borderRadius": "3px",
-                                                "transition": "width 0.05s linear",
-                                            },
-                                        )
-                                    ],
-                                    style={
-                                        "width": "100%",
-                                        "height": "6px",
-                                        "backgroundColor": "#e0e0e0",
-                                        "borderRadius": "3px",
-                                        "marginTop": "10px",
-                                    },
+                                    [html.Div(id="time-bar-fill", style={"width": "0%", "height": "6px", "backgroundColor": "#43A047", "borderRadius": "3px"})],
+                                    style={"width": "100%", "height": "6px", "backgroundColor": "#e0e0e0", "borderRadius": "3px", "marginTop": "10px"},
                                 ),
                                 html.Div(
                                     id="time-label",
-                                    style={"fontSize": "12px", "color": "#888", "marginTop": "4px", "textAlign": "center"},
+                                    style={"fontSize": "12px", "color": "#666", "marginTop": "4px", "textAlign": "center"},
                                 ),
                             ],
                             style={**section_style, "backgroundColor": "#f0f7f0", "border": "1px solid #c8e6c9"},
                         ),
                         html.Div(
                             [
-                                html.Div(
-                                    [
-                                        html.H4("Analyzer A", style={"color": PRIMARY_COLOR, "margin": "0", "display": "inline-block"}),
-                                        dcc.Checklist(
-                                            id="a-on",
-                                            options=[{"label": " On", "value": "on"}],
-                                            value=["on"],
-                                            style={"display": "inline-block", "marginLeft": "16px"},
-                                            inputStyle={"marginRight": "4px"},
-                                        ),
+                                html.H4("Equation Set", style={"margin": "0 0 8px 0"}),
+                                dcc.RadioItems(
+                                    id="model-selector",
+                                    options=[
+                                        {
+                                            "label": " Sequence response: P_A = cos²(θ-φ_A), P_B = sin²(θ-φ_B)",
+                                            "value": MODEL_SEQUENCE,
+                                        },
+                                        {
+                                            "label": " Three-party closure: P_A = cos²(θ-φ_A), P_B = cos²(θ-φ_B), P_0 = 1 - P_A - P_B",
+                                            "value": MODEL_CLOSURE,
+                                        },
                                     ],
-                                    style={"marginBottom": "10px"},
+                                    value=MODEL_CLOSURE,
+                                    labelStyle={"display": "block", "marginBottom": "8px"},
+                                    inputStyle={"marginRight": "6px"},
                                 ),
-                                html.Label("Angle φ_A", style={"fontWeight": "bold", "fontSize": "13px"}),
+                            ],
+                            style=section_style,
+                        ),
+                        html.Div(
+                            [
+                                html.H4("Detector A", style={"color": A_COLOR, "margin": "0 0 10px 0"}),
+                                html.Label("Analyzer angle φ_A", style={"fontWeight": "bold", "fontSize": "13px"}),
                                 dcc.Slider(
                                     id="phi-a",
                                     min=0,
@@ -431,16 +725,16 @@ app.layout = html.Div(
                                     value=0,
                                     step=5,
                                     marks={i: f"{i}°" for i in range(0, 181, 45)},
-                                    tooltip={"placement": "bottom", "always_visible": False},
+                                    tooltip={"placement": "bottom"},
                                 ),
-                                html.Label("Measurement time", style={"fontWeight": "bold", "fontSize": "13px"}),
+                                html.Label("Detector plane z_A", style={"fontWeight": "bold", "fontSize": "13px"}),
                                 dcc.Slider(
                                     id="t-a",
                                     min=0.10,
                                     max=0.90,
-                                    value=0.45,
+                                    value=0.35,
                                     step=0.05,
-                                    marks={0.1: "early", 0.5: "mid", 0.9: "late"},
+                                    marks={0.1: "0.1", 0.5: "0.5", 0.9: "0.9"},
                                     tooltip={"placement": "bottom"},
                                 ),
                             ],
@@ -448,20 +742,8 @@ app.layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.Div(
-                                    [
-                                        html.H4("Analyzer B", style={"color": PARTNER_COLOR, "margin": "0", "display": "inline-block"}),
-                                        dcc.Checklist(
-                                            id="b-on",
-                                            options=[{"label": " On", "value": "on"}],
-                                            value=["on"],
-                                            style={"display": "inline-block", "marginLeft": "16px"},
-                                            inputStyle={"marginRight": "4px"},
-                                        ),
-                                    ],
-                                    style={"marginBottom": "10px"},
-                                ),
-                                html.Label("Angle φ_B", style={"fontWeight": "bold", "fontSize": "13px"}),
+                                html.H4("Detector B", style={"color": B_COLOR, "margin": "0 0 10px 0"}),
+                                html.Label("Analyzer angle φ_B", style={"fontWeight": "bold", "fontSize": "13px"}),
                                 dcc.Slider(
                                     id="phi-b",
                                     min=0,
@@ -471,14 +753,14 @@ app.layout = html.Div(
                                     marks={i: f"{i}°" for i in range(0, 181, 45)},
                                     tooltip={"placement": "bottom"},
                                 ),
-                                html.Label("Measurement time", style={"fontWeight": "bold", "fontSize": "13px"}),
+                                html.Label("Detector plane z_B", style={"fontWeight": "bold", "fontSize": "13px"}),
                                 dcc.Slider(
                                     id="t-b",
                                     min=0.10,
                                     max=0.90,
-                                    value=0.65,
+                                    value=0.70,
                                     step=0.05,
-                                    marks={0.1: "early", 0.5: "mid", 0.9: "late"},
+                                    marks={0.1: "0.1", 0.5: "0.5", 0.9: "0.9"},
                                     tooltip={"placement": "bottom"},
                                 ),
                             ],
@@ -490,11 +772,11 @@ app.layout = html.Div(
                                 dcc.Checklist(
                                     id="show-opts",
                                     options=[
-                                        {"label": " Clarke superposition trace", "value": "super"},
-                                        {"label": " Conservation planes", "value": "planes"},
-                                        {"label": " Analyzer axis lines", "value": "axes"},
+                                        {"label": " Equal-sequence superposition trace", "value": "super"},
+                                        {"label": " Explicit channel / P_0 plane when available", "value": "channel"},
+                                        {"label": " Detector axis lines", "value": "axes"},
                                     ],
-                                    value=["super", "axes"],
+                                    value=["super", "channel", "axes"],
                                     inputStyle={"marginRight": "4px"},
                                     labelStyle={"display": "block", "marginBottom": "4px"},
                                 ),
@@ -505,31 +787,28 @@ app.layout = html.Div(
                             id="info-panel",
                             style={
                                 "padding": "12px",
-                                "backgroundColor": "#fff3e0",
+                                "backgroundColor": "#fff8e1",
                                 "borderRadius": "8px",
                                 "fontSize": "13px",
                                 "lineHeight": "1.5",
-                                "border": "1px solid #ffe0b2",
+                                "border": "1px solid #ffe082",
                             },
                         ),
                     ],
-                    style={
-                        "width": "310px",
-                        "padding": "12px",
-                        "flexShrink": "0",
-                        "overflowY": "auto",
-                        "maxHeight": "92vh",
-                    },
+                    style={"width": "360px", "padding": "12px", "flexShrink": "0", "overflowY": "auto", "maxHeight": "95vh"},
                 ),
                 html.Div(
-                    [dcc.Graph(id="main-plot", style={"height": "88vh"}, config={"displayModeBar": True})],
+                    [
+                        dcc.Graph(id="main-plot", style={"height": "56vh"}, config={"displayModeBar": True}),
+                        dcc.Graph(id="accounting-plot", style={"height": "31vh"}, config={"displayModeBar": True}),
+                    ],
                     style={"flexGrow": "1", "minWidth": "0"},
                 ),
             ],
             style={"display": "flex", "gap": "12px", "padding": "8px 16px"},
         ),
     ],
-    style={"fontFamily": "system-ui, sans-serif", "maxWidth": "1500px", "margin": "auto"},
+    style={"fontFamily": "system-ui, sans-serif", "maxWidth": "1600px", "margin": "auto"},
 )
 
 
@@ -550,32 +829,14 @@ def handle_buttons(play_clicks, reset_clicks, playing, sim_time):
     trigger = ctx.triggered_id
 
     if trigger == "reset-btn":
-        return (
-            False,
-            True,
-            "\u25b6  Play",
-            {**btn_base, "backgroundColor": "#43A047", "color": "white"},
-            0.0,
-        )
+        return False, True, "\u25b6  Play", {**btn_base, "backgroundColor": "#43A047", "color": "white"}, 0.0
 
     if trigger == "play-btn":
         new_playing = not playing
         if new_playing:
             start_t = 0.0 if sim_time >= T_MAX - 0.01 else sim_time
-            return (
-                True,
-                False,
-                "\u23f8  Pause",
-                {**btn_base, "backgroundColor": "#EF6C00", "color": "white"},
-                start_t,
-            )
-        return (
-            False,
-            True,
-            "\u25b6  Play",
-            {**btn_base, "backgroundColor": "#43A047", "color": "white"},
-            no_update,
-        )
+            return True, False, "\u23f8  Pause", {**btn_base, "backgroundColor": "#EF6C00", "color": "white"}, start_t
+        return False, True, "\u25b6  Play", {**btn_base, "backgroundColor": "#43A047", "color": "white"}, no_update
 
     return no_update, no_update, no_update, no_update, no_update
 
@@ -601,220 +862,52 @@ def advance_time(n_intervals, sim_time, speed, loop_val, playing):
 @app.callback(
     [
         Output("main-plot", "figure"),
+        Output("accounting-plot", "figure"),
         Output("info-panel", "children"),
         Output("time-bar-fill", "style"),
         Output("time-label", "children"),
     ],
     [
         Input("sim-time", "data"),
+        Input("model-selector", "value"),
         Input("phi-a", "value"),
         Input("phi-b", "value"),
-        Input("a-on", "value"),
-        Input("b-on", "value"),
         Input("t-a", "value"),
         Input("t-b", "value"),
         Input("show-opts", "value"),
-        Input("handedness-toggle", "value"),
     ],
 )
-def update(sim_time, phi_a_deg, phi_b_deg, a_on, b_on, t_a, t_b, show_opts, handedness_toggle):
+def update(sim_time, model_key, phi_a_deg, phi_b_deg, z_a, z_b, show_opts):
     sim_time = clamp_time(sim_time)
     phi_a = np.radians(phi_a_deg)
     phi_b = np.radians(phi_b_deg)
-    handedness = -1 if "negative" in (handedness_toggle or []) else 1
-    a_enabled = "on" in (a_on or [])
-    b_enabled = "on" in (b_on or [])
     show_super = "super" in (show_opts or [])
-    show_planes = "planes" in (show_opts or [])
+    show_channel = "channel" in (show_opts or [])
     show_axes = "axes" in (show_opts or [])
 
-    idx_cut = max(2, int(sim_time / T_MAX * N_HELIX))
-    visible_time = _t_helix[:idx_cut]
-    breathing_value = float(breathing_envelope(sim_time))
-    helix_scale = float(breathing_scale(sim_time, HELIX_BREATH_GAIN))
-    super_scale = float(breathing_scale(sim_time, SUPER_BREATH_GAIN))
-    surface_scale = float(breathing_scale(sim_time, SURFACE_BREATH_GAIN))
-    tip_size = 7.0 * float(breathing_scale(sim_time, TIP_BREATH_GAIN))
-    phase, a_measured, b_measured = simulation_phase(sim_time, t_a, t_b, a_enabled, b_enabled)
-    delta_phi, corr, e_ab = bell_metrics(phi_a, phi_b)
+    if z_a > z_b:
+        z_a, z_b = z_b, z_a
 
-    fig = go.Figure()
+    scene_fig = build_scene_figure(sim_time, phi_a, phi_b, z_a, z_b, model_key, show_super, show_channel, show_axes)
+    accounting_fig = build_accounting_figure(sim_time, phi_a, phi_b, model_key)
+    info = info_panel_children(sim_time, phi_a, phi_b, model_key)
 
-    primary_x, primary_y = helix_coords(visible_time, handedness=handedness, branch_sign=1, radius_scale=helix_scale)
-    partner_x, partner_y = helix_coords(visible_time, handedness=handedness, branch_sign=-1, radius_scale=helix_scale)
-
-    fig.add_scatter3d(
-        x=primary_x,
-        y=primary_y,
-        z=visible_time,
-        mode="lines",
-        line=dict(color=PRIMARY_COLOR, width=4.0),
-        name=f"reference helix ({handedness_label(handedness)})",
-    )
-    fig.add_scatter3d(
-        x=partner_x,
-        y=partner_y,
-        z=visible_time,
-        mode="lines",
-        line=dict(color=PARTNER_COLOR, width=4.0),
-        name="partner helix (φ + 180°)",
-    )
-
-    tip = max(0, idx_cut - 1)
-    for x_val, y_val, color in (
-        (primary_x[tip], primary_y[tip], PRIMARY_COLOR),
-        (partner_x[tip], partner_y[tip], PARTNER_COLOR),
-    ):
-        fig.add_scatter3d(
-            x=[x_val],
-            y=[y_val],
-            z=[visible_time[tip]],
-            mode="markers",
-            marker=dict(size=tip_size, color=color, symbol="diamond", line=dict(width=1, color="white")),
-            showlegend=False,
-            hoverinfo="skip",
-        )
-
-    if show_super:
-        super_x, super_y = superposition_coords(visible_time, radius_scale=super_scale)
-        fig.add_scatter3d(
-            x=super_x,
-            y=super_y,
-            z=visible_time,
-            mode="lines",
-            line=dict(color=SUPER_COLOR, width=3.0, dash="dot"),
-            name="balanced Clarke trace",
-        )
-
-    if a_enabled:
-        colorscale_a = [[0, "#E3F2FD"], [0.55, "#64B5F6"], [1, PRIMARY_COLOR]]
-        for trace in surface_trace_bundle(
-            phi_a,
-            t_a,
-            inverted=False,
-            colorscale=colorscale_a,
-            name="A energy surface",
-            sim_time=sim_time,
-            surface_scale=surface_scale,
-        ):
-            fig.add_trace(trace)
-        if show_axes and a_measured:
-            length = 1.15
-            fig.add_scatter3d(
-                x=[-length * np.cos(phi_a), length * np.cos(phi_a)],
-                y=[-length * np.sin(phi_a), length * np.sin(phi_a)],
-                z=[t_a, t_a],
-                mode="lines+text",
-                line=dict(color=PRIMARY_COLOR, width=5, dash="dash"),
-                text=["", f"φ_A={phi_a_deg}°"],
-                textposition="top center",
-                textfont=dict(size=11, color=PRIMARY_COLOR),
-                showlegend=False,
-            )
-
-    if b_enabled:
-        colorscale_b = [[0, "#FFEBEE"], [0.55, "#EF5350"], [1, PARTNER_COLOR]]
-        for trace in surface_trace_bundle(
-            phi_b,
-            t_b,
-            inverted=True,
-            colorscale=colorscale_b,
-            name="B energy surface",
-            sim_time=sim_time,
-            surface_scale=surface_scale,
-        ):
-            fig.add_trace(trace)
-        if show_axes and b_measured:
-            length = 1.15
-            fig.add_scatter3d(
-                x=[-length * np.cos(phi_b), length * np.cos(phi_b)],
-                y=[-length * np.sin(phi_b), length * np.sin(phi_b)],
-                z=[t_b, t_b],
-                mode="lines+text",
-                line=dict(color=PARTNER_COLOR, width=5, dash="dash"),
-                text=["", f"φ_B={phi_b_deg}°"],
-                textposition="bottom center",
-                textfont=dict(size=11, color=PARTNER_COLOR),
-                showlegend=False,
-            )
-
-    if show_planes:
-        px = np.array([[-1.3, 1.3], [-1.3, 1.3]])
-        py = np.array([[-1.3, -1.3], [1.3, 1.3]])
-        if a_measured:
-            fig.add_surface(
-                x=px,
-                y=py,
-                z=np.full_like(px, t_a),
-                colorscale=[[0, "#E3F2FD"], [1, "#E3F2FD"]],
-                opacity=0.08,
-                showscale=False,
-                hoverinfo="skip",
-            )
-        if b_measured:
-            fig.add_surface(
-                x=px,
-                y=py,
-                z=np.full_like(px, t_b),
-                colorscale=[[0, "#FFEBEE"], [1, "#FFEBEE"]],
-                opacity=0.08,
-                showscale=False,
-                hoverinfo="skip",
-            )
-
-    title_text = f"Δφ = {delta_phi:.0f}°  │  cos²(Δφ) = {corr:.4f}  │  E(a,b) = {e_ab:.4f}"
-    fig.update_layout(
-        scene=dict(
-            xaxis_title="α",
-            yaxis_title="β",
-            zaxis_title="propagation / pαβ height",
-            aspectmode="manual",
-            aspectratio=dict(x=1, y=1, z=1.6),
-            camera=dict(eye=dict(x=1.7, y=1.3, z=0.7), up=dict(x=0, y=0, z=1)),
-            xaxis=dict(range=[-1.5, 1.5], showgrid=True, gridcolor="#eee"),
-            yaxis=dict(range=[-1.5, 1.5], showgrid=True, gridcolor="#eee"),
-            zaxis=dict(range=[0, T_MAX], showgrid=True, gridcolor="#eee"),
-            bgcolor="white",
-        ),
-        margin=dict(l=0, r=0, t=50, b=0),
-        legend=dict(
-            x=0.01,
-            y=0.99,
-            bgcolor="rgba(255,255,255,0.88)",
-            bordercolor="#ddd",
-            borderwidth=1,
-            font=dict(size=11),
-        ),
-        title=dict(text=title_text, x=0.5, font=dict(size=14, family="monospace")),
-        paper_bgcolor="white",
-        uirevision="locked",
-    )
-
-    info = info_panel_children(phase, delta_phi, e_ab, handedness, breathing_value, surface_scale)
     pct = min(100.0, sim_time / T_MAX * 100.0)
-    phase_colors = {
-        "ready": "#888",
-        "propagating": "#43A047",
-        "A measured": PRIMARY_COLOR,
-        "B measured": PARTNER_COLOR,
-        "both measured": "#6A1B9A",
-    }
     bar_style = {
         "width": f"{pct:.1f}%",
         "height": "6px",
-        "backgroundColor": phase_colors.get(phase, "#43A047"),
+        "backgroundColor": "#43A047",
         "borderRadius": "3px",
         "transition": "width 0.04s linear",
     }
-    time_label = f"t = {sim_time:.3f} / {T_MAX:.1f}  [{phase}, {handedness_label(handedness)}]"
-
-    return fig, info, bar_style, time_label
+    time_label = f"Propagation sample z = {sim_time:.3f} / {T_MAX:.1f}   [θ* = {np.degrees(current_hidden_phase(sim_time)):.1f}°]"
+    return scene_fig, accounting_fig, info, bar_style, time_label
 
 
 # ── Entry point ────────────────────────────────────────────────────
 if __name__ == "__main__":
     print("\n  ╔══════════════════════════════════════════╗")
-    print("  ║   Clarke-Space Entanglement Surface     ║")
+    print("  ║   Rigorous Clarke-Space Entanglement    ║")
     print("  ║   Open http://localhost:8050            ║")
     print("  ╚══════════════════════════════════════════╝\n")
     app.run(debug=True, port=8050)

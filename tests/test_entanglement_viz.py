@@ -54,3 +54,42 @@ def test_viewpoint_flip_preserves_surface_shape():
     z_partner = viz.analyzer_surface_height(theta, flipped_phi, 0.5, inverted=False, height_scale=1.2)
 
     assert np.allclose(z_ref, z_partner, atol=1e-9)
+
+
+def test_positive_and_negative_sequences_counter_rotate():
+    t_values = np.linspace(0.0, viz.T_MAX, 50)
+    x_pos, y_pos = viz.positive_sequence_coords(t_values)
+    x_neg, y_neg = viz.negative_sequence_coords(t_values)
+
+    assert np.allclose(x_pos, x_neg)
+    assert np.allclose(y_pos, -y_neg)
+
+
+def test_superposition_trace_stays_on_alpha_axis():
+    t_values = np.linspace(0.0, viz.T_MAX, 50)
+    _, y = viz.superposition_coords(t_values)
+    assert np.allclose(y, np.zeros_like(y))
+
+
+def test_sequence_response_is_complementary_when_analyzers_match():
+    theta = np.linspace(0.0, 2 * np.pi, 512)
+    phi = np.pi / 6.0
+    p_a, p_b, residual = viz.sequence_response_profiles(theta, phi, phi)
+
+    assert np.allclose(p_a + p_b, np.ones_like(theta), atol=1e-9)
+    assert np.allclose(residual, np.zeros_like(theta), atol=1e-9)
+
+
+def test_three_party_profiles_close_exactly_by_construction():
+    theta = np.linspace(0.0, 2 * np.pi, 512)
+    p_a, p_b, p_0 = viz.three_party_profiles(theta, np.pi / 7.0, np.pi / 3.0)
+
+    assert np.allclose(p_a + p_b + p_0, np.ones_like(theta), atol=1e-9)
+
+
+def test_bell_metrics_match_analytic_quadratic_law():
+    phi_a = np.radians(10.0)
+    phi_b = np.radians(55.0)
+    _, _, e_ab = viz.bell_metrics(phi_a, phi_b)
+
+    assert np.isclose(e_ab, -np.cos(2.0 * (phi_a - phi_b)))
