@@ -28,6 +28,7 @@ package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.1.1"
+pytest = "^8.4.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
