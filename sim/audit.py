@@ -18,6 +18,18 @@ from .definitions import (
     render_metrics_markdown,
     render_readout_rules_markdown,
 )
+from .disambiguation import (
+    DISAMBIGUATION_METRIC_DEFINITIONS,
+    GROUP_KEYS as MECHANISM_GROUP_KEYS,
+    REGIME_BIN_DEFINITIONS,
+    analyzer_features,
+    build_mechanism_structure,
+    build_oracle_caches,
+    build_oracle_gap_summary,
+    build_oracle_trial_table,
+    build_readout_sensitivity,
+    phase_aligned_features,
+)
 from .io import dump_json, ensure_dir, load_json
 from .readout import (
     RULE_CONTROL_NEGATIVE_PREWINDOW,
@@ -30,6 +42,7 @@ GROUP_KEYS = ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotrop
 GROUP_WITH_ROLE_KEYS = ["rule", "rule_role", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
 PAIR_KEYS = GROUP_KEYS + ["angle_a_deg", "angle_b_deg"]
 SINGLE_KEYS = ["window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio", "angle_deg"]
+MECHANISM_KEYS = ["window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
 
 RULE_DISPLAY_NAMES = {
     RULE_ENERGY_LOSS_WINNER: "extracted_energy_winner",
@@ -78,6 +91,16 @@ def write_table(frame: pd.DataFrame, csv_path: Path, json_path: Path) -> None:
     ensure_dir(csv_path.parent)
     frame.to_csv(csv_path, index=False)
     dump_json(json_path, frame.to_dict(orient="records"))
+
+
+def render_disambiguation_markdown() -> str:
+    lines = ["# Mechanism-vs-Readout Disambiguation", ""]
+    for name, formula in DISAMBIGUATION_METRIC_DEFINITIONS.items():
+        lines.extend([f"## `{name}`", "", f"- Definition: {formula}", ""])
+    lines.extend(["# Classification Bins", ""])
+    for name, description in REGIME_BIN_DEFINITIONS.items():
+        lines.extend([f"## `{name}`", "", f"- Interpretation: {description}", ""])
+    return "\n".join(lines).strip() + "\n"
 
 
 def _with_rule_display(frame: pd.DataFrame) -> pd.DataFrame:
@@ -538,6 +561,129 @@ def plot_rule_comparison(frame: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_mechanism_metric_vs_anisotropy(
+    frame: pd.DataFrame,
+    *,
+    metric: str,
+    title: str,
+    ylabel: str,
+    out_path: Path,
+) -> None:
+    if frame.empty:
+        _placeholder_plot(out_path, title)
+        return
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for window_fraction, group in frame.groupby("window_fraction"):
+        ax.plot(group["anisotropy_ratio"], group[metric], marker="o", label=f"T={window_fraction:.3g}")
+    ax.set_title(title)
+    ax.set_xlabel("Anisotropy ratio gamma_plus / gamma_minus")
+    ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.2)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+
+
+def plot_confidence_efficiency_curve(frame: pd.DataFrame, out_path: Path) -> None:
+    if frame.empty:
+        _placeholder_plot(out_path, "Occupancy vs Confidence Threshold")
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True)
+    axes[0].plot(frame["margin_threshold"], frame["retained_fraction"], marker="o", label="retained fraction")
+    axes[0].plot(frame["margin_threshold"], frame["branch_recoverability"], marker="s", label="branch recoverability")
+    axes[0].set_title("Coverage vs Threshold")
+    axes[1].plot(frame["margin_threshold"], frame["confidence_efficiency"], marker="o", label="confidence efficiency")
+    axes[1].set_title("Efficiency vs Threshold")
+    for axis in axes:
+        axis.set_xlabel("Residual margin threshold")
+        axis.grid(alpha=0.2)
+        axis.legend(fontsize=8)
+    axes[0].set_ylabel("Score")
+    fig.suptitle("Occupancy vs Confidence Threshold")
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+
+
+def plot_practical_vs_oracle(
+    frame: pd.DataFrame,
+    *,
+    practical_col: str,
+    oracle_col: str,
+    title: str,
+    ylabel: str,
+    out_path: Path,
+) -> None:
+    if frame.empty:
+        _placeholder_plot(out_path, title)
+        return
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for window_fraction, group in frame.groupby("window_fraction"):
+        ax.plot(group["anisotropy_ratio"], group[practical_col], marker="o", label=f"practical T={window_fraction:.3g}")
+        ax.plot(group["anisotropy_ratio"], group[oracle_col], marker="s", linestyle="--", label=f"oracle T={window_fraction:.3g}")
+    ax.set_title(title)
+    ax.set_xlabel("Anisotropy ratio gamma_plus / gamma_minus")
+    ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.2)
+    ax.legend(fontsize=8, ncol=2)
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+
+
+def plot_mechanism_vs_readout_phase_map(frame: pd.DataFrame, out_path: Path) -> None:
+    if frame.empty:
+        _placeholder_plot(out_path, "Mechanism vs Readout Phase Map")
+        return
+    colors = {
+        "mechanism_limited": "tab:red",
+        "readout_limited": "tab:orange",
+        "mixed_failure": "tab:gray",
+        "bridge_candidate": "tab:green",
+    }
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for label, group in frame.groupby("classification_bin"):
+        ax.scatter(
+            group["mechanism_strength_score"],
+            group["oracle_gap"],
+            s=50,
+            alpha=0.8,
+            label=label,
+            color=colors.get(label),
+        )
+    ax.set_title("Mechanism vs Readout Phase Map")
+    ax.set_xlabel("Mechanism strength score")
+    ax.set_ylabel("Oracle gap")
+    ax.grid(alpha=0.2)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+
+
+def plot_state_clouds_with_oracle_clusters(frame: pd.DataFrame, out_path: Path) -> None:
+    if frame.empty:
+        _placeholder_plot(out_path, "State Clouds With Oracle Clusters")
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+    colors = frame["oracle_label"].map({-1: "tab:blue", 0: "tab:gray", 1: "tab:orange"}).tolist()
+    axes[0].scatter(frame["source_x"], frame["source_y"], c=colors, alpha=0.75, s=20)
+    axes[0].set_title("Source Basis")
+    axes[1].scatter(frame["analyzer_x"], frame["analyzer_y"], c=colors, alpha=0.75, s=20)
+    axes[1].set_title("Alice Analyzer Basis")
+    for axis in axes:
+        axis.grid(alpha=0.2)
+    axes[0].set_xlabel("Re(c0)")
+    axes[0].set_ylabel("Re/Im residual coordinate")
+    axes[1].set_xlabel("|c+|^2")
+    axes[1].set_ylabel("|c-|^2")
+    fig.suptitle("State Clouds With Oracle Clusters")
+    fig.tight_layout()
+    fig.savefig(out_path)
+    plt.close(fig)
+
+
 def write_plot_with_dataset(
     dataset: pd.DataFrame,
     plot_name: str,
@@ -551,6 +697,178 @@ def write_plot_with_dataset(
     dataset.to_csv(dataset_path, index=False)
     plot_fn(dataset, image_path)
     plot_manifest.append(build_plot_dataset_manifest_entry(plot_name, image_path, dataset_path))
+
+
+def build_best_practical_vs_oracle_frame(readout_sensitivity: pd.DataFrame) -> pd.DataFrame:
+    if readout_sensitivity.empty:
+        return pd.DataFrame()
+    practical = readout_sensitivity[readout_sensitivity["family_category"] == "practical"].copy()
+    if practical.empty:
+        return pd.DataFrame()
+    best_idx = practical.groupby(MECHANISM_KEYS)["confidence_efficiency"].idxmax()
+    best = practical.loc[best_idx].rename(
+        columns={
+            "readout_family": "best_practical_rule",
+            "aligned_same_sign_mass": "best_practical_aligned_same_sign_mass",
+            "max_marginal_drift": "best_practical_max_marginal_drift",
+        }
+    )
+    return best.sort_values(MECHANISM_KEYS).reset_index(drop=True)
+
+
+def select_disambiguation_case(regime_classification: pd.DataFrame, case_name: str) -> pd.Series | None:
+    if regime_classification.empty:
+        return None
+    if case_name == "mechanism_limited":
+        frame = regime_classification[regime_classification["classification_bin"] == "mechanism_limited"].copy()
+        if frame.empty:
+            return None
+        return frame.sort_values(
+            ["mechanism_strength_score", "oracle_gap"],
+            ascending=[True, True],
+        ).iloc[0]
+    if case_name == "readout_limited":
+        frame = regime_classification[regime_classification["classification_bin"] == "readout_limited"].copy()
+        if frame.empty:
+            return None
+        return frame.sort_values(
+            ["oracle_gap", "mechanism_strength_score"],
+            ascending=[False, False],
+        ).iloc[0]
+    if case_name == "mixed_failure":
+        frame = regime_classification[regime_classification["classification_bin"] == "mixed_failure"].copy()
+        if frame.empty:
+            return None
+        return frame.sort_values(
+            ["oracle_gap", "mechanism_strength_score"],
+            ascending=[False, False],
+        ).iloc[0]
+    if case_name == "bridge_candidate":
+        frame = regime_classification[regime_classification["classification_bin"] == "bridge_candidate"].copy()
+        if frame.empty:
+            return None
+        return frame.sort_values(
+            ["best_practical_confidence_efficiency", "oracle_gap"],
+            ascending=[False, True],
+        ).iloc[0]
+    raise ValueError(f"Unknown disambiguation case: {case_name}")
+
+
+def export_single_raw_case(
+    output_dir: Path,
+    case_name: str,
+    row: pd.Series,
+    base: BaseArtifact,
+) -> dict[str, Any]:
+    case_dir = ensure_dir(output_dir / case_name)
+    match = base.single_manifest[
+        np.isclose(base.single_manifest["angle_deg"], float(row["angle_deg"]))
+        & np.isclose(base.single_manifest["gamma_plus"], float(row["gamma_plus"]))
+        & np.isclose(base.single_manifest["gamma_minus"], float(row["gamma_minus"]))
+        & np.isclose(base.single_manifest["window_fraction"], float(row["window_fraction"]))
+    ]
+    if match.empty:
+        raise ValueError(f"Could not resolve single raw case for {case_name}")
+    combo_id = int(match.sort_values("combo_id").iloc[0]["combo_id"])
+    trial_subset = (
+        base.single_trials[base.single_trials["combo_id"] == combo_id]
+        .sort_values("sample_index")
+        .reset_index(drop=True)
+    )
+    np.savez_compressed(
+        case_dir / "raw_arrays.npz",
+        combo_id=np.array([combo_id], dtype=int),
+        combo_key=np.array([match.iloc[0]["combo_key"]], dtype=str),
+        initial_states=base.single_states.get("initial_states", np.empty((0, 0, 2)))[combo_id : combo_id + 1],
+        post_states=base.single_states.get("post_states", np.empty((0, 0, 2)))[combo_id : combo_id + 1],
+    )
+    trial_subset.to_csv(case_dir / "trial_metrics.csv", index=False)
+    dump_json(
+        case_dir / "metadata.json",
+        {
+            "case_name": case_name,
+            "combo_id": combo_id,
+            "window_fraction": float(row["window_fraction"]),
+            "gamma_plus": float(row["gamma_plus"]),
+            "gamma_minus": float(row["gamma_minus"]),
+            "anisotropy_ratio": float(row["anisotropy_ratio"]),
+            "angle_deg": float(row["angle_deg"]),
+            "projectivity_score": float(row["projectivity_score"]),
+        },
+    )
+    return {
+        "case_name": case_name,
+        "path": str(case_dir),
+        "metadata_path": str(case_dir / "metadata.json"),
+    }
+
+
+def export_regime_raw_case(
+    output_dir: Path,
+    case_name: str,
+    row: pd.Series,
+    base: BaseArtifact,
+    readout_sensitivity: pd.DataFrame,
+    mechanism_structure: pd.DataFrame,
+) -> dict[str, Any]:
+    case_dir = ensure_dir(output_dir / case_name)
+    trial_mask = np.ones(len(base.sequential_trial_metrics), dtype=bool)
+    combo_mask = np.ones(len(base.sequential_manifest), dtype=bool)
+    for key in MECHANISM_KEYS:
+        trial_mask &= np.isclose(base.sequential_trial_metrics[key], float(row[key]))
+        combo_mask &= np.isclose(base.sequential_manifest[key], float(row[key]))
+    trial_subset = (
+        base.sequential_trial_metrics[trial_mask]
+        .sort_values(["combo_id", "sample_index"])
+        .reset_index(drop=True)
+    )
+    combo_subset = base.sequential_manifest[combo_mask].sort_values("combo_id").reset_index(drop=True)
+    sensitivity_subset = (
+        readout_sensitivity[
+            np.logical_and.reduce(
+                [np.isclose(readout_sensitivity[key], float(row[key])) for key in MECHANISM_KEYS]
+            )
+        ]
+        .sort_values(["family_category", "readout_family"])
+        .reset_index(drop=True)
+    )
+    structure_subset = mechanism_structure[
+        np.logical_and.reduce(
+            [np.isclose(mechanism_structure[key], float(row[key])) for key in MECHANISM_KEYS]
+        )
+    ].reset_index(drop=True)
+    combo_ids = combo_subset["combo_id"].astype(int).to_numpy() if not combo_subset.empty else np.array([], dtype=int)
+    np.savez_compressed(
+        case_dir / "raw_arrays.npz",
+        combo_ids=combo_ids,
+        combo_keys=np.asarray(combo_subset.get("combo_key", pd.Series(dtype=str)).to_numpy(), dtype=str),
+        initial_states=base.sequential_states.get("initial_states", np.empty((0, 0, 2)))[combo_ids] if len(combo_ids) else np.empty((0, 0, 2)),
+        post_alice_states=base.sequential_states.get("post_alice_states", np.empty((0, 0, 2)))[combo_ids] if len(combo_ids) else np.empty((0, 0, 2)),
+        post_bob_states=base.sequential_states.get("post_bob_states", np.empty((0, 0, 2)))[combo_ids] if len(combo_ids) else np.empty((0, 0, 2)),
+    )
+    trial_subset.to_csv(case_dir / "trial_metrics.csv", index=False)
+    combo_subset.to_csv(case_dir / "combo_manifest.csv", index=False)
+    sensitivity_subset.to_csv(case_dir / "readout_sensitivity.csv", index=False)
+    structure_subset.to_csv(case_dir / "mechanism_structure.csv", index=False)
+    dump_json(
+        case_dir / "metadata.json",
+        {
+            "case_name": case_name,
+            "classification_bin": str(row["classification_bin"]),
+            "classification_justification": str(row["classification_justification"]),
+            "window_fraction": float(row["window_fraction"]),
+            "gamma_plus": float(row["gamma_plus"]),
+            "gamma_minus": float(row["gamma_minus"]),
+            "anisotropy_ratio": float(row["anisotropy_ratio"]),
+            "mechanism_strength_score": float(row["mechanism_strength_score"]),
+            "oracle_gap": float(row["oracle_gap"]),
+        },
+    )
+    return {
+        "case_name": case_name,
+        "path": str(case_dir),
+        "metadata_path": str(case_dir / "metadata.json"),
+    }
 
 
 def select_case_row(base: BaseArtifact, case_name: str) -> pd.Series | None:
@@ -705,132 +1023,103 @@ def export_sequential_raw_case(
 
 
 def build_direct_answers(
-    base: BaseArtifact,
-    single_full: pd.DataFrame,
-    gated_summary: pd.DataFrame,
-    residual_agreement_summary: pd.DataFrame,
-    aligned_support: pd.DataFrame,
+    mechanism_structure: pd.DataFrame,
+    readout_sensitivity: pd.DataFrame,
+    oracle_gap_summary: pd.DataFrame,
+    regime_classification: pd.DataFrame,
 ) -> list[str]:
     answers: list[str] = []
-    thresholds = extract_gate_thresholds(base)
+    if regime_classification.empty:
+        return [
+            "1. The disambiguation study did not have enough sequential data to classify the failure mode.",
+            "2. Mechanism structure metrics were not available.",
+            "3. Oracle-vs-practical comparisons were not available.",
+            "4. Readout-only rescue could not be evaluated.",
+            "5. No project recommendation could be made from the available artifacts.",
+        ]
 
-    headline = gated_summary[gated_summary["headline_eligible"]].copy() if not gated_summary.empty else pd.DataFrame()
-    if headline.empty:
-        answers.append(
-            "1. No post-update rule currently produces a headline-eligible sequential regime after the hard gates."
-        )
-    else:
-        best = headline.sort_values("CHSH_gated", ascending=False).iloc[0]
-        answers.append(
-            "1. At least one headline primary regime survives the hard gates: "
-            f"ratio={best['anisotropy_ratio']:.3g}, window={best['window_fraction']:.3g}, CHSH_gated={best['CHSH_gated']:.3f}."
-        )
+    counts = regime_classification["classification_bin"].value_counts()
+    dominant_bin = str(counts.idxmax())
+    answers.append(
+        "1. The current sequential failures are primarily "
+        + dominant_bin.replace("_", "-")
+        + f", based on the most frequent regime classification (`{dominant_bin}` appears {int(counts.iloc[0])} times)."
+    )
 
-    promising = headline if not headline.empty else gated_summary[gated_summary["rule"] == RULE_ENERGY_LOSS_WINNER].copy()
-    if not promising.empty:
-        best_agreement = promising.sort_values(
-            ["residual_agreement_rate", "mean_confidence_margin"],
-            ascending=[False, False],
+    if not mechanism_structure.empty:
+        strongest = mechanism_structure.sort_values(
+            ["usable_branch_fraction", "residual_separability_score", "residual_stability_score"],
+            ascending=[False, False, False],
         ).iloc[0]
         answers.append(
-            "2. Energy-based and residual-template readouts agree best in the strongest surviving or nearest-surviving headline regime at "
-            f"agreement={best_agreement['residual_agreement_rate']:.3f}, ambiguity={best_agreement['residual_ambiguity_rate']:.3f}."
-        )
-    elif not residual_agreement_summary.empty:
-        best_agreement = residual_agreement_summary.sort_values(
-            ["residual_agreement_rate", "mean_confidence_margin"],
-            ascending=[False, False],
-        ).iloc[0]
-        answers.append(
-            "2. Agreement exists, but not in a regime that clears the hard gates: "
-            f"best agreement={best_agreement['residual_agreement_rate']:.3f}, ambiguity={best_agreement['residual_ambiguity_rate']:.3f}."
+            "2. The mechanism does generate residual branches, but only up to "
+            f"usable_branch_fraction={strongest['usable_branch_fraction']:.3f}, "
+            f"separability={strongest['residual_separability_score']:.3f}, "
+            f"stability={strongest['residual_stability_score']:.3f} in its strongest regime."
         )
     else:
-        answers.append("2. Residual-agreement diagnostics were not available.")
+        answers.append("2. The mechanism structure table was empty.")
 
-    aligned_headline = aligned_support[aligned_support["rule"] == RULE_ENERGY_LOSS_WINNER].copy() if not aligned_support.empty else pd.DataFrame()
-    if not aligned_headline.empty:
-        best_support = aligned_headline.sort_values(
-            ["aligned_same_sign_mass_high_confidence", "aligned_same_sign_mass"],
-            ascending=[True, True],
-        ).iloc[0]
+    if not oracle_gap_summary.empty:
+        best_gap = oracle_gap_summary.sort_values("oracle_gap", ascending=False).iloc[0]
         answers.append(
-            "3. High-confidence filtering "
-            + (
-                "does suppress"
-                if best_support["aligned_same_sign_mass_high_confidence"] < best_support["aligned_same_sign_mass"]
-                else "does not suppress"
-            )
-            + " aligned same-sign mass in the best headline slice: "
-            f"all={best_support['aligned_same_sign_mass']:.3f}, high-confidence={best_support['aligned_same_sign_mass_high_confidence']:.3f}."
+            "3. The oracle detector "
+            + ("does" if best_gap["oracle_gap"] > 0.2 else "does not")
+            + " recover materially better behavior than the best practical readout in the strongest gap regime: "
+            f"oracle_gap={best_gap['oracle_gap']:.3f}, best_practical_rule={best_gap['best_practical_rule']}."
         )
     else:
-        answers.append("3. Aligned-support-by-confidence data were not available.")
+        answers.append("3. Oracle-gap analysis was not available.")
 
-    redesigned = gated_summary[
-        ~gated_summary["rule"].isin([RULE_LEGACY_DOMINANT_POST, RULE_LEGACY_DOMINANCE_SHIFT, RULE_CONTROL_NEGATIVE_PREWINDOW])
-    ].copy() if not gated_summary.empty else pd.DataFrame()
-    low_drift = redesigned[
-        (redesigned["alice_marginal_drift"] <= thresholds["max_alice_drift"])
-        & (redesigned["bob_marginal_drift"] <= thresholds["max_bob_drift"])
-    ] if not redesigned.empty else pd.DataFrame()
-    if low_drift.empty:
-        answers.append(
-            "4. Low drift does not survive robustly once legacy and negative-control rules are removed from headline use."
-        )
+    readout_limited = regime_classification[regime_classification["classification_bin"] == "readout_limited"]
+    if readout_limited.empty:
+        answers.append("4. There is no strong evidence that improving readout alone would rescue the sequential bridge across the tested regimes.")
     else:
-        best_low_drift = low_drift.sort_values(
-            ["residual_agreement_rate", "mean_projectivity_compatibility"],
-            ascending=[False, False],
-        ).iloc[0]
+        best_rescue = readout_limited.sort_values("oracle_gap", ascending=False).iloc[0]
         answers.append(
-            "4. Low drift survives for some redesigned rules, but those regimes still need the support and coherence gates checked: "
-            f"rule={best_low_drift['rule_display_name'] if 'rule_display_name' in best_low_drift else best_low_drift['rule']}, "
-            f"alice_drift={best_low_drift['alice_marginal_drift']:.3f}, bob_drift={best_low_drift['bob_marginal_drift']:.3f}."
+            "4. Improving readout alone might rescue a narrow subset of regimes, but only where oracle improvements are substantial: "
+            f"oracle_gap={best_rescue['oracle_gap']:.3f}, mechanism_strength={best_rescue['mechanism_strength_score']:.3f}."
         )
 
-    if not headline.empty:
+    bridge_candidates = regime_classification[regime_classification["classification_bin"] == "bridge_candidate"]
+    if bridge_candidates.empty:
         answers.append(
-            "5. There is still some sphere-like sequential evidence only in the narrow sense that at least one headline rule clears drift, support, coherence, and projectivity together."
+            "5. The evidence favors pivoting toward explicit joint-selector or global-constraint mechanisms rather than continuing to refine the current projective-depletion bridge in isolation."
         )
     else:
-        best_single = single_full.sort_values("projectivity_score", ascending=False).iloc[0] if not single_full.empty else None
-        if best_single is not None:
-            answers.append(
-                "5. After the redesign there is no credible sphere-like sequential bridge yet; the strongest surviving evidence remains single-analyzer projectivity at "
-                f"ratio={best_single['anisotropy_ratio']:.3g}, window={best_single['window_fraction']:.3g}, angle={best_single['angle_deg']:.3g}."
-            )
-        else:
-            answers.append("5. After the redesign there is no credible sphere-like sequential bridge in the available artifacts.")
+        best_candidate = bridge_candidates.sort_values("best_practical_confidence_efficiency", ascending=False).iloc[0]
+        answers.append(
+            "5. There is at least one bridge-candidate regime, so continued work on projective modal depletion remains arguable: "
+            f"best practical confidence efficiency={best_candidate['best_practical_confidence_efficiency']:.3f}."
+        )
 
     return answers
 
 
 def build_readme(
     base: BaseArtifact,
-    single_full: pd.DataFrame,
-    gated_summary: pd.DataFrame,
-    residual_agreement_summary: pd.DataFrame,
-    aligned_support: pd.DataFrame,
+    mechanism_structure: pd.DataFrame,
+    readout_sensitivity: pd.DataFrame,
+    oracle_gap_summary: pd.DataFrame,
+    regime_classification: pd.DataFrame,
     raw_case_manifest: list[dict[str, Any]],
 ) -> str:
     thresholds = extract_gate_thresholds(base)
-    answers = build_direct_answers(base, single_full, gated_summary, residual_agreement_summary, aligned_support)
+    answers = build_direct_answers(mechanism_structure, readout_sensitivity, oracle_gap_summary, regime_classification)
 
     lines = [
         "# Verification Audit",
         "",
         f"Source artifact: `{base.artifact_dir}`",
         "",
-        "## Sequential Redesign",
+        "## Mechanism-vs-Readout Disambiguation",
         "",
-        "- `dominant_pre` is retained only as the negative-control rule `control_negative_prewindow` because it reads pre-window branch dominance instead of post-update depletion structure.",
-        "- The new primary sequential rule is `energy_loss_winner`, which assigns outcomes from analyzer-basis branch energy losses during the update.",
-        "- `residual_agreement_rate` measures how often the energy-loss winner and residual-template classifier agree across both sequential stages.",
-        "- A regime is `headline_eligible` only when it belongs to the primary rule and passes drift, aligned-support, residual-coherence, projectivity, and overfit gates.",
-        "- CHSH is secondary because raw pair structure is not considered credible until the non-CHSH gates are already satisfied.",
+        "- Layer A analyzes post-Alice residual-state structure directly, without using binary outcomes as the primary signal.",
+        "- Layer B compares practical readouts against an oracle separability benchmark to isolate readout brittleness from mechanism weakness.",
+        "- The oracle detector is diagnostic only. It is used as an upper bound on what the existing residual-state structure could support, not as a physical final readout.",
+        "- The key question is whether the mechanism fails to produce usable branches, the practical readouts fail to recover them, or both.",
         "",
-        "## Gate Thresholds",
+        "## Existing Sequential Gate Thresholds",
         "",
     ]
     for name, value in thresholds.items():
@@ -879,6 +1168,18 @@ def build_verification_audit(artifact_dir: Path, output_dir: Path) -> dict[str, 
     top_chsh_audit = build_top_sequential_chsh_audit(base.sequential_gated_summary)
     rule_comparison = build_rule_comparison(base.sequential_gated_summary)
     headline_eligible = build_headline_eligible_summary(base.sequential_gated_summary)
+    alice_oracle_cache, bob_oracle_cache = build_oracle_caches(base.sequential_manifest, base.sequential_states)
+    oracle_trials = build_oracle_trial_table(base.sequential_manifest, alice_oracle_cache, bob_oracle_cache)
+    mechanism_structure = build_mechanism_structure(base.sequential_manifest, alice_oracle_cache)
+    readout_sensitivity, confidence_efficiency_curve = build_readout_sensitivity(
+        base.sequential_trial_metrics,
+        oracle_trials,
+    )
+    oracle_gap_summary, regime_classification = build_oracle_gap_summary(
+        mechanism_structure,
+        readout_sensitivity,
+    )
+    best_practical_vs_oracle = build_best_practical_vs_oracle_frame(readout_sensitivity)
 
     write_table(single_full, tables_dir / "single_full.csv", tables_dir / "single_full.json")
     write_table(sequential_full, tables_dir / "sequential_full.csv", tables_dir / "sequential_full.json")
@@ -889,6 +1190,12 @@ def build_verification_audit(artifact_dir: Path, output_dir: Path) -> dict[str, 
     write_table(top_chsh_audit, tables_dir / "top_sequential_chsh_audit.csv", tables_dir / "top_sequential_chsh_audit.json")
     write_table(rule_comparison, tables_dir / "rule_comparison.csv", tables_dir / "rule_comparison.json")
     write_table(headline_eligible, tables_dir / "headline_eligible_summary.csv", tables_dir / "headline_eligible_summary.json")
+    write_table(mechanism_structure, tables_dir / "mechanism_structure.csv", tables_dir / "mechanism_structure.json")
+    write_table(readout_sensitivity, tables_dir / "readout_sensitivity.csv", tables_dir / "readout_sensitivity.json")
+    write_table(confidence_efficiency_curve, tables_dir / "confidence_efficiency_curve.csv", tables_dir / "confidence_efficiency_curve.json")
+    write_table(oracle_gap_summary, tables_dir / "oracle_gap_summary.csv", tables_dir / "oracle_gap_summary.json")
+    write_table(regime_classification, tables_dir / "regime_classification.csv", tables_dir / "regime_classification.json")
+    write_table(best_practical_vs_oracle, tables_dir / "best_practical_vs_oracle.csv", tables_dir / "best_practical_vs_oracle.json")
 
     dump_json(definitions_dir / "readout_rules.json", READOUT_RULE_DEFINITIONS)
     dump_json(
@@ -900,8 +1207,11 @@ def build_verification_audit(artifact_dir: Path, output_dir: Path) -> dict[str, 
         },
     )
     dump_json(definitions_dir / "gate_thresholds.json", extract_gate_thresholds(base))
+    dump_json(definitions_dir / "disambiguation_metrics.json", DISAMBIGUATION_METRIC_DEFINITIONS)
+    dump_json(definitions_dir / "regime_bins.json", REGIME_BIN_DEFINITIONS)
     (definitions_dir / "readout_rules.md").write_text(render_readout_rules_markdown(), encoding="utf-8")
     (definitions_dir / "metrics.md").write_text(render_metrics_markdown(), encoding="utf-8")
+    (definitions_dir / "disambiguation.md").write_text(render_disambiguation_markdown(), encoding="utf-8")
 
     plot_manifest: list[dict[str, str]] = []
     agreement_plot_frame = _primary_window_slice(base.sequential_residual_agreement)
@@ -998,23 +1308,189 @@ def build_verification_audit(artifact_dir: Path, output_dir: Path) -> dict[str, 
         plot_manifest,
         plot_rule_comparison,
     )
+
+    write_plot_with_dataset(
+        mechanism_structure.sort_values(MECHANISM_KEYS),
+        "residual_separability_vs_anisotropy",
+        plots_dir,
+        plot_manifest,
+        lambda df, path: plot_mechanism_metric_vs_anisotropy(
+            df,
+            metric="residual_separability_score",
+            title="Residual Separability vs Anisotropy",
+            ylabel="Residual separability score",
+            out_path=path,
+        ),
+    )
+    write_plot_with_dataset(
+        mechanism_structure.sort_values(MECHANISM_KEYS),
+        "residual_stability_vs_anisotropy",
+        plots_dir,
+        plot_manifest,
+        lambda df, path: plot_mechanism_metric_vs_anisotropy(
+            df,
+            metric="residual_stability_score",
+            title="Residual Stability vs Anisotropy",
+            ylabel="Residual stability score",
+            out_path=path,
+        ),
+    )
+
+    if not oracle_gap_summary.empty and not confidence_efficiency_curve.empty:
+        target = oracle_gap_summary.sort_values("oracle_gap", ascending=False).iloc[0]
+        confidence_plot_selection = confidence_efficiency_curve[
+            np.logical_and.reduce(
+                [np.isclose(confidence_efficiency_curve[key], float(target[key])) for key in MECHANISM_KEYS]
+            )
+        ].sort_values("margin_threshold")
+    else:
+        confidence_plot_selection = (
+            confidence_efficiency_curve.groupby("margin_threshold", as_index=False)
+            .agg(
+                retained_fraction=("retained_fraction", "mean"),
+                branch_recoverability=("branch_recoverability", "mean"),
+                confidence_efficiency=("confidence_efficiency", "mean"),
+            )
+            if not confidence_efficiency_curve.empty
+            else pd.DataFrame()
+        )
+    write_plot_with_dataset(
+        confidence_plot_selection,
+        "occupancy_vs_confidence_threshold",
+        plots_dir,
+        plot_manifest,
+        plot_confidence_efficiency_curve,
+    )
+
+    write_plot_with_dataset(
+        oracle_gap_summary.sort_values(MECHANISM_KEYS),
+        "oracle_gap_vs_anisotropy",
+        plots_dir,
+        plot_manifest,
+        lambda df, path: plot_mechanism_metric_vs_anisotropy(
+            df,
+            metric="oracle_gap",
+            title="Oracle Gap vs Anisotropy",
+            ylabel="Oracle gap",
+            out_path=path,
+        ),
+    )
+    write_plot_with_dataset(
+        best_practical_vs_oracle,
+        "support_recoverability_practical_vs_oracle",
+        plots_dir,
+        plot_manifest,
+        lambda df, path: plot_practical_vs_oracle(
+            df,
+            practical_col="best_practical_aligned_same_sign_mass",
+            oracle_col="oracle_aligned_same_sign_mass",
+            title="Support Recoverability: Practical vs Oracle",
+            ylabel="Aligned same-sign mass",
+            out_path=path,
+        ),
+    )
+    write_plot_with_dataset(
+        best_practical_vs_oracle,
+        "drift_recoverability_practical_vs_oracle",
+        plots_dir,
+        plot_manifest,
+        lambda df, path: plot_practical_vs_oracle(
+            df,
+            practical_col="best_practical_max_marginal_drift",
+            oracle_col="oracle_max_marginal_drift",
+            title="Drift Recoverability: Practical vs Oracle",
+            ylabel="Max marginal drift",
+            out_path=path,
+        ),
+    )
+    write_plot_with_dataset(
+        regime_classification,
+        "mechanism_vs_readout_phase_map",
+        plots_dir,
+        plot_manifest,
+        plot_mechanism_vs_readout_phase_map,
+    )
+
+    if not regime_classification.empty and not base.sequential_manifest.empty:
+        representative = select_disambiguation_case(regime_classification, "readout_limited")
+        if representative is None:
+            representative = select_disambiguation_case(regime_classification, "mechanism_limited")
+        if representative is None:
+            representative = regime_classification.iloc[0]
+        combo_match = (
+            base.sequential_manifest[
+                np.logical_and.reduce(
+                    [np.isclose(base.sequential_manifest[key], float(representative[key])) for key in MECHANISM_KEYS]
+                )
+            ]
+            .sort_values(["angle_a_deg", "combo_id"])
+            .drop_duplicates("angle_a_deg")
+        )
+        if not combo_match.empty:
+            combo_id = int(
+                combo_match.assign(angle_distance=(combo_match["angle_a_deg"] - 45.0).abs())
+                .sort_values(["angle_distance", "combo_id"])
+                .iloc[0]["combo_id"]
+            )
+            post_alice_states = base.sequential_states.get("post_alice_states", np.empty((0, 0, 2)))[combo_id]
+            source_features = phase_aligned_features(post_alice_states)
+            analyzer_feature_block = analyzer_features(post_alice_states, float(combo_match[combo_match["combo_id"] == combo_id].iloc[0]["angle_a_deg"]))
+            cloud_dataset = pd.DataFrame(
+                {
+                    "source_x": source_features[:, 0],
+                    "source_y": source_features[:, 1],
+                    "analyzer_x": analyzer_feature_block[:, 0],
+                    "analyzer_y": analyzer_feature_block[:, 1],
+                    "oracle_label": alice_oracle_cache[combo_id].outcomes,
+                }
+            )
+        else:
+            cloud_dataset = pd.DataFrame()
+    else:
+        cloud_dataset = pd.DataFrame()
+    write_plot_with_dataset(
+        cloud_dataset,
+        "state_clouds_with_oracle_clusters",
+        plots_dir,
+        plot_manifest,
+        plot_state_clouds_with_oracle_clusters,
+    )
     dump_json(plots_dir / "manifest.json", plot_manifest)
 
     raw_case_manifest: list[dict[str, Any]] = []
-    for case_name in [
-        "best_gated_regime",
-        "lowest_drift_regime",
-        "highest_residual_agreement_regime",
-        "top_negative_control_chsh_regime",
-        "projective_but_support_fail_regime",
-    ]:
-        row = select_case_row(base, case_name)
+    for case_name in ["mechanism_limited", "readout_limited", "mixed_failure", "bridge_candidate"]:
+        row = select_disambiguation_case(regime_classification, case_name)
         if row is None:
             continue
-        raw_case_manifest.append(export_sequential_raw_case(raw_cases_dir, case_name, row, base))
+        raw_case_manifest.append(
+            export_regime_raw_case(
+                raw_cases_dir,
+                case_name,
+                row,
+                base,
+                readout_sensitivity,
+                mechanism_structure,
+            )
+        )
+    if not single_full.empty:
+        raw_case_manifest.append(
+            export_single_raw_case(
+                raw_cases_dir,
+                "best_single_analyzer_case",
+                single_full.sort_values("projectivity_score", ascending=False).iloc[0],
+                base,
+            )
+        )
     dump_json(raw_cases_dir / "manifest.json", raw_case_manifest)
 
-    readme = build_readme(base, single_full, gated_summary, residual_agreement, aligned_support, raw_case_manifest)
+    readme = build_readme(
+        base,
+        mechanism_structure,
+        readout_sensitivity,
+        oracle_gap_summary,
+        regime_classification,
+        raw_case_manifest,
+    )
     (output_dir / "README.md").write_text(readme, encoding="utf-8")
 
     manifest = {
@@ -1029,6 +1505,10 @@ def build_verification_audit(artifact_dir: Path, output_dir: Path) -> dict[str, 
             "legacy_rule_controls": int(len(legacy_controls)),
             "top_sequential_chsh_audit": int(len(top_chsh_audit)),
             "headline_eligible_summary": int(len(headline_eligible)),
+            "mechanism_structure": int(len(mechanism_structure)),
+            "readout_sensitivity": int(len(readout_sensitivity)),
+            "oracle_gap_summary": int(len(oracle_gap_summary)),
+            "regime_classification": int(len(regime_classification)),
         },
         "plot_count": len(plot_manifest),
         "raw_case_count": len(raw_case_manifest),

@@ -60,6 +60,10 @@ def test_build_verification_audit_bundle(tmp_path: Path) -> None:
     aligned_support = pd.read_csv(audit_dir / "tables" / "aligned_support_by_confidence.csv")
     legacy_controls = pd.read_csv(audit_dir / "tables" / "legacy_rule_controls.csv")
     top_chsh_audit = pd.read_csv(audit_dir / "tables" / "top_sequential_chsh_audit.csv")
+    mechanism_structure = pd.read_csv(audit_dir / "tables" / "mechanism_structure.csv")
+    readout_sensitivity = pd.read_csv(audit_dir / "tables" / "readout_sensitivity.csv")
+    oracle_gap_summary = pd.read_csv(audit_dir / "tables" / "oracle_gap_summary.csv")
+    regime_classification = pd.read_csv(audit_dir / "tables" / "regime_classification.csv")
 
     assert {
         "angle_deg",
@@ -109,12 +113,66 @@ def test_build_verification_audit_bundle(tmp_path: Path) -> None:
     }.issubset(aligned_support.columns)
     assert {"rule", "rule_display_name"}.issubset(legacy_controls.columns)
     assert {"rule", "gate_blockers", "audit_note", "CHSH_raw"}.issubset(top_chsh_audit.columns)
+    assert {
+        "window_fraction",
+        "gamma_plus",
+        "gamma_minus",
+        "anisotropy_ratio",
+        "residual_separability_score",
+        "residual_stability_score",
+        "usable_branch_fraction",
+        "mechanism_strength_score",
+        "oracle_branch_quality",
+    }.issubset(mechanism_structure.columns)
+    assert {
+        "window_fraction",
+        "gamma_plus",
+        "gamma_minus",
+        "anisotropy_ratio",
+        "readout_family",
+        "family_category",
+        "branch_recoverability",
+        "retained_fraction",
+        "confidence_efficiency",
+        "support_recoverability",
+        "drift_recoverability",
+    }.issubset(readout_sensitivity.columns)
+    assert {
+        "window_fraction",
+        "gamma_plus",
+        "gamma_minus",
+        "anisotropy_ratio",
+        "oracle_gap",
+        "best_practical_rule",
+        "classification_bin",
+    }.issubset(oracle_gap_summary.columns)
+    assert {
+        "window_fraction",
+        "gamma_plus",
+        "gamma_minus",
+        "anisotropy_ratio",
+        "classification_bin",
+        "classification_justification",
+        "mechanism_strength_score",
+        "oracle_gap",
+    }.issubset(regime_classification.columns)
 
     assert (audit_dir / "definitions" / "readout_rules.md").exists()
     assert (audit_dir / "definitions" / "metrics.md").exists()
     assert (audit_dir / "definitions" / "gate_thresholds.json").exists()
+    assert (audit_dir / "definitions" / "disambiguation.md").exists()
+    assert (audit_dir / "definitions" / "disambiguation_metrics.json").exists()
+    assert (audit_dir / "definitions" / "regime_bins.json").exists()
     assert (audit_dir / "plots" / "manifest.json").exists()
     assert (audit_dir / "plots" / "residual-agreement-vs-anisotropy.png").exists()
     assert (audit_dir / "plots" / "legacy-vs-redesigned-rule-comparison.png").exists()
+    assert (audit_dir / "plots" / "residual_separability_vs_anisotropy.png").exists()
+    assert (audit_dir / "plots" / "residual_stability_vs_anisotropy.png").exists()
+    assert (audit_dir / "plots" / "occupancy_vs_confidence_threshold.png").exists()
+    assert (audit_dir / "plots" / "oracle_gap_vs_anisotropy.png").exists()
+    assert (audit_dir / "plots" / "support_recoverability_practical_vs_oracle.png").exists()
+    assert (audit_dir / "plots" / "drift_recoverability_practical_vs_oracle.png").exists()
+    assert (audit_dir / "plots" / "mechanism_vs_readout_phase_map.png").exists()
+    assert (audit_dir / "plots" / "state_clouds_with_oracle_clusters.png").exists()
     assert (audit_dir / "raw_cases" / "manifest.json").exists()
     assert (audit_dir / "README.md").exists()
