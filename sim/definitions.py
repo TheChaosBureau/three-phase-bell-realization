@@ -2,182 +2,204 @@ from __future__ import annotations
 
 from textwrap import dedent
 
+from .config import SequentialGateConfig
+from .readout import (
+    RULE_CONFIDENCE_WEIGHTED_AGREEMENT,
+    RULE_CONTROL_NEGATIVE_PREWINDOW,
+    RULE_ENERGY_LOSS_WINNER,
+    RULE_LEGACY_DOMINANCE_SHIFT,
+    RULE_LEGACY_DOMINANT_POST,
+    RULE_RESIDUAL_TEMPLATE_CLASSIFIER,
+)
+
 PRIMARY_WINDOW_FRACTION = 0.25
 PURE_CLUSTER_THRESHOLD = 0.9
-SIGNALING_THRESHOLD = 0.05
+DEFAULT_GATE_THRESHOLDS = SequentialGateConfig()
+SIGNALING_THRESHOLD = DEFAULT_GATE_THRESHOLDS.max_bob_drift
 OVERFIT_CHSH_THRESHOLD = 1.9
 
 
 READOUT_RULE_DEFINITIONS: dict[str, dict[str, str]] = {
-    "dominant_pre": {
-        "state_variables": "Analyzer-basis pre-window coordinates `(c_+, c_-)`.",
+    RULE_ENERGY_LOSS_WINNER: {
+        "role": "headline_primary",
+        "state_variables": "Analyzer-basis pre/post coordinates and branch energy losses during the update.",
+        "timing": "Post-update centered; uses the update-induced depletion structure.",
+        "basis": "Analyzer basis.",
+        "logic": dedent(
+            """
+            Compute branch energy losses
+            `E_loss,+ = max(|c_+^pre|^2 - |c_+^post|^2, 0)` and
+            `E_loss,- = max(|c_-^pre|^2 - |c_-^post|^2, 0)`.
+            Return `+1` when `E_loss,+ >= E_loss,-`, else `-1`.
+            """
+        ).strip(),
+        "ties": "Ties go to `+1` because the implementation uses `>=`.",
+    },
+    RULE_RESIDUAL_TEMPLATE_CLASSIFIER: {
+        "role": "diagnostic_rule",
+        "state_variables": "Post-update analyzer-basis state only.",
+        "timing": "Post-update only.",
+        "basis": "Analyzer basis.",
+        "logic": dedent(
+            """
+            Normalize the post-update analyzer-basis state `u = psi_post / ||psi_post||`.
+            Compare it to the ideal residual templates `e_+ = [1, 0]` and `e_- = [0, 1]`
+            through absolute template overlaps `s_+ = |<u, e_+>|` and `s_- = |<u, e_->|`.
+            Return `+1` when `s_+ >= s_-`, else `-1`.
+            """
+        ).strip(),
+        "ties": "Ties go to `+1` because the implementation uses `>=`.",
+    },
+    RULE_CONFIDENCE_WEIGHTED_AGREEMENT: {
+        "role": "diagnostic_rule",
+        "state_variables": "The headline energy-loss outcome, the residual-template outcome, and the residual-template confidence margin.",
+        "timing": "Post-update only for the classifier; combines both redesigned rules after the update.",
+        "basis": "Analyzer basis.",
+        "logic": dedent(
+            f"""
+            Let `A_E` be the energy-loss winner outcome and `A_R` be the residual-template outcome.
+            Let the residual-template confidence margin be `m_R`.
+            Return the shared outcome only when `A_E == A_R` and `m_R >= {DEFAULT_GATE_THRESHOLDS.confidence_margin_threshold}`.
+            Otherwise emit the sentinel value `0`, interpreted as `ambiguous_residual`.
+            """
+        ).strip(),
+        "ties": "Ambiguous cases are not forced to `+1`; they are marked as `0` and tracked explicitly.",
+    },
+    RULE_LEGACY_DOMINANT_POST: {
+        "role": "legacy_rule",
+        "state_variables": "Post-update analyzer-basis branch powers.",
+        "timing": "Post-update only.",
+        "basis": "Analyzer basis.",
+        "logic": "Return `+1` when `|c_+^post|^2 >= |c_-^post|^2`, else `-1`.",
+        "ties": "Ties go to `+1` because the implementation uses `>=`.",
+    },
+    RULE_LEGACY_DOMINANCE_SHIFT: {
+        "role": "legacy_rule",
+        "state_variables": "Pre-window and post-window analyzer-basis branch powers.",
+        "timing": "Uses both pre-window and post-window values.",
+        "basis": "Analyzer basis.",
+        "logic": "Return `+1` when the post-minus-pre dominance shift is non-negative, else `-1`.",
+        "ties": "Ties go to `+1` because the implementation uses `>=`.",
+    },
+    RULE_CONTROL_NEGATIVE_PREWINDOW: {
+        "role": "negative_control",
+        "state_variables": "Pre-window analyzer-basis branch powers only.",
         "timing": "Pre-window only.",
         "basis": "Analyzer basis.",
-        "logic": dedent(
-            """
-            Compute pre-window branch powers `p_+ = |c_+|^2` and `p_- = |c_-|^2`.
-            Return `+1` when `p_+ >= p_-`, else `-1`.
-            """
-        ).strip(),
-        "ties": "Ties go to `+1` because the implementation uses `>=`.",
-    },
-    "dominant_post": {
-        "state_variables": "Analyzer-basis post-window coordinates `(c'_+, c'_-)`.",
-        "timing": "Post-window only.",
-        "basis": "Analyzer basis.",
-        "logic": dedent(
-            """
-            Compute post-window branch powers `p'_+ = |c'_+|^2` and `p'_- = |c'_-|^2`.
-            Return `+1` when `p'_+ >= p'_-`, else `-1`.
-            """
-        ).strip(),
-        "ties": "Ties go to `+1` because the implementation uses `>=`.",
-    },
-    "dominance_shift": {
-        "state_variables": "Analyzer-basis pre-window and post-window coordinates.",
-        "timing": "Uses both pre-window and post-window values.",
-        "basis": "Analyzer basis.",
-        "logic": dedent(
-            """
-            Compute pre-window dominance `d = |c_+|^2 - |c_-|^2`.
-            Compute post-window dominance `d' = |c'_+|^2 - |c'_-|^2`.
-            Return `+1` when `(d' - d) >= 0`, else `-1`.
-            """
-        ).strip(),
-        "ties": "Ties go to `+1` because the implementation uses `>=`.",
-    },
-    "extracted_energy": {
-        "state_variables": "Analyzer-basis pre-window and post-window coordinates.",
-        "timing": "Uses both pre-window and post-window values.",
-        "basis": "Analyzer basis.",
-        "logic": dedent(
-            """
-            Compute extracted branch energies
-            `E_+ = max(|c_+|^2 - |c'_+|^2, 0)` and `E_- = max(|c_-|^2 - |c'_-|^2, 0)`.
-            Return `+1` when `E_+ >= E_-`, else `-1`.
-            """
-        ).strip(),
-        "ties": "Ties go to `+1` because the implementation uses `>=`.",
-    },
-    "residual_classifier": {
-        "state_variables": "Analyzer-basis post-window coordinates `(c'_+, c'_-)`.",
-        "timing": "Post-window only.",
-        "basis": "Analyzer basis.",
-        "logic": dedent(
-            """
-            Compute post-window branch powers `p'_+ = |c'_+|^2` and `p'_- = |c'_-|^2`.
-            Return `+1` when `p'_+ >= p'_-`, else `-1`.
-            This is equivalent to choosing the larger post-window normalized branch weight.
-            """
-        ).strip(),
+        "logic": "Return `+1` when `|c_+^pre|^2 >= |c_-^pre|^2`, else `-1`.",
         "ties": "Ties go to `+1` because the implementation uses `>=`.",
     },
 }
 
 
 METRIC_DEFINITIONS: dict[str, dict[str, str]] = {
-    "projectivity_score": {
+    "residual_agreement_rate": {
+        "formula": "Mean over trials of `(alice_energy_outcome == alice_residual_outcome) and (bob_energy_outcome == bob_residual_outcome)`.",
+        "normalization": "Binary per trial, averaged to `[0, 1]`.",
+        "aggregation": "Mean within a `(rule, window_fraction, gamma_plus, gamma_minus, anisotropy_ratio)` group.",
+        "interpretation": "Higher means the energy-based and residual-template readouts tell the same story more often.",
+    },
+    "residual_ambiguity_rate": {
         "formula": dedent(
-            """
-            For each trial, find the extracted branch by `argmax(branch_loss_+, branch_loss_-)`.
-            The complementary branch is the opposite branch.
-            Compute post-window normalized branch weights
-            `w'_+ = |c'_+|^2 / (|c'_+|^2 + |c'_-|^2)` and `w'_- = 1 - w'_+`.
-            The per-trial complementary residual quality is the post-window weight on the complementary branch.
-            `projectivity_score` is the mean complementary residual quality across trials.
+            f"""
+            Mean over trials of `(alice_or_bob_disagrees) or (alice_or_bob_residual_margin < {DEFAULT_GATE_THRESHOLDS.confidence_margin_threshold})`.
             """
         ).strip(),
-        "normalization": "Uses normalized post-window branch weights; values are in `[0, 1]`.",
-        "aggregation": "Mean across trials for a fixed `(window_fraction, gamma_plus, gamma_minus, anisotropy_ratio, angle_deg)` row.",
-        "interpretation": "Higher is more projective-like because the residual mass lands on the branch opposite the depleted branch.",
+        "normalization": "Binary per trial, averaged to `[0, 1]`.",
+        "aggregation": "Mean within a sequential group.",
+        "interpretation": "Lower is better; high ambiguity means the mechanism is not producing a clean discrete residual story.",
     },
-    "clusterability": {
-        "formula": f"`clusterability = mean(residual_purity >= {PURE_CLUSTER_THRESHOLD})`, where `residual_purity = max(w'_+, w'_-)`.",
-        "normalization": f"Binary threshold at `{PURE_CLUSTER_THRESHOLD}` per trial, then averaged to `[0, 1]`.",
-        "aggregation": "Mean across trials for the row.",
-        "interpretation": "Higher means more trials collapse into a clearly dominant residual branch.",
+    "mean_confidence_margin": {
+        "formula": "Mean over trials of `0.5 * (alice_confidence_margin + bob_confidence_margin)`, where stage confidence is `min(energy_margin, residual_margin)`.",
+        "normalization": "Each stage margin is normalized to `[0, 1]`.",
+        "aggregation": "Mean within a sequential group.",
+        "interpretation": "Higher means the headline and residual-template rules are separated from their decision boundaries.",
     },
-    "residual_branch_quality": {
-        "formula": "`residual_branch_quality = mean(max(w'_+, w'_-))`.",
-        "normalization": "Uses normalized post-window branch weights; values are in `[0.5, 1]` for nonzero states.",
-        "aggregation": "Mean across trials.",
-        "interpretation": "Higher means cleaner branch purity after the damping window.",
-    },
-    "branch_loss_mean": {
-        "formula": "`branch_loss_mean = mean(branch_loss_+ + branch_loss_-)`, with `branch_loss_± = max(|c_±|^2 - |c'_±|^2, 0)`.",
-        "normalization": "No additional normalization beyond the source-state normalization.",
-        "aggregation": "Mean total extracted energy across trials.",
-        "interpretation": "Higher means the analyzer removed more norm/energy during the window.",
-    },
-    "dominance_mean": {
-        "formula": "`dominance_mean = mean(abs(w'_+ - w'_-))`.",
-        "normalization": "Uses normalized post-window branch weights; values are in `[0, 1]`.",
-        "aggregation": "Mean across trials.",
-        "interpretation": "Higher means stronger post-window branch asymmetry.",
+    "mean_projectivity_compatibility": {
+        "formula": "Mean over trials of `0.5 * (alice_complementary_residual_quality + bob_complementary_residual_quality)`.",
+        "normalization": "Uses the single-analyzer complementary residual quality scale `[0, 1]`.",
+        "aggregation": "Mean within a sequential group.",
+        "interpretation": "Higher means the sequential stages remain compatible with the single-analyzer projective-depletion story.",
     },
     "alice_marginal_drift": {
-        "formula": dedent(
-            f"""
-            For each fixed `(rule, window_fraction, anisotropy_ratio, phiA)`, compute Alice's marginal mean
-            across Bob settings. The per-`phiA` drift is `max(alice_marginal) - min(alice_marginal)`.
-            `alice_marginal_drift` is the maximum of that quantity over all `phiA` values in the group.
-            """
-        ).strip(),
-        "normalization": "No normalization beyond the `[-1, 1]` outcome scale.",
-        "aggregation": "Max over remote-angle spread, then max over local settings.",
-        "interpretation": f"Lower is better; values above `{SIGNALING_THRESHOLD}` are treated as a signaling warning.",
+        "formula": "For fixed `(rule, phiA)`, compute `max(alice_marginal over phiB) - min(alice_marginal over phiB)`. Then take the max over `phiA` within the group.",
+        "normalization": "No extra normalization beyond the `[-1, 1]` outcome scale.",
+        "aggregation": "Max over local-setting slices inside a sequential group.",
+        "interpretation": "Lower is better; this is one half of the no-signaling gate.",
     },
     "bob_marginal_drift": {
-        "formula": dedent(
-            f"""
-            For each fixed `(rule, window_fraction, anisotropy_ratio, phiB)`, compute Bob's marginal mean
-            across Alice settings. The per-`phiB` drift is `max(bob_marginal) - min(bob_marginal)`.
-            `bob_marginal_drift` is the maximum of that quantity over all `phiB` values in the group.
-            """
-        ).strip(),
-        "normalization": "No normalization beyond the `[-1, 1]` outcome scale.",
-        "aggregation": "Max over remote-angle spread, then max over local settings.",
-        "interpretation": f"Lower is better; values above `{SIGNALING_THRESHOLD}` are treated as a signaling warning.",
+        "formula": "For fixed `(rule, phiB)`, compute `max(bob_marginal over phiA) - min(bob_marginal over phiA)`. Then take the max over `phiB` within the group.",
+        "normalization": "No extra normalization beyond the `[-1, 1]` outcome scale.",
+        "aggregation": "Max over local-setting slices inside a sequential group.",
+        "interpretation": "Lower is better; this is the other half of the no-signaling gate.",
     },
     "aligned_same_sign_mass": {
-        "formula": "`aligned_same_sign_mass = mean(same_sign_mass)` over aligned pairs where `phiA = phiB`.",
-        "normalization": "Each aligned pair contributes a fraction in `[0, 1]`.",
-        "aggregation": "Mean over aligned angle rows within a `(rule, window_fraction, anisotropy_ratio)` group.",
-        "interpretation": "Lower is more singlet-like; high aligned same-sign leakage is a warning sign.",
+        "formula": "Mean same-sign mass over aligned analyzer rows `phiA = phiB`.",
+        "normalization": "Fraction in `[0, 1]`.",
+        "aggregation": "Mean over aligned angle rows in a sequential group.",
+        "interpretation": "Lower is better for singlet-like aligned support.",
     },
-    "aligned_anti_mass": {
-        "formula": "`aligned_anti_mass = mean(anti_sign_mass)` over aligned pairs where `phiA = phiB`.",
-        "normalization": "Each aligned pair contributes a fraction in `[0, 1]`.",
-        "aggregation": "Mean over aligned angle rows within a `(rule, window_fraction, anisotropy_ratio)` group.",
-        "interpretation": "Higher is more singlet-like because aligned analyzers prefer opposite outcomes.",
+    "aligned_same_sign_mass_high_confidence": {
+        "formula": "Mean same-sign mass over aligned rows, restricting to trials labeled `high_confidence_residual`.",
+        "normalization": "Fraction in `[0, 1]` over the high-confidence subset.",
+        "aggregation": "Mean over aligned rows after high-confidence masking.",
+        "interpretation": "Tests whether confidence is actually related to improved aligned support.",
     },
-    "sequential_projectivity_compatibility": {
-        "formula": dedent(
-            """
-            For each `(phiA, phiB)` pair, compute
-            `0.5 * (mean(alice_complementary_residual_quality) + mean(bob_complementary_residual_quality))`.
-            """
-        ).strip(),
-        "normalization": "Uses the same `[0, 1]` complementary-quality scale as the single-analyzer projectivity score.",
-        "aggregation": "Mean over trials for a fixed `(window_fraction, anisotropy_ratio, phiA, phiB)` pair.",
-        "interpretation": "Higher means the sequential state updates remain compatible with the single-analyzer projective-branch story.",
+    "mean_branch_stability_score": {
+        "formula": "Mean fraction of small deterministic perturbations to Alice's post-state that preserve Bob's headline energy-loss outcome.",
+        "normalization": "Two perturbation checks per trial, averaged to `[0, 1]`.",
+        "aggregation": "Mean within a sequential group.",
+        "interpretation": "Higher means Bob's readout is locally stable rather than knife-edge sensitive.",
     },
-    "no_signaling_flag": {
-        "formula": f"`alice_marginal_drift <= {SIGNALING_THRESHOLD}` and `bob_marginal_drift <= {SIGNALING_THRESHOLD}`.",
+    "CHSH_raw": {
+        "formula": "`|E_ab - E_abp + E_apb + E_apbp|` using the canonical four setting pairs.",
+        "normalization": "Standard CHSH expression.",
+        "aggregation": "One value per `(rule, window_fraction, gamma_plus, gamma_minus, anisotropy_ratio)` group.",
+        "interpretation": "Secondary only; not meaningful until the hard gates are checked.",
+    },
+    "CHSH_gated": {
+        "formula": "`CHSH_raw` if and only if all hard gates pass, otherwise `NaN`.",
+        "normalization": "Same scale as CHSH.",
+        "aggregation": "One value per sequential group.",
+        "interpretation": "This is the only CHSH value intended for serious ranking after the redesign.",
+    },
+    "headline_eligible": {
+        "formula": f"`all_gates_pass and rule == {RULE_ENERGY_LOSS_WINNER!r}`.",
         "normalization": "Boolean flag.",
-        "aggregation": "Evaluated per `(rule, window_fraction, anisotropy_ratio)` group, then repeated across its rows in the audit table.",
-        "interpretation": "True means the current audit thresholds do not indicate signaling.",
+        "aggregation": "Per sequential group.",
+        "interpretation": "True means the regime survives the redesign's non-CHSH gates and belongs to the headline primary rule.",
     },
-    "overfit_flag": {
-        "formula": dedent(
-            f"""
-            `overfit_flag = (CHSH > {OVERFIT_CHSH_THRESHOLD}) and`
-            `((alice_marginal_drift > {SIGNALING_THRESHOLD}) or (bob_marginal_drift > {SIGNALING_THRESHOLD}))`.
-            """
-        ).strip(),
-        "normalization": "Boolean flag.",
-        "aggregation": "Evaluated per `(rule, window_fraction, anisotropy_ratio)` group, then repeated across its rows in the audit table.",
-        "interpretation": "True means the strongest sequential signal in the group is accompanied by explicit marginal drift and should be treated as likely overfit/signaling-driven.",
+}
+
+
+GATE_DEFINITIONS: dict[str, dict[str, str]] = {
+    "max_alice_drift": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.max_alice_drift),
+        "meaning": "Maximum allowed Alice marginal drift.",
+    },
+    "max_bob_drift": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.max_bob_drift),
+        "meaning": "Maximum allowed Bob marginal drift.",
+    },
+    "max_aligned_same_sign_mass": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.max_aligned_same_sign_mass),
+        "meaning": "Maximum allowed aligned same-sign mass before the support gate fails.",
+    },
+    "min_residual_agreement_rate": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.min_residual_agreement_rate),
+        "meaning": "Minimum required agreement between energy-loss and residual-template readouts.",
+    },
+    "max_residual_ambiguity_rate": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.max_residual_ambiguity_rate),
+        "meaning": "Maximum allowed ambiguity rate.",
+    },
+    "min_projectivity_compatibility": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.min_projectivity_compatibility),
+        "meaning": "Minimum allowed sequential projectivity compatibility.",
+    },
+    "confidence_margin_threshold": {
+        "default": str(DEFAULT_GATE_THRESHOLDS.confidence_margin_threshold),
+        "meaning": "Minimum stage confidence margin used for ambiguity/high-confidence labeling.",
     },
 }
 
@@ -185,29 +207,23 @@ METRIC_DEFINITIONS: dict[str, dict[str, str]] = {
 FAILURE_MODE_DEFINITIONS: dict[str, dict[str, str]] = {
     "F1_isotropic_nonprojective": {
         "trigger": "`mean_projectivity_score(ani=1.0) < 0.7`.",
-        "interpretation": "The isotropic baseline does not exhibit clean projective residual branching.",
+        "interpretation": "The isotropic baseline does not show clean projective depletion.",
     },
     "F2_generic_deformation": {
-        "trigger": "`branch_loss_mean > 0.05` and `residual_branch_quality < 0.7` for at least one single-analyzer row.",
-        "interpretation": "The state deforms and loses norm, but not toward a clean residual branch.",
+        "trigger": "`branch_loss_mean > 0.05` and `residual_branch_quality < 0.7`.",
+        "interpretation": "The state deforms without selecting a clean residual branch.",
     },
     "F3_signaling_regime": {
-        "trigger": f"`alice_marginal_drift > {SIGNALING_THRESHOLD}` or `bob_marginal_drift > {SIGNALING_THRESHOLD}` for at least one sequential group.",
-        "interpretation": "Remote settings visibly move local marginals under the current audit threshold.",
+        "trigger": f"`alice_marginal_drift > {DEFAULT_GATE_THRESHOLDS.max_alice_drift}` or `bob_marginal_drift > {DEFAULT_GATE_THRESHOLDS.max_bob_drift}`.",
+        "interpretation": "A sequential group fails the redesigned drift gate.",
     },
     "F4_washout_regime": {
-        "trigger": "For `window_fraction >= 0.5`, projectivity drops below `0.8 *` the corresponding `T/4` baseline for the same anisotropy ratio.",
-        "interpretation": "Long windows erase useful branch-discriminating structure.",
+        "trigger": "For `window_fraction >= 0.5`, projectivity drops below `0.8 *` the matching `T/4` baseline at the same anisotropy ratio.",
+        "interpretation": "Long windows erase the useful branch-discriminating structure.",
     },
     "F5_overfit_readout": {
-        "trigger": dedent(
-            f"""
-            A sequential group satisfies `CHSH > {OVERFIT_CHSH_THRESHOLD}` and at least one of:
-            `alice_marginal_drift > {SIGNALING_THRESHOLD}`,
-            or `bob_marginal_drift > {SIGNALING_THRESHOLD}`.
-            """
-        ).strip(),
-        "interpretation": "The readout appears to amplify attractive pair statistics in a regime that is not trustworthy on state-level diagnostics.",
+        "trigger": f"`CHSH_raw > {OVERFIT_CHSH_THRESHOLD}` and at least one of the drift, residual-coherence, or projectivity gates fails.",
+        "interpretation": "The readout is producing attractive pair statistics in a regime that does not survive the redesigned physical trust gates.",
     },
 }
 
@@ -219,6 +235,7 @@ def render_readout_rules_markdown() -> str:
             [
                 f"## `{name}`",
                 "",
+                f"- Role: {definition['role']}",
                 f"- State variables: {definition['state_variables']}",
                 f"- Timing: {definition['timing']}",
                 f"- Basis: {definition['basis']}",
@@ -231,7 +248,16 @@ def render_readout_rules_markdown() -> str:
 
 
 def render_metrics_markdown() -> str:
-    sections = ["# Metrics And Failure Modes", ""]
+    sections = ["# Metrics, Gates, And Failure Modes", ""]
+    sections.extend(["## Gate Thresholds", ""])
+    for name, definition in GATE_DEFINITIONS.items():
+        sections.extend(
+            [
+                f"- `{name}` = {definition['default']}: {definition['meaning']}",
+            ]
+        )
+    sections.append("")
+
     for name, definition in METRIC_DEFINITIONS.items():
         sections.extend(
             [

@@ -9,6 +9,7 @@ from sim.metrics import (
     compute_chsh,
     residual_branch_quality,
 )
+from sim.readout import RULE_RESIDUAL_TEMPLATE_CLASSIFIER
 
 
 def test_branch_weights_and_purity_for_pure_branch() -> None:
@@ -32,10 +33,10 @@ def test_complementary_quality_tracks_opposite_of_extracted_branch() -> None:
 def test_compute_chsh_uses_canonical_angle_set() -> None:
     frame = pd.DataFrame(
         [
-            {"rule": "residual_classifier", "window_fraction": 0.25, "anisotropy_ratio": 4.0, "angle_a_deg": 0.0, "angle_b_deg": 22.5, "correlation": 0.7},
-            {"rule": "residual_classifier", "window_fraction": 0.25, "anisotropy_ratio": 4.0, "angle_a_deg": 0.0, "angle_b_deg": 67.5, "correlation": -0.1},
-            {"rule": "residual_classifier", "window_fraction": 0.25, "anisotropy_ratio": 4.0, "angle_a_deg": 45.0, "angle_b_deg": 22.5, "correlation": 0.6},
-            {"rule": "residual_classifier", "window_fraction": 0.25, "anisotropy_ratio": 4.0, "angle_a_deg": 45.0, "angle_b_deg": 67.5, "correlation": 0.5},
+            {"rule": RULE_RESIDUAL_TEMPLATE_CLASSIFIER, "window_fraction": 0.25, "gamma_plus": 4.0, "gamma_minus": 1.0, "anisotropy_ratio": 4.0, "angle_a_deg": 0.0, "angle_b_deg": 22.5, "correlation": 0.7},
+            {"rule": RULE_RESIDUAL_TEMPLATE_CLASSIFIER, "window_fraction": 0.25, "gamma_plus": 4.0, "gamma_minus": 1.0, "anisotropy_ratio": 4.0, "angle_a_deg": 0.0, "angle_b_deg": 67.5, "correlation": -0.1},
+            {"rule": RULE_RESIDUAL_TEMPLATE_CLASSIFIER, "window_fraction": 0.25, "gamma_plus": 4.0, "gamma_minus": 1.0, "anisotropy_ratio": 4.0, "angle_a_deg": 45.0, "angle_b_deg": 22.5, "correlation": 0.6},
+            {"rule": RULE_RESIDUAL_TEMPLATE_CLASSIFIER, "window_fraction": 0.25, "gamma_plus": 4.0, "gamma_minus": 1.0, "anisotropy_ratio": 4.0, "angle_a_deg": 45.0, "angle_b_deg": 67.5, "correlation": 0.5},
         ]
     )
     summary = compute_chsh(frame)

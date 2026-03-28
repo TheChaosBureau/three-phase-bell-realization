@@ -89,6 +89,10 @@ def write_sequential_results(artifact_dir: Path, result) -> dict[str, object]:
     write_dataframe(sequential_dir / "rule_summary.csv", result.rule_summary)
     write_dataframe(sequential_dir / "drift_summary.csv", result.drift_summary)
     write_dataframe(sequential_dir / "chsh_summary.csv", result.chsh_summary)
+    write_dataframe(sequential_dir / "sequential_residual_agreement.csv", result.residual_agreement_summary)
+    write_dataframe(sequential_dir / "sequential_gated_summary.csv", result.gated_summary)
+    write_dataframe(sequential_dir / "aligned_support_by_confidence.csv", result.aligned_support_by_confidence)
+    write_dataframe(sequential_dir / "legacy_rule_controls.csv", result.legacy_rule_controls)
     if hasattr(result, "correlation_summary"):
         write_dataframe(sequential_dir / "correlation_summary.csv", result.correlation_summary)
     dump_json(sequential_dir / "run_manifest.json", result.run_manifest)
@@ -101,14 +105,14 @@ def write_sequential_results(artifact_dir: Path, result) -> dict[str, object]:
     )
 
     best_chsh = (
-        result.chsh_summary.sort_values("chsh", ascending=False).head(3).to_dict(orient="records")
-        if not result.chsh_summary.empty
+        result.gated_summary.sort_values("CHSH_raw", ascending=False).head(3).to_dict(orient="records")
+        if not result.gated_summary.empty
         else []
     )
     return {
         "combo_count": len(result.combo_keys),
         "trial_count": int(len(result.trial_metrics)),
-        "top_chsh_rows": best_chsh,
+        "top_rule_groups": best_chsh,
     }
 
 

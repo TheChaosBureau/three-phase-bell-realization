@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from sim.io import dump_json, ensure_dir, load_json
+from sim.readout import RULE_ENERGY_LOSS_WINNER
 
 PRIMARY_WINDOW = 0.25
 SIGNALING_THRESHOLD = 0.05
@@ -149,11 +150,11 @@ def plot_marginal_drift(rule_summary: pd.DataFrame, out_path: Path) -> None:
     if rule_summary.empty:
         return
     primary = rule_summary[
-        (rule_summary["rule"] == "residual_classifier")
+        (rule_summary["rule"] == RULE_ENERGY_LOSS_WINNER)
         & (rule_summary["window_fraction"].round(6) == round(PRIMARY_WINDOW, 6))
     ]
     if primary.empty:
-        primary = rule_summary[rule_summary["rule"] == "residual_classifier"]
+        primary = rule_summary[rule_summary["rule"] == RULE_ENERGY_LOSS_WINNER]
     if primary.empty:
         primary = rule_summary
     primary = primary[primary["anisotropy_ratio"] == primary["anisotropy_ratio"].max()]
@@ -181,7 +182,7 @@ def plot_aligned_mass(rule_summary: pd.DataFrame, out_path: Path) -> None:
     if rule_summary.empty:
         return
     aligned = rule_summary[
-        (rule_summary["rule"] == "residual_classifier")
+        (rule_summary["rule"] == RULE_ENERGY_LOSS_WINNER)
         & (rule_summary["angle_a_deg"].round(6) == rule_summary["angle_b_deg"].round(6))
     ]
     if aligned.empty:
@@ -208,11 +209,11 @@ def plot_correlation_vs_delta(rule_summary: pd.DataFrame, out_path: Path) -> Non
     if rule_summary.empty:
         return
     primary = rule_summary[
-        (rule_summary["rule"] == "residual_classifier")
+        (rule_summary["rule"] == RULE_ENERGY_LOSS_WINNER)
         & (rule_summary["window_fraction"].round(6) == round(PRIMARY_WINDOW, 6))
     ]
     if primary.empty:
-        primary = rule_summary[rule_summary["rule"] == "residual_classifier"]
+        primary = rule_summary[rule_summary["rule"] == RULE_ENERGY_LOSS_WINNER]
     if primary.empty:
         return
     primary = primary[primary["anisotropy_ratio"] == primary["anisotropy_ratio"].max()].copy()
@@ -249,8 +250,7 @@ def plot_chsh(chsh_summary: pd.DataFrame, out_path: Path) -> None:
 
 def detect_failures(
     single_ratio_summary: pd.DataFrame,
-    drift_summary: pd.DataFrame,
-    chsh_summary: pd.DataFrame,
+    gated_summary: pd.DataFrame,
 ) -> dict[str, dict[str, object]]:
     failures: dict[str, dict[str, object]] = {}
 
@@ -287,32 +287,13 @@ def detect_failures(
             "rows": int(len(washed_out)),
         }
 
-    if not drift_summary.empty:
-        signaling = drift_summary[
-            (drift_summary["alice_drift_max"] > SIGNALING_THRESHOLD)
-            | (drift_summary["bob_drift_max"] > SIGNALING_THRESHOLD)
-        ]
+    if not gated_summary.empty:
+        signaling = gated_summary[~gated_summary["drift_gate_pass"]]
         failures["F3_signaling_regime"] = {
             "triggered": bool(not signaling.empty),
             "rows": int(len(signaling)),
         }
-
-    if not chsh_summary.empty and not drift_summary.empty:
-        chsh_peaks = chsh_summary.sort_values("chsh", ascending=False).head(5)
-        drift_peaks = drift_summary.rename(columns={"rule": "drift_rule"})
-        merged = chsh_peaks.merge(
-            drift_peaks,
-            left_on=["rule", "window_fraction", "anisotropy_ratio"],
-            right_on=["drift_rule", "window_fraction", "anisotropy_ratio"],
-            how="left",
-        )
-        overfit = merged[
-            (merged["chsh"] > 1.9)
-            & (
-                (merged["alice_drift_max"].fillna(0.0) > SIGNALING_THRESHOLD)
-                | (merged["bob_drift_max"].fillna(0.0) > SIGNALING_THRESHOLD)
-            )
-        ]
+        overfit = gated_summary[gated_summary["overfit_flag"]]
         failures["F5_overfit_readout"] = {
             "triggered": bool(not overfit.empty),
             "rows": int(len(overfit)),
@@ -323,8 +304,9 @@ def detect_failures(
 
 def build_report_answers(
     single_ratio_summary: pd.DataFrame,
-    drift_summary: pd.DataFrame,
-    chsh_summary: pd.DataFrame,
+    gated_summary: pd.DataFrame,
+    residual_agreement_summary: pd.DataFrame,
+    aligned_support_by_confidence: pd.DataFrame,
 ) -> dict[str, str]:
     answers: dict[str, str] = {}
 
@@ -351,36 +333,61 @@ def build_report_answers(
         answers["q1_projective_residuals"] = "Single-analyzer artifacts were not present."
         answers["q2_window_durations"] = "Window comparison was not available."
 
-    if not drift_summary.empty:
-        low_drift = drift_summary[
-            (drift_summary["alice_drift_max"] <= SIGNALING_THRESHOLD)
-            & (drift_summary["bob_drift_max"] <= SIGNALING_THRESHOLD)
-        ]
-        if not low_drift.empty:
-            preferred_rule = str(low_drift.sort_values(["alice_drift_max", "bob_drift_max"]).iloc[0]["rule"])
+    if not gated_summary.empty:
+        headline = gated_summary[gated_summary["headline_eligible"]]
+        if headline.empty:
             answers["q3_rule_meaningfulness"] = (
-                f"Lowest-drift behavior comes from {preferred_rule}; dominant-pre style rules are least dynamical because they rely on pre-window branch weights."
+                "No post-update headline rule currently clears the full drift, support, coherence, and projectivity gates."
             )
         else:
+            preferred = headline.sort_values(["CHSH_gated", "residual_agreement_rate"], ascending=[False, False]).iloc[0]
             answers["q3_rule_meaningfulness"] = (
-                "Every tested readout shows noticeable drift; residual-classifier and extracted-energy rules remain the most dynamical, but none are drift-free."
+                "The redesigned headline rule remains meaningful in a narrow gated regime at "
+                f"window={preferred['window_fraction']:.3f}, ratio={preferred['anisotropy_ratio']:.3f}."
             )
+        redesigned_low_drift = gated_summary[
+            (gated_summary["rule"] == RULE_ENERGY_LOSS_WINNER)
+            & gated_summary["drift_gate_pass"]
+            & (~gated_summary["overfit_flag"])
+        ]
         answers["q5_marginal_protection"] = (
-            "Some marginal protection is available in the tested regime."
-            if not low_drift.empty
-            else "Projectivity and marginal protection trade off sharply in the tested regime."
+            "Low drift survives for at least one redesigned headline slice."
+            if not redesigned_low_drift.empty
+            else "Low drift does not survive robustly once the redesigned headline rule is isolated from overfit-prone controls."
         )
     else:
         answers["q3_rule_meaningfulness"] = "Sequential readout comparisons were not available."
         answers["q5_marginal_protection"] = "Marginal drift was not available."
 
-    if not chsh_summary.empty:
-        peak = chsh_summary.sort_values("chsh", ascending=False).iloc[0]
+    if not gated_summary.empty:
+        peak = gated_summary.sort_values("CHSH_raw", ascending=False).iloc[0]
         answers["q4_pair_statistics"] = (
-            f"Peak sequential structure appears for rule={peak['rule']} at window={peak['window_fraction']:.3f} and ratio={peak['anisotropy_ratio']:.3f}, which should be compared against the drift summary before calling it sphere-like."
+            f"Peak raw sequential structure appears for rule={peak['rule']} at window={peak['window_fraction']:.3f} and ratio={peak['anisotropy_ratio']:.3f}; gated CHSH should be used instead of this raw peak for any serious claim."
         )
     else:
         answers["q4_pair_statistics"] = "Sequential pair statistics were not available."
+
+    if not residual_agreement_summary.empty:
+        best_agreement = residual_agreement_summary.sort_values(
+            ["residual_agreement_rate", "mean_confidence_margin"],
+            ascending=[False, False],
+        ).iloc[0]
+        answers["q6_residual_coherence"] = (
+            f"Best residual coherence reaches agreement={best_agreement['residual_agreement_rate']:.3f} with ambiguity={best_agreement['residual_ambiguity_rate']:.3f}."
+        )
+
+    if not aligned_support_by_confidence.empty:
+        headline_support = aligned_support_by_confidence[
+            aligned_support_by_confidence["rule"] == RULE_ENERGY_LOSS_WINNER
+        ]
+        if not headline_support.empty:
+            best_support = headline_support.sort_values(
+                ["aligned_same_sign_mass_high_confidence", "aligned_same_sign_mass"],
+                ascending=[True, True],
+            ).iloc[0]
+            answers["q7_aligned_support"] = (
+                f"High-confidence aligned same-sign mass is {best_support['aligned_same_sign_mass_high_confidence']:.3f} versus {best_support['aligned_same_sign_mass']:.3f} over all trials."
+            )
 
     return answers
 
@@ -397,6 +404,9 @@ def main() -> None:
     rule_summary = load_csv(artifact_dir / "sequential" / "rule_summary.csv")
     drift_summary = load_csv(artifact_dir / "sequential" / "drift_summary.csv")
     chsh_summary = load_csv(artifact_dir / "sequential" / "chsh_summary.csv")
+    gated_summary = load_csv(artifact_dir / "sequential" / "sequential_gated_summary.csv")
+    residual_agreement_summary = load_csv(artifact_dir / "sequential" / "sequential_residual_agreement.csv")
+    aligned_support_by_confidence = load_csv(artifact_dir / "sequential" / "aligned_support_by_confidence.csv")
 
     plot_projectivity_vs_ratio(single_ratio_summary, plots_dir / "projectivity-vs-anisotropy.png")
     plot_residual_quality_vs_ratio(single_ratio_summary, plots_dir / "residual-quality-vs-anisotropy.png")
@@ -417,8 +427,13 @@ def main() -> None:
         "correlation_vs_delta": str(plots_dir / "correlation-vs-delta.png"),
         "chsh_vs_anisotropy": str(plots_dir / "chsh-vs-anisotropy.png"),
     }
-    summary["failure_modes"] = detect_failures(single_ratio_summary, drift_summary, chsh_summary)
-    summary["report_answers"] = build_report_answers(single_ratio_summary, drift_summary, chsh_summary)
+    summary["failure_modes"] = detect_failures(single_ratio_summary, gated_summary)
+    summary["report_answers"] = build_report_answers(
+        single_ratio_summary,
+        gated_summary,
+        residual_agreement_summary,
+        aligned_support_by_confidence,
+    )
     dump_json(artifact_dir / "summary.json", summary)
     print(f"Wrote plots and updated summary in {artifact_dir}")
 

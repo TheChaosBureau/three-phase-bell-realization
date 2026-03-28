@@ -11,11 +11,12 @@ PRIMARY_WINDOW_FRACTIONS = (1.0 / 12.0, 0.25, 0.5, 1.0)
 KEY_ANGLES_DEG = (0.0, 22.5, 45.0, 67.5, 90.0)
 DEFAULT_ANISOTROPY_RATIOS = (1.0, 1.5, 2.0, 4.0, 8.0, 16.0)
 DEFAULT_READOUT_RULES = (
-    "dominant_pre",
-    "dominant_post",
-    "dominance_shift",
-    "extracted_energy",
-    "residual_classifier",
+    "energy_loss_winner",
+    "residual_template_classifier",
+    "confidence_weighted_agreement",
+    "legacy_dominant_post",
+    "legacy_dominance_shift",
+    "control_negative_prewindow",
 )
 
 
@@ -78,6 +79,18 @@ class SequentialRunConfig:
     alice_angles_deg: tuple[float, ...] = KEY_ANGLES_DEG
     bob_angles_deg: tuple[float, ...] = KEY_ANGLES_DEG
     readout_rules: tuple[str, ...] = DEFAULT_READOUT_RULES
+    gate_thresholds: "SequentialGateConfig" = field(default_factory=lambda: SequentialGateConfig())
+
+
+@dataclass(slots=True)
+class SequentialGateConfig:
+    max_alice_drift: float = 0.05
+    max_bob_drift: float = 0.05
+    max_aligned_same_sign_mass: float = 0.25
+    min_residual_agreement_rate: float = 0.75
+    max_residual_ambiguity_rate: float = 0.25
+    min_projectivity_compatibility: float = 0.75
+    confidence_margin_threshold: float = 0.2
 
 
 @dataclass(slots=True)
@@ -97,6 +110,7 @@ class SweepPreset:
     include_dense_single_angles: bool = True
     dense_single_angle_count: int = 37
     readout_rules: tuple[str, ...] = DEFAULT_READOUT_RULES
+    sequential_gate_thresholds: SequentialGateConfig = field(default_factory=SequentialGateConfig)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -185,6 +199,7 @@ def build_sequential_run_configs(preset: SweepPreset) -> list[SequentialRunConfi
                     alice_angles_deg=preset.sequential_alice_angles_deg,
                     bob_angles_deg=preset.sequential_bob_angles_deg,
                     readout_rules=preset.readout_rules,
+                    gate_thresholds=preset.sequential_gate_thresholds,
                 )
             )
     return runs

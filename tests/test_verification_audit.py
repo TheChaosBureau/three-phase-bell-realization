@@ -53,14 +53,14 @@ def test_build_verification_audit_bundle(tmp_path: Path) -> None:
         check=True,
     )
 
-    sequential_full = pd.read_csv(audit_dir / "tables" / "sequential_full.csv")
     single_full = pd.read_csv(audit_dir / "tables" / "single_full.csv")
-    top_chsh = pd.read_csv(audit_dir / "tables" / "top_chsh_audit.csv")
-    trust_ranking = pd.read_csv(audit_dir / "tables" / "trust_ranking.csv")
+    sequential_full = pd.read_csv(audit_dir / "tables" / "sequential_full.csv")
+    gated_summary = pd.read_csv(audit_dir / "tables" / "sequential_gated_summary.csv")
+    residual_agreement = pd.read_csv(audit_dir / "tables" / "sequential_residual_agreement.csv")
+    aligned_support = pd.read_csv(audit_dir / "tables" / "aligned_support_by_confidence.csv")
+    legacy_controls = pd.read_csv(audit_dir / "tables" / "legacy_rule_controls.csv")
+    top_chsh_audit = pd.read_csv(audit_dir / "tables" / "top_sequential_chsh_audit.csv")
 
-    assert {"rule", "phiA", "phiB", "CHSH", "alice_marginal_drift", "bob_marginal_drift", "no_signaling_flag", "overfit_flag"}.issubset(
-        sequential_full.columns
-    )
     assert {
         "angle_deg",
         "anisotropy_ratio",
@@ -68,20 +68,53 @@ def test_build_verification_audit_bundle(tmp_path: Path) -> None:
         "gamma_minus",
         "window_fraction",
         "branch_loss_mean",
-        "dominance_mean",
-        "quality_to_plus",
-        "quality_to_minus",
-        "residual_branch_quality",
         "projectivity_score",
-        "clusterability",
-        "total_norm_before",
-        "total_norm_after",
     }.issubset(single_full.columns)
-    assert {"rule", "CHSH", "audit_note"}.issubset(top_chsh.columns)
-    assert {"rule", "trust_score", "trust_label"}.issubset(trust_ranking.columns)
+    assert {
+        "rule",
+        "rule_display_name",
+        "phiA",
+        "phiB",
+        "E_phiA_phiB",
+        "group_residual_agreement_rate",
+        "CHSH_raw",
+        "headline_eligible",
+    }.issubset(sequential_full.columns)
+    assert {
+        "rule",
+        "rule_display_name",
+        "residual_agreement_rate",
+        "residual_ambiguity_rate",
+        "mean_confidence_margin",
+        "mean_projectivity_compatibility",
+    }.issubset(residual_agreement.columns)
+    assert {
+        "rule",
+        "rule_display_name",
+        "alice_marginal_drift",
+        "bob_marginal_drift",
+        "aligned_same_sign_mass",
+        "aligned_anti_mass",
+        "CHSH_raw",
+        "CHSH_gated",
+        "headline_eligible",
+    }.issubset(gated_summary.columns)
+    assert {
+        "rule",
+        "rule_display_name",
+        "aligned_same_sign_mass",
+        "aligned_same_sign_mass_high_confidence",
+        "high_confidence_trial_count",
+        "low_confidence_trial_count",
+    }.issubset(aligned_support.columns)
+    assert {"rule", "rule_display_name"}.issubset(legacy_controls.columns)
+    assert {"rule", "gate_blockers", "audit_note", "CHSH_raw"}.issubset(top_chsh_audit.columns)
 
     assert (audit_dir / "definitions" / "readout_rules.md").exists()
     assert (audit_dir / "definitions" / "metrics.md").exists()
+    assert (audit_dir / "definitions" / "gate_thresholds.json").exists()
     assert (audit_dir / "plots" / "manifest.json").exists()
+    assert (audit_dir / "plots" / "residual-agreement-vs-anisotropy.png").exists()
+    assert (audit_dir / "plots" / "legacy-vs-redesigned-rule-comparison.png").exists()
     assert (audit_dir / "raw_cases" / "manifest.json").exists()
     assert (audit_dir / "README.md").exists()

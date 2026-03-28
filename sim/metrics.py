@@ -6,8 +6,15 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .config import EPSILON
-from .readout import ALL_READOUT_RULES
+from .config import EPSILON, SequentialGateConfig
+from .definitions import OVERFIT_CHSH_THRESHOLD
+from .readout import (
+    ALL_READOUT_RULES,
+    LEGACY_RULES,
+    RULE_ENERGY_LOSS_WINNER,
+    RULE_CONTROL_NEGATIVE_PREWINDOW,
+    RULE_ROLE,
+)
 from .state import abs2
 
 CHSH_ANGLE_SET = (
@@ -161,15 +168,21 @@ def summarize_single_trials(trials: pd.DataFrame) -> tuple[pd.DataFrame, pd.Data
 def summarize_sequential_trials(
     trials: pd.DataFrame,
     *,
+    gate_thresholds: SequentialGateConfig,
     rules: tuple[str, ...] = ALL_READOUT_RULES,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     rule_frames: list[pd.DataFrame] = []
     drift_rows: list[dict[str, Any]] = []
     correlation_rows: list[dict[str, Any]] = []
+    gate_rows: list[dict[str, Any]] = []
+    aligned_rows: list[dict[str, Any]] = []
+    agreement_rows: list[dict[str, Any]] = []
 
     for rule in rules:
         alice_col = f"alice_outcome_{rule}"
         bob_col = f"bob_outcome_{rule}"
+        alice_valid_col = f"alice_valid_{rule}"
+        bob_valid_col = f"bob_valid_{rule}"
         working = trials[
             [
                 "window_fraction",
@@ -178,19 +191,52 @@ def summarize_sequential_trials(
                 "anisotropy_ratio",
                 "angle_a_deg",
                 "angle_b_deg",
+                "aligned_pair",
+                "pair_readout_agreement",
+                "pair_residual_ambiguity",
+                "pair_high_confidence_residual",
+                "pair_low_confidence_residual",
+                "mean_confidence_margin",
+                "mean_projectivity_compatibility",
+                "bob_branch_stability_score",
                 alice_col,
                 bob_col,
+                alice_valid_col,
+                bob_valid_col,
             ]
         ].copy()
         working["rule"] = rule
-        working["corr"] = working[alice_col] * working[bob_col]
-        working["same_sign"] = (working[alice_col] == working[bob_col]).astype(float)
-        working["anti_sign"] = (working[alice_col] != working[bob_col]).astype(float)
+        working["rule_role"] = RULE_ROLE[rule]
+        working["pair_valid"] = working[alice_valid_col].astype(bool) & working[bob_valid_col].astype(bool)
+        working["corr"] = np.where(working["pair_valid"], working[alice_col] * working[bob_col], np.nan)
+        working["same_sign"] = np.where(
+            working["pair_valid"],
+            (working[alice_col] == working[bob_col]).astype(float),
+            np.nan,
+        )
+        working["anti_sign"] = np.where(
+            working["pair_valid"],
+            (working[alice_col] != working[bob_col]).astype(float),
+            np.nan,
+        )
+        working["alice_marginal_valid"] = np.where(working["pair_valid"], working[alice_col], np.nan)
+        working["bob_marginal_valid"] = np.where(working["pair_valid"], working[bob_col], np.nan)
+        working["same_sign_high_conf"] = np.where(
+            working["pair_valid"] & working["pair_high_confidence_residual"].astype(bool),
+            (working[alice_col] == working[bob_col]).astype(float),
+            np.nan,
+        )
+        working["anti_sign_high_conf"] = np.where(
+            working["pair_valid"] & working["pair_high_confidence_residual"].astype(bool),
+            (working[alice_col] != working[bob_col]).astype(float),
+            np.nan,
+        )
 
         combo_summary = (
             working.groupby(
                 [
                     "rule",
+                    "rule_role",
                     "window_fraction",
                     "gamma_plus",
                     "gamma_minus",
@@ -201,11 +247,21 @@ def summarize_sequential_trials(
                 as_index=False,
             )
             .agg(
-                alice_marginal=(alice_col, "mean"),
-                bob_marginal=(bob_col, "mean"),
+                alice_marginal=("alice_marginal_valid", "mean"),
+                bob_marginal=("bob_marginal_valid", "mean"),
                 same_sign_mass=("same_sign", "mean"),
                 anti_sign_mass=("anti_sign", "mean"),
                 correlation=("corr", "mean"),
+                valid_trial_fraction=("pair_valid", "mean"),
+                ambiguity_fraction=("pair_residual_ambiguity", "mean"),
+                high_confidence_trial_fraction=("pair_high_confidence_residual", "mean"),
+                same_sign_high_confidence=("same_sign_high_conf", "mean"),
+                anti_sign_high_confidence=("anti_sign_high_conf", "mean"),
+                residual_agreement_rate=("pair_readout_agreement", "mean"),
+                residual_ambiguity_rate=("pair_residual_ambiguity", "mean"),
+                mean_confidence_margin=("mean_confidence_margin", "mean"),
+                mean_projectivity_compatibility=("mean_projectivity_compatibility", "mean"),
+                mean_branch_stability_score=("bob_branch_stability_score", "mean"),
             )
             .sort_values(
                 [
@@ -221,31 +277,68 @@ def summarize_sequential_trials(
         correlation_rows.extend(combo_summary.to_dict(orient="records"))
 
         alice_drift = (
-            combo_summary.groupby(["rule", "window_fraction", "anisotropy_ratio", "angle_a_deg"])
+            combo_summary.groupby(
+                ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio", "angle_a_deg"]
+            )
             .agg(alice_drift=("alice_marginal", lambda s: float(s.max() - s.min())))
             .reset_index()
         )
         bob_drift = (
-            combo_summary.groupby(["rule", "window_fraction", "anisotropy_ratio", "angle_b_deg"])
+            combo_summary.groupby(
+                ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio", "angle_b_deg"]
+            )
             .agg(bob_drift=("bob_marginal", lambda s: float(s.max() - s.min())))
             .reset_index()
         )
         merged_drift = (
-            alice_drift.groupby(["rule", "window_fraction", "anisotropy_ratio"], as_index=False)
+            alice_drift.groupby(
+                ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+                as_index=False,
+            )
             .agg(alice_drift_max=("alice_drift", "max"))
             .merge(
-                bob_drift.groupby(["rule", "window_fraction", "anisotropy_ratio"], as_index=False)
+                bob_drift.groupby(
+                    ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+                    as_index=False,
+                )
                 .agg(bob_drift_max=("bob_drift", "max")),
-                on=["rule", "window_fraction", "anisotropy_ratio"],
+                on=["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
                 how="outer",
             )
         )
         drift_rows.extend(merged_drift.to_dict(orient="records"))
 
+        group_cols = ["rule", "rule_role", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
+        pair_group_summary = (
+            combo_summary.groupby(group_cols, as_index=False)
+            .agg(
+                residual_agreement_rate=("residual_agreement_rate", "mean"),
+                residual_ambiguity_rate=("residual_ambiguity_rate", "mean"),
+                mean_confidence_margin=("mean_confidence_margin", "mean"),
+                mean_projectivity_compatibility=("mean_projectivity_compatibility", "mean"),
+                mean_branch_stability_score=("mean_branch_stability_score", "mean"),
+            )
+        )
+        agreement_rows.extend(pair_group_summary.to_dict(orient="records"))
+
+        aligned_summary = (
+            working[working["aligned_pair"].astype(bool)]
+            .groupby(group_cols, as_index=False)
+            .agg(
+                aligned_same_sign_mass=("same_sign", "mean"),
+                aligned_anti_mass=("anti_sign", "mean"),
+                aligned_same_sign_mass_high_confidence=("same_sign_high_conf", "mean"),
+                aligned_anti_mass_high_confidence=("anti_sign_high_conf", "mean"),
+                high_confidence_trial_count=("pair_high_confidence_residual", "sum"),
+                low_confidence_trial_count=("pair_low_confidence_residual", "sum"),
+            )
+        )
+        aligned_rows.extend(aligned_summary.to_dict(orient="records"))
+
     rule_summary = pd.concat(rule_frames, ignore_index=True) if rule_frames else pd.DataFrame()
     if drift_rows:
         drift_summary = pd.DataFrame(drift_rows).drop_duplicates().sort_values(
-            ["rule", "window_fraction", "anisotropy_ratio"]
+            ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
         )
     else:
         drift_summary = pd.DataFrame()
@@ -255,8 +348,158 @@ def summarize_sequential_trials(
         )
     else:
         correlation_df = pd.DataFrame()
+    residual_agreement_summary = (
+        pd.DataFrame(agreement_rows).drop_duplicates().sort_values(
+            ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
+        )
+        if agreement_rows
+        else pd.DataFrame()
+    )
+    aligned_support_by_confidence = (
+        pd.DataFrame(aligned_rows).drop_duplicates().sort_values(
+            ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
+        )
+        if aligned_rows
+        else pd.DataFrame()
+    )
 
-    return rule_summary, drift_summary, correlation_df
+    chsh_raw_df = compute_chsh(correlation_df) if not correlation_df.empty else pd.DataFrame()
+    if not chsh_raw_df.empty and not rule_summary.empty:
+        rule_reference = (
+            rule_summary[
+                ["rule", "rule_role", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
+            ]
+            .drop_duplicates()
+            .sort_values(["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"])
+        )
+        chsh_raw_df = chsh_raw_df.rename(columns={"chsh": "CHSH_raw"}).merge(
+            rule_reference,
+            on=["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+            how="left",
+        )
+    else:
+        chsh_raw_df = pd.DataFrame()
+
+    if not residual_agreement_summary.empty:
+        gated_summary = residual_agreement_summary.merge(
+            drift_summary.rename(
+                columns={
+                    "alice_drift_max": "alice_marginal_drift",
+                    "bob_drift_max": "bob_marginal_drift",
+                }
+            ),
+            on=["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+            how="left",
+        ).merge(
+            aligned_support_by_confidence[
+                [
+                    "rule",
+                    "window_fraction",
+                    "gamma_plus",
+                    "gamma_minus",
+                    "anisotropy_ratio",
+                    "aligned_same_sign_mass",
+                    "aligned_anti_mass",
+                    "aligned_same_sign_mass_high_confidence",
+                    "aligned_anti_mass_high_confidence",
+                    "high_confidence_trial_count",
+                    "low_confidence_trial_count",
+                ]
+            ],
+            on=["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+            how="left",
+        )
+        if not chsh_raw_df.empty:
+            gated_summary = gated_summary.merge(
+                chsh_raw_df[
+                    [
+                        "rule",
+                        "rule_role",
+                        "window_fraction",
+                        "gamma_plus",
+                        "gamma_minus",
+                        "anisotropy_ratio",
+                        "CHSH_raw",
+                    ]
+                ],
+                on=["rule", "rule_role", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"],
+                how="left",
+            )
+        else:
+            gated_summary["CHSH_raw"] = np.nan
+
+        gated_summary["drift_gate_pass"] = (
+            (gated_summary["alice_marginal_drift"].fillna(np.inf) <= gate_thresholds.max_alice_drift)
+            & (gated_summary["bob_marginal_drift"].fillna(np.inf) <= gate_thresholds.max_bob_drift)
+        )
+        gated_summary["aligned_support_gate_pass"] = (
+            gated_summary["aligned_same_sign_mass"].fillna(np.inf)
+            <= gate_thresholds.max_aligned_same_sign_mass
+        )
+        gated_summary["residual_coherence_gate_pass"] = (
+            (gated_summary["residual_agreement_rate"].fillna(0.0) >= gate_thresholds.min_residual_agreement_rate)
+            & (
+                gated_summary["residual_ambiguity_rate"].fillna(np.inf)
+                <= gate_thresholds.max_residual_ambiguity_rate
+            )
+        )
+        gated_summary["projectivity_gate_pass"] = (
+            gated_summary["mean_projectivity_compatibility"].fillna(0.0)
+            >= gate_thresholds.min_projectivity_compatibility
+        )
+        gated_summary["overfit_flag"] = (
+            (gated_summary["CHSH_raw"].fillna(-np.inf) > OVERFIT_CHSH_THRESHOLD)
+            & (
+                ~gated_summary["drift_gate_pass"]
+                | ~gated_summary["residual_coherence_gate_pass"]
+                | ~gated_summary["projectivity_gate_pass"]
+            )
+        )
+        gated_summary["overfit_gate_pass"] = ~gated_summary["overfit_flag"]
+        gated_summary["no_signaling_flag"] = gated_summary["drift_gate_pass"]
+        gated_summary["gates_passed"] = (
+            gated_summary[
+                [
+                    "drift_gate_pass",
+                    "aligned_support_gate_pass",
+                    "overfit_gate_pass",
+                    "residual_coherence_gate_pass",
+                    "projectivity_gate_pass",
+                ]
+            ]
+            .astype(int)
+            .sum(axis=1)
+        )
+        gated_summary["all_gates_pass"] = gated_summary["gates_passed"] == 5
+        gated_summary["CHSH_gated"] = np.where(
+            gated_summary["all_gates_pass"],
+            gated_summary["CHSH_raw"],
+            np.nan,
+        )
+        gated_summary["headline_eligible"] = (
+            gated_summary["all_gates_pass"]
+            & (gated_summary["rule"] == RULE_ENERGY_LOSS_WINNER)
+        )
+        gated_summary = gated_summary.sort_values(["rule", "window_fraction", "anisotropy_ratio"]).reset_index(drop=True)
+    else:
+        gated_summary = pd.DataFrame()
+
+    legacy_rule_controls = (
+        gated_summary[gated_summary["rule"].isin(LEGACY_RULES + (RULE_CONTROL_NEGATIVE_PREWINDOW,))]
+        .copy()
+        if not gated_summary.empty
+        else pd.DataFrame()
+    )
+
+    return (
+        rule_summary,
+        drift_summary,
+        correlation_df,
+        residual_agreement_summary,
+        gated_summary,
+        aligned_support_by_confidence,
+        legacy_rule_controls,
+    )
 
 
 def compute_chsh(rule_summary: pd.DataFrame) -> pd.DataFrame:
@@ -264,8 +507,8 @@ def compute_chsh(rule_summary: pd.DataFrame) -> pd.DataFrame:
     if rule_summary.empty:
         return pd.DataFrame(rows)
 
-    for (rule, window_fraction, anisotropy_ratio), group in rule_summary.groupby(
-        ["rule", "window_fraction", "anisotropy_ratio"]
+    for (rule, window_fraction, gamma_plus, gamma_minus, anisotropy_ratio), group in rule_summary.groupby(
+        ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
     ):
         lookup = {
             (float(row.angle_a_deg), float(row.angle_b_deg)): float(row.correlation)
@@ -282,10 +525,14 @@ def compute_chsh(rule_summary: pd.DataFrame) -> pd.DataFrame:
             {
                 "rule": rule,
                 "window_fraction": window_fraction,
+                "gamma_plus": gamma_plus,
+                "gamma_minus": gamma_minus,
                 "anisotropy_ratio": anisotropy_ratio,
                 "chsh": chsh_value,
             }
         )
     if not rows:
         return pd.DataFrame()
-    return pd.DataFrame(rows).sort_values(["rule", "window_fraction", "anisotropy_ratio"])
+    return pd.DataFrame(rows).sort_values(
+        ["rule", "window_fraction", "gamma_plus", "gamma_minus", "anisotropy_ratio"]
+    )

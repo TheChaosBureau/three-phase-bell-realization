@@ -1,5 +1,6 @@
 from .config import (
     DampingConfig,
+    SequentialGateConfig,
     SequentialRunConfig,
     SingleRunConfig,
     SourceConfig,
@@ -9,6 +10,7 @@ from .config import (
 
 __all__ = [
     "DampingConfig",
+    "SequentialGateConfig",
     "SequentialRunConfig",
     "SingleRunConfig",
     "SourceConfig",

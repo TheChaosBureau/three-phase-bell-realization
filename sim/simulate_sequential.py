@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .config import SequentialRunConfig
+from .config import EPSILON, SequentialRunConfig
 from .damping import evolve_with_diagnostics
 from .metrics import (
     complementary_residual_quality,
@@ -14,8 +14,13 @@ from .metrics import (
     residual_branch_quality,
     summarize_sequential_trials,
 )
-from .readout import compute_all_outcomes
-from .state import abs2, sample_source_states
+from .readout import (
+    ALL_READOUT_RULES,
+    RULE_ENERGY_LOSS_WINNER,
+    compute_stage_readout,
+    rule_role,
+)
+from .state import abs2, from_analyzer_basis, sample_source_states
 
 
 @dataclass(slots=True)
@@ -25,6 +30,10 @@ class SequentialBatchResult:
     drift_summary: pd.DataFrame
     correlation_summary: pd.DataFrame
     chsh_summary: pd.DataFrame
+    residual_agreement_summary: pd.DataFrame
+    gated_summary: pd.DataFrame
+    aligned_support_by_confidence: pd.DataFrame
+    legacy_rule_controls: pd.DataFrame
     initial_states: np.ndarray
     post_alice_states: np.ndarray
     post_bob_states: np.ndarray
@@ -40,6 +49,36 @@ def _combo_key(config: SequentialRunConfig, angle_a_deg: float, angle_b_deg: flo
         f"__a_{angle_a_deg:.6f}"
         f"__b_{angle_b_deg:.6f}"
     )
+
+
+def _compute_bob_branch_stability(
+    post_alice_states: np.ndarray,
+    phi_b_rad: float,
+    config: SequentialRunConfig,
+    reference_outcomes: np.ndarray,
+    *,
+    perturbation_scale: float = 1e-3,
+) -> np.ndarray:
+    basis_direction = np.array([[1.0, -1.0]], dtype=np.complex128) / np.sqrt(2.0)
+    state_norms = np.linalg.norm(post_alice_states, axis=1, keepdims=True)
+    scaled_direction = basis_direction * np.maximum(state_norms, EPSILON) * perturbation_scale
+    lab_delta = from_analyzer_basis(scaled_direction, phi_b_rad)
+
+    stability_checks: list[np.ndarray] = []
+    for sign in (1.0, -1.0):
+        perturbed_input = post_alice_states + sign * lab_delta
+        perturbed_diag = evolve_with_diagnostics(perturbed_input, phi_b_rad, config.damping)
+        perturbed_stage = compute_stage_readout(
+            perturbed_diag["coords_before"],
+            perturbed_diag["coords_after"],
+            residual_branch_quality(perturbed_diag["coords_after"])[2],
+            config.gate_thresholds,
+        )
+        stability_checks.append(
+            perturbed_stage.outcomes[RULE_ENERGY_LOSS_WINNER] == reference_outcomes
+        )
+
+    return np.mean(np.stack(stability_checks), axis=0).astype(np.float64)
 
 
 def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchResult:
@@ -69,12 +108,18 @@ def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchR
                 alice_post,
                 branch_loss=alice_branch_loss,
             )
-            alice_outcomes = compute_all_outcomes(alice_pre, alice_post)
+            alice_stage = compute_stage_readout(
+                alice_pre,
+                alice_post,
+                alice_purity,
+                config.gate_thresholds,
+            )
 
             for angle_b_deg in config.bob_angles_deg:
+                phi_b_rad = np.deg2rad(angle_b_deg)
                 bob_diag = evolve_with_diagnostics(
                     post_alice_states,
-                    np.deg2rad(angle_b_deg),
+                    phi_b_rad,
                     config.damping,
                 )
                 bob_pre = bob_diag["coords_before"]
@@ -87,7 +132,30 @@ def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchR
                     bob_post,
                     branch_loss=bob_branch_loss,
                 )
-                bob_outcomes = compute_all_outcomes(bob_pre, bob_post)
+                bob_stage = compute_stage_readout(
+                    bob_pre,
+                    bob_post,
+                    bob_purity,
+                    config.gate_thresholds,
+                )
+                bob_branch_stability = _compute_bob_branch_stability(
+                    post_alice_states,
+                    phi_b_rad,
+                    config,
+                    bob_stage.outcomes[RULE_ENERGY_LOSS_WINNER],
+                )
+                pair_readout_agreement = alice_stage.readout_agreement & bob_stage.readout_agreement
+                pair_residual_ambiguity = alice_stage.residual_ambiguous | bob_stage.residual_ambiguous
+                mean_projectivity_compatibility = 0.5 * (alice_complementary + bob_complementary)
+                pair_high_confidence = (
+                    alice_stage.high_confidence_residual
+                    & bob_stage.high_confidence_residual
+                    & (mean_projectivity_compatibility >= config.gate_thresholds.min_projectivity_compatibility)
+                )
+                pair_low_confidence = ~pair_high_confidence
+                mean_confidence_margin = 0.5 * (
+                    alice_stage.confidence_margin + bob_stage.confidence_margin
+                )
 
                 key = _combo_key(config, angle_a_deg, angle_b_deg)
                 combo_keys.append(key)
@@ -105,6 +173,15 @@ def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchR
                         "anisotropy_ratio": config.damping.anisotropy_ratio,
                         "window_fraction": config.damping.window_fraction,
                         "sample_count": config.source.sample_count,
+                        "gate_thresholds": {
+                            "max_alice_drift": config.gate_thresholds.max_alice_drift,
+                            "max_bob_drift": config.gate_thresholds.max_bob_drift,
+                            "max_aligned_same_sign_mass": config.gate_thresholds.max_aligned_same_sign_mass,
+                            "min_residual_agreement_rate": config.gate_thresholds.min_residual_agreement_rate,
+                            "max_residual_ambiguity_rate": config.gate_thresholds.max_residual_ambiguity_rate,
+                            "min_projectivity_compatibility": config.gate_thresholds.min_projectivity_compatibility,
+                            "confidence_margin_threshold": config.gate_thresholds.confidence_margin_threshold,
+                        },
                     }
                 )
 
@@ -146,19 +223,61 @@ def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchR
                         "bob_quality_to_plus": bob_quality_plus,
                         "bob_quality_to_minus": bob_quality_minus,
                         "bob_complementary_residual_quality": bob_complementary,
+                        "alice_energy_margin": alice_stage.energy_margin,
+                        "alice_residual_margin": alice_stage.residual_margin,
+                        "alice_confidence_margin": alice_stage.confidence_margin,
+                        "alice_residual_template_plus_score": alice_stage.residual_template_plus_score,
+                        "alice_residual_template_minus_score": alice_stage.residual_template_minus_score,
+                        "alice_residual_template_distance_gap": alice_stage.residual_template_distance_gap,
+                        "alice_readout_agreement": alice_stage.readout_agreement.astype(float),
+                        "alice_residual_ambiguous": alice_stage.residual_ambiguous.astype(float),
+                        "alice_high_confidence_residual": alice_stage.high_confidence_residual.astype(float),
+                        "alice_low_confidence_residual": alice_stage.low_confidence_residual.astype(float),
+                        "bob_energy_margin": bob_stage.energy_margin,
+                        "bob_residual_margin": bob_stage.residual_margin,
+                        "bob_confidence_margin": bob_stage.confidence_margin,
+                        "bob_residual_template_plus_score": bob_stage.residual_template_plus_score,
+                        "bob_residual_template_minus_score": bob_stage.residual_template_minus_score,
+                        "bob_residual_template_distance_gap": bob_stage.residual_template_distance_gap,
+                        "bob_readout_agreement": bob_stage.readout_agreement.astype(float),
+                        "bob_residual_ambiguous": bob_stage.residual_ambiguous.astype(float),
+                        "bob_high_confidence_residual": bob_stage.high_confidence_residual.astype(float),
+                        "bob_low_confidence_residual": bob_stage.low_confidence_residual.astype(float),
+                        "pair_readout_agreement": pair_readout_agreement.astype(float),
+                        "pair_residual_ambiguity": pair_residual_ambiguity.astype(float),
+                        "pair_high_confidence_residual": pair_high_confidence.astype(float),
+                        "pair_low_confidence_residual": pair_low_confidence.astype(float),
+                        "mean_confidence_margin": mean_confidence_margin,
+                        "mean_projectivity_compatibility": mean_projectivity_compatibility,
+                        "bob_branch_stability_score": bob_branch_stability,
                     }
                 )
-                for rule, outcomes in alice_outcomes.items():
+                for rule in ALL_READOUT_RULES:
+                    outcomes = alice_stage.outcomes[rule]
                     frame[f"alice_outcome_{rule}"] = outcomes
-                for rule, outcomes in bob_outcomes.items():
+                    frame[f"alice_valid_{rule}"] = alice_stage.valid[rule].astype(float)
+                    frame[f"rule_role_{rule}"] = rule_role(rule)
+                for rule in ALL_READOUT_RULES:
+                    outcomes = bob_stage.outcomes[rule]
                     frame[f"bob_outcome_{rule}"] = outcomes
+                    frame[f"bob_valid_{rule}"] = bob_stage.valid[rule].astype(float)
 
                 trial_frames.append(frame)
                 combo_id += 1
 
     trials = pd.concat(trial_frames, ignore_index=True) if trial_frames else pd.DataFrame()
-    rule_summary, drift_summary, correlation_summary = (
-        summarize_sequential_trials(trials) if not trials.empty else (pd.DataFrame(), pd.DataFrame(), pd.DataFrame())
+    (
+        rule_summary,
+        drift_summary,
+        correlation_summary,
+        residual_agreement_summary,
+        gated_summary,
+        aligned_support_by_confidence,
+        legacy_rule_controls,
+    ) = (
+        summarize_sequential_trials(trials, gate_thresholds=configs[0].gate_thresholds)
+        if (not trials.empty and configs)
+        else (pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame())
     )
     chsh_summary = compute_chsh(correlation_summary) if not correlation_summary.empty else pd.DataFrame()
 
@@ -168,6 +287,10 @@ def run_sequential_batch(configs: list[SequentialRunConfig]) -> SequentialBatchR
         drift_summary=drift_summary,
         correlation_summary=correlation_summary,
         chsh_summary=chsh_summary,
+        residual_agreement_summary=residual_agreement_summary,
+        gated_summary=gated_summary,
+        aligned_support_by_confidence=aligned_support_by_confidence,
+        legacy_rule_controls=legacy_rule_controls,
         initial_states=np.stack(initial_state_blocks) if initial_state_blocks else np.empty((0, 0, 2)),
         post_alice_states=np.stack(post_alice_blocks) if post_alice_blocks else np.empty((0, 0, 2)),
         post_bob_states=np.stack(post_bob_blocks) if post_bob_blocks else np.empty((0, 0, 2)),

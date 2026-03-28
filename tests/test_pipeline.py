@@ -40,4 +40,8 @@ def test_run_and_analyze_pipeline_smoke(tmp_path: Path) -> None:
     assert (artifact_dir / "single" / "states.npz").exists()
     assert (artifact_dir / "sequential" / "trial_metrics.csv").exists()
     assert (artifact_dir / "sequential" / "chsh_summary.csv").exists()
+    assert (artifact_dir / "sequential" / "sequential_residual_agreement.csv").exists()
+    assert (artifact_dir / "sequential" / "sequential_gated_summary.csv").exists()
+    assert (artifact_dir / "sequential" / "aligned_support_by_confidence.csv").exists()
+    assert (artifact_dir / "sequential" / "legacy_rule_controls.csv").exists()
     assert (artifact_dir / "plots" / "projectivity-vs-anisotropy.png").exists()
