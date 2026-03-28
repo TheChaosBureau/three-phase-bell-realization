@@ -1,5 +1,3 @@
-Yes. Here’s a compact **hypothesis map** of the space.
-
 # Hypothesis Map
 
 **Target question:**
@@ -449,8 +447,3 @@ This is already a strong result.
 # 6. One-sentence summary of the map
 
 **The classical/local families explain the geometry and the boundary; the remaining candidates for the full mechanism are projective modal depletion, a genuine pair-space joint selector, or a global constraint law that selects the outcome pair without ordinary signaling.**
-
-If you want, I can turn this into a visual 2-axis map next, like:
-
-* x-axis = local → global
-* y-axis = continuous-budget → discrete-pair-selection
