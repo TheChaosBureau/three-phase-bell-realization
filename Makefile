@@ -20,11 +20,6 @@ pdf:
 		--pdf-engine=tectonic \
 		--metadata date="$(DATE)"
 
-verification-run:
-	$(PYTHON) scripts/run_sweeps.py --preset risk_first_full --artifact-dir $(SIM_ARTIFACT_DIR)
-	$(PYTHON) scripts/analyze_results.py $(SIM_ARTIFACT_DIR)
-
-verification-audit:
-	$(PYTHON) scripts/build_verification_audit.py $(SIM_ARTIFACT_DIR) --output-dir $(SIM_AUDIT_DIR)
-
-verification: verification-run verification-audit
+tests:
+	# todo: also build single-file allure report, regardless of test suite pass / fail (also don't stop tests if one fails)
+	poetry run pytest -vv

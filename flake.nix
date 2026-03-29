@@ -18,6 +18,7 @@
             tectonic
             zlib
             stdenv.cc.cc.lib  # needed b/c I'm keeping nix env deps separate from python deps (poetry)
+            allure
           ];
         
         shellHook = ''
