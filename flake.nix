@@ -12,7 +12,6 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             python3
-            ffmpeg
             poetry
             git
             quarto            # ipynb / qmd / markdown / pdf converter
