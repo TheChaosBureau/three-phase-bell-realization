@@ -24,7 +24,8 @@ pdf:
 		--no-cache \
 		--pdf-engine=tectonic \
 		--metadata date="$(DATE)"
-	mv notebooks/$(PAPER).pdf artifacts/$(PAPER).pdf
+	mkdir -p artifacts/paper
+	mv notebooks/$(PAPER).pdf artifacts/paper/$(PAPER).pdf
 
 test:
 	@set +e; \
