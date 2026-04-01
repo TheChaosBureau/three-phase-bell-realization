@@ -111,7 +111,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objects as go
-from ipython.display import display
+from IPython.display import display
 
 v = 1.0
 r = 1.0
@@ -130,8 +130,8 @@ t = np.sqrt(2/3) * np.array([
     [1/np.sqrt(2), 1/np.sqrt(2), 1/np.sqrt(2)]
 ])
 
-vabc = np.vstack([va, vb, vc]).t
-vab0 = vabc @ t.t
+vabc = np.vstack([va, vb, vc]).T
+vab0 = vabc @ t.T
 
 v_alpha = vab0[:, 0]
 v_beta = vab0[:, 1]
@@ -150,14 +150,14 @@ x = rr * np.cos(th)
 y = rr * np.sin(th)
 z = np.tile(p_ab, (len(r), 1))
 
-plotly_fig = go.figure()
+plotly_fig = go.Figure()
 plotly_fig.add_surface(
     x=x,
     y=y,
     z=z,
     colorscale="viridis",
     opacity=0.9,
-    showscale=true,
+    showscale=True,
 )
 plotly_fig.add_scatter3d(
     x=np.cos(theta),
@@ -182,7 +182,7 @@ plotly_fig.update_layout(
 )
 
 if os.environ.get("quarto_fig_format") == "pdf":
-    fig = plt.figure(figsize=(8, 8), constrained_layout=true)
+    fig = plt.figure(figsize=(8, 8), constrained_layout=True)
     ax = fig.add_subplot(111, projection="3d")
     ax.plot_surface(
         x,
@@ -190,7 +190,7 @@ if os.environ.get("quarto_fig_format") == "pdf":
         z,
         cmap="viridis",
         linewidth=0,
-        antialiased=true,
+        antialiased=True,
         alpha=0.9,
     )
     ax.plot(np.cos(theta), np.sin(theta), p_ab, color="black", linewidth=2.5)
