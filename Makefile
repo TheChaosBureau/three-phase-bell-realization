@@ -2,13 +2,15 @@ PAPER = 30_bell_conservation_paper
 
 DATE := $(shell date -u +%Y-%m-%d)
 PYTHON ?= python
-SIM_ARTIFACT_DIR ?= artifacts/sim/verification-run
-SIM_AUDIT_DIR ?= artifacts/sim/verification-audit
 TEST_ARTIFACT_DIR ?= artifacts/tests
 ALLURE_RESULTS_DIR ?= $(TEST_ARTIFACT_DIR)/allure-results
 ALLURE_REPORT_DIR ?= $(TEST_ARTIFACT_DIR)/allure-report
+GIT_COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+ALLURE_REPORT_FILE ?= index_$(GIT_COMMIT_HASH).html
+ALLURE_MD_FILE ?= report_$(GIT_COMMIT_HASH).md
+ALLURE_PDF_FILE ?= report_$(GIT_COMMIT_HASH).pdf
 
-.PHONY: qmd ipynb pdf test
+.PHONY: qmd ipynb pdf test test-pdf sim-artifacts spice-artifacts refresh-spice-fixtures
 
 qmd:
 	quarto convert paper/paper.ipynb -o qmd
@@ -34,5 +36,15 @@ test:
 	test_exit=$$?; \
 	allure generate "$(ALLURE_RESULTS_DIR)" --clean --single-file -o "$(ALLURE_REPORT_DIR)"; \
 	report_exit=$$?; \
+	if [ $$report_exit -eq 0 ] && [ -f "$(ALLURE_REPORT_DIR)/index.html" ]; then mv "$(ALLURE_REPORT_DIR)/index.html" "$(ALLURE_REPORT_DIR)/$(ALLURE_REPORT_FILE)"; fi; \
 	if [ $$test_exit -ne 0 ]; then exit $$test_exit; fi; \
 	exit $$report_exit
+
+test-pdf: test
+	mkdir -p "$(ALLURE_REPORT_DIR)"
+	poetry run python scripts/allure_to_md.py \
+		--results-dir "$(ALLURE_RESULTS_DIR)" \
+		--out-path "$(ALLURE_REPORT_DIR)/$(ALLURE_MD_FILE)"
+	quarto render "$(ALLURE_REPORT_DIR)/$(ALLURE_MD_FILE)" \
+		--to pdf \
+		--pdf-engine=tectonic
