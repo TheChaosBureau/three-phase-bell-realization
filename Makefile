@@ -11,7 +11,7 @@ ALLURE_REPORT_FILE ?= index_$(GIT_COMMIT_HASH).html
 ALLURE_MD_FILE ?= report_$(GIT_COMMIT_HASH).md
 ALLURE_PDF_FILE ?= report_$(GIT_COMMIT_HASH).pdf
 
-.PHONY: qmd ipynb pdf test test-pdf 
+.PHONY: qmd ipynb pdf pdf-all test test-pdf 
 
 qmd:
 	quarto convert paper/paper.ipynb -o qmd
@@ -29,6 +29,21 @@ pdf:
 		--metadata date="$(DATE)"
 	mkdir -p artifacts/paper
 	mv notebooks/$(PAPER).pdf artifacts/paper/$(PAPER).pdf
+
+pdf-all:
+	@mkdir -p artifacts/paper
+	@for f in notebooks/*.md notebooks/*.qmd; do \
+		[ -e "$$f" ] || continue; \
+		QUARTO_PYTHON=.venv/bin/python quarto render "$$f" \
+			--to pdf \
+			--execute \
+			--no-execute-daemon \
+			--no-cache \
+			--pdf-engine=tectonic \
+			--metadata date="$(DATE)"; \
+		pdf="$${f%.*}.pdf"; \
+		mv "$$pdf" "artifacts/paper/$$(basename "$$pdf")"; \
+	done
 
 test:
 	@set +e; \
