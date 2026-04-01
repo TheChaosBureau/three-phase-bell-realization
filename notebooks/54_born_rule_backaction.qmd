@@ -1,0 +1,649 @@
+Yes. The cleanest way to do this is:
+
+1. add a **small pre-click closure variable** (Z(t)),
+2. let it perturb the branch hazards a little,
+3. derive how the winner probability shifts away from Born,
+4. simulate that shift.
+
+The key question is:
+
+> if the ideal pre-click hazards are
+> [
+> \lambda_i^{(0)}(t)=\gamma(t),w_i,\qquad w_i=|u_i^\dagger a|^2,
+> ]
+> how much state-dependent or asymmetric (Z)-feedback can you add before
+> [
+> \Pr(i)\approx w_i
+> ]
+> stops being a good approximation?
+
+---
+
+# 1. Ideal Born-exact hazard model
+
+Without pre-click backaction, the branch hazards are
+[
+\lambda_1^{(0)}(t)=\gamma(t)w_1,\qquad
+\lambda_2^{(0)}(t)=\gamma(t)w_2,
+]
+with
+[
+w_1+w_2=1.
+]
+
+Then
+[
+\Pr(1)=w_1,\qquad \Pr(2)=w_2.
+]
+
+That is the exact reference point.
+
+---
+
+# 2. Add weak pre-click closure feedback
+
+Let (Z(t)) be a small shared closure variable that begins to rise even before the click, due to weak incipient measurement coupling.
+
+A minimal pre-click model is
+[
+\dot Z = \alpha - \beta Z,\qquad Z(0)=0,
+]
+so
+[
+Z(t)=\frac{\alpha}{\beta}\left(1-e^{-\beta t}\right).
+]
+
+If (\alpha/\beta\ll 1), then (Z(t)) stays small before the click.
+
+Now let (Z) perturb the hazards.
+
+There are two qualitatively different ways it can enter.
+
+## Case A: common-mode feedback only
+
+[
+\lambda_i(t)=\gamma(t),w_i,[1+\varepsilon Z(t)].
+]
+
+This multiplies both hazards by the same factor. Then the ratio
+[
+\frac{\lambda_1(t)}{\lambda_1(t)+\lambda_2(t)}=w_1
+]
+is unchanged.
+
+So:
+
+> **pure common-mode pre-click feedback does not distort Born at all.**
+
+It can change click-time statistics, but not winner probabilities.
+
+That is an important result.
+
+## Case B: differential feedback
+
+The simplest asymmetric perturbation is
+[
+\lambda_1(t)=\gamma(t),w_1,[1+\varepsilon Z(t)],
+]
+[
+\lambda_2(t)=\gamma(t),w_2,[1-\varepsilon Z(t)].
+]
+
+Now the branch ratio is perturbed, so Born will distort.
+
+This is the right model for “how much backaction can you tolerate?”
+
+---
+
+# 3. Exact winner probability formula with differential feedback
+
+For any hazards (\lambda_i(t)), the probability branch 1 wins is
+[
+\Pr(1)=\int_0^\infty \lambda_1(t),
+\exp!\left[-\int_0^t\bigl(\lambda_1(\tau)+\lambda_2(\tau)\bigr),d\tau\right]dt.
+]
+
+Substitute
+[
+\lambda_1(t)=\gamma(t)w_1[1+\varepsilon Z(t)],
+]
+[
+\lambda_2(t)=\gamma(t)w_2[1-\varepsilon Z(t)].
+]
+
+Then
+[
+\lambda_1+\lambda_2
+===================
+
+\gamma(t)\Bigl[1+\varepsilon Z(t)(w_1-w_2)\Bigr].
+]
+
+This is exact, but not yet transparent.
+
+---
+
+# 4. First-order distortion formula
+
+Assume (\varepsilon Z(t)) is small, so we can expand to first order.
+
+Define
+[
+\Delta = w_1-w_2 = 2w_1-1.
+]
+
+Also define the ideal cumulative envelope
+[
+G(t)=\int_0^t \gamma(\tau),d\tau.
+]
+
+Then, to first order in (\varepsilon),
+[
+\Pr(1)
+\approx
+w_1
++
+\varepsilon,w_1(1-\Delta),I_Z,
+]
+where
+[
+I_Z=\int_0^\infty \gamma(t)Z(t)e^{-G(t)},dt.
+]
+
+Since (1-\Delta = 1-(w_1-w_2)=2w_2), this becomes
+[
+\boxed{
+\Pr(1)\approx w_1 + 2\varepsilon,w_1w_2,I_Z.
+}
+]
+
+Similarly
+[
+\boxed{
+\Pr(2)\approx w_2 - 2\varepsilon,w_1w_2,I_Z.
+}
+]
+
+This is the main perturbative result.
+
+## Interpretation
+
+* distortion is proportional to (\varepsilon)
+* distortion is proportional to (w_1w_2), so it is largest near the equator ((w_1\approx w_2\approx 1/2))
+* distortion vanishes near the poles ((w_1\approx 0) or (1))
+* distortion depends on the weighted average amount of pre-click closure, (I_Z)
+
+So the **most sensitive states** are equatorial superpositions.
+
+That is exactly what you would expect.
+
+---
+
+# 5. Simple closed form for constant envelope
+
+Take the simplest case:
+[
+\gamma(t)=\Gamma \quad \text{constant},
+]
+and
+[
+Z(t)=\frac{\alpha}{\beta}(1-e^{-\beta t}).
+]
+
+Then
+[
+G(t)=\Gamma t,
+]
+and
+[
+I_Z
+===
+
+\int_0^\infty \Gamma,\frac{\alpha}{\beta}(1-e^{-\beta t})e^{-\Gamma t},dt.
+]
+
+Compute it:
+[
+I_Z
+===
+
+\frac{\alpha}{\beta}
+\left[
+\int_0^\infty \Gamma e^{-\Gamma t},dt
+-------------------------------------
+
+\int_0^\infty \Gamma e^{-(\Gamma+\beta)t},dt
+\right].
+]
+
+So
+[
+I_Z
+===
+
+\frac{\alpha}{\beta}
+\left[
+1-\frac{\Gamma}{\Gamma+\beta}
+\right]
+=======
+
+\frac{\alpha}{\Gamma+\beta}.
+]
+
+Therefore
+[
+\boxed{
+\Pr(1)\approx w_1 + 2\varepsilon,w_1w_2,\frac{\alpha}{\Gamma+\beta}.
+}
+]
+
+This is very useful.
+
+It says the distortion scale is
+[
+\delta p \sim 2\varepsilon,w_1w_2,\frac{\alpha}{\Gamma+\beta}.
+]
+
+So tolerance improves when:
+
+* (\varepsilon) is small
+* pre-click closure growth (\alpha) is small
+* clicks happen fast ((\Gamma) large)
+* closure relaxes fast ((\beta) large)
+
+That is a very clear design rule.
+
+---
+
+# 6. Tolerance criterion
+
+Suppose you want the deviation from Born to stay below some target (\delta):
+[
+|\Pr(1)-w_1| \le \delta.
+]
+
+Using the first-order formula,
+[
+2|\varepsilon|,w_1w_2,\frac{\alpha}{\Gamma+\beta}\le \delta.
+]
+
+Worst case is at
+[
+w_1=w_2=\frac12,
+]
+so
+[
+w_1w_2=\frac14.
+]
+
+Then the worst-case tolerance condition is
+[
+\boxed{
+|\varepsilon|,\frac{\alpha}{\Gamma+\beta}\le 2\delta.
+}
+]
+
+For example, if you want error below 1% in the worst case,
+[
+\delta=0.01,
+]
+then you need roughly
+[
+|\varepsilon|,\frac{\alpha}{\Gamma+\beta}\lesssim 0.02.
+]
+
+That is a nice engineering criterion.
+
+---
+
+# 7. Summary of the math
+
+## No distortion
+
+If pre-click feedback is common-mode only:
+[
+\lambda_i=\gamma w_i(1+\varepsilon Z),
+]
+then
+[
+\Pr(i)=w_i
+]
+exactly.
+
+## Small distortion
+
+If pre-click feedback is differential:
+[
+\lambda_1=\gamma w_1(1+\varepsilon Z),\qquad
+\lambda_2=\gamma w_2(1-\varepsilon Z),
+]
+then
+[
+\Pr(1)\approx w_1 + 2\varepsilon w_1w_2 I_Z,
+]
+with
+[
+I_Z=\int_0^\infty \gamma(t)Z(t)e^{-G(t)}dt.
+]
+
+For constant (\gamma=\Gamma) and (Z(t)=\frac{\alpha}{\beta}(1-e^{-\beta t})),
+[
+\Pr(1)\approx w_1 + 2\varepsilon w_1w_2\frac{\alpha}{\Gamma+\beta}.
+]
+
+That is the clean result.
+
+---
+
+# 8. Python Monte Carlo script
+
+Here is a compact script that tests both:
+
+* **common-mode** pre-click feedback: should preserve Born
+* **differential** pre-click feedback: should distort it according to the formula above
+
+```{python}
+import math
+import numpy as np
+
+
+def normalize_state(a: np.ndarray) -> np.ndarray:
+    a = np.asarray(a, dtype=np.complex128).reshape(2)
+    n = np.linalg.norm(a)
+    if n == 0:
+        raise ValueError("State must be nonzero.")
+    return a / n
+
+
+def analyzer_basis(theta: float) -> tuple[np.ndarray, np.ndarray]:
+    c = math.cos(theta)
+    s = math.sin(theta)
+    u1 = np.array([c, s], dtype=np.complex128)
+    u2 = np.array([-s, c], dtype=np.complex128)
+    return u1, u2
+
+
+def projected_weights(a: np.ndarray, u1: np.ndarray, u2: np.ndarray) -> tuple[float, float]:
+    c1 = np.vdot(u1, a)
+    c2 = np.vdot(u2, a)
+    w1 = float(abs(c1) ** 2)
+    w2 = float(abs(c2) ** 2)
+    total = w1 + w2
+    return w1 / total, w2 / total
+
+
+def theoretical_p1_first_order(
+    w1: float,
+    *,
+    epsilon: float,
+    alpha: float,
+    beta: float,
+    Gamma: float,
+    mode: str,
+) -> float:
+    """
+    First-order perturbative theory for P(branch1).
+    """
+    if mode == "common":
+        return w1
+
+    if mode != "differential":
+        raise ValueError("mode must be 'common' or 'differential'")
+
+    w2 = 1.0 - w1
+    iz = alpha / (Gamma + beta)
+    return w1 + 2.0 * epsilon * w1 * w2 * iz
+
+
+def simulate_one_trial(
+    w1: float,
+    w2: float,
+    *,
+    Gamma: float,
+    alpha: float,
+    beta: float,
+    epsilon: float,
+    mode: str,
+    dt: float,
+    t_max: float,
+    rng: np.random.Generator,
+) -> int:
+    """
+    Simulate first nucleation with time-dependent hazards.
+
+    Pre-click closure:
+        dZ/dt = alpha - beta Z,  Z(0)=0
+
+    Hazards:
+      common-mode:
+        lambda_i = Gamma * w_i * (1 + epsilon Z)
+
+      differential:
+        lambda_1 = Gamma * w1 * (1 + epsilon Z)
+        lambda_2 = Gamma * w2 * (1 - epsilon Z)
+    """
+    Z = 0.0
+    t = 0.0
+
+    for _ in range(int(math.ceil(t_max / dt))):
+        # Update closure variable
+        Z += (alpha - beta * Z) * dt
+        if Z < 0.0:
+            Z = 0.0
+
+        if mode == "common":
+            lam1 = Gamma * w1 * (1.0 + epsilon * Z)
+            lam2 = Gamma * w2 * (1.0 + epsilon * Z)
+        elif mode == "differential":
+            lam1 = Gamma * w1 * (1.0 + epsilon * Z)
+            lam2 = Gamma * w2 * (1.0 - epsilon * Z)
+        else:
+            raise ValueError("mode must be 'common' or 'differential'")
+
+        # Clamp hazards to be nonnegative
+        lam1 = max(lam1, 0.0)
+        lam2 = max(lam2, 0.0)
+
+        # Small-step Bernoulli approximation to first-event race
+        p1 = lam1 * dt
+        p2 = lam2 * dt
+
+        # To keep the discrete-time approximation sane
+        if p1 + p2 > 0.1:
+            raise ValueError("dt too large for current hazards; reduce dt.")
+
+        u = rng.random()
+        if u < p1:
+            return 1
+        if u < p1 + p2:
+            return 2
+
+        t += dt
+        if t >= t_max:
+            return 0
+
+    return 0
+
+
+def run_experiment(
+    a: np.ndarray,
+    theta: float,
+    *,
+    n_trials: int,
+    Gamma: float,
+    alpha: float,
+    beta: float,
+    epsilon: float,
+    mode: str,
+    dt: float,
+    t_max: float,
+    seed: int,
+) -> dict:
+    rng = np.random.default_rng(seed)
+
+    a = normalize_state(a)
+    u1, u2 = analyzer_basis(theta)
+    w1, w2 = projected_weights(a, u1, u2)
+
+    wins1 = 0
+    wins2 = 0
+    timeouts = 0
+
+    for _ in range(n_trials):
+        out = simulate_one_trial(
+            w1,
+            w2,
+            Gamma=Gamma,
+            alpha=alpha,
+            beta=beta,
+            epsilon=epsilon,
+            mode=mode,
+            dt=dt,
+            t_max=t_max,
+            rng=rng,
+        )
+        if out == 1:
+            wins1 += 1
+        elif out == 2:
+            wins2 += 1
+        else:
+            timeouts += 1
+
+    completed = wins1 + wins2
+    p1_emp = wins1 / completed if completed else float("nan")
+    p2_emp = wins2 / completed if completed else float("nan")
+
+    p1_theory = theoretical_p1_first_order(
+        w1,
+        epsilon=epsilon,
+        alpha=alpha,
+        beta=beta,
+        Gamma=Gamma,
+        mode=mode,
+    )
+
+    return {
+        "theta_deg": math.degrees(theta),
+        "state": a,
+        "w1_born": w1,
+        "w2_born": w2,
+        "p1_theory_first_order": p1_theory,
+        "wins1": wins1,
+        "wins2": wins2,
+        "timeouts": timeouts,
+        "p1_emp": p1_emp,
+        "p2_emp": p2_emp,
+        "mode": mode,
+        "Gamma": Gamma,
+        "alpha": alpha,
+        "beta": beta,
+        "epsilon": epsilon,
+        "n_trials": n_trials,
+    }
+
+
+def print_result(name: str, r: dict) -> None:
+    a = r["state"]
+    print(f"\n=== {name} ===")
+    print(f"mode = {r['mode']}")
+    print(f"theta = {r['theta_deg']:.2f} deg")
+    print(f"state a = [{a[0]:.6g}, {a[1]:.6g}]")
+    print(f"Gamma = {r['Gamma']}, alpha = {r['alpha']}, beta = {r['beta']}, epsilon = {r['epsilon']}")
+    print(f"Born target:        p1 = {r['w1_born']:.6f}, p2 = {r['w2_born']:.6f}")
+    print(f"1st-order theory:   p1 = {r['p1_theory_first_order']:.6f}")
+    print(f"Empirical:          p1 = {r['p1_emp']:.6f}, p2 = {r['p2_emp']:.6f}")
+    print(f"wins:               n1 = {r['wins1']}, n2 = {r['wins2']}")
+    print(f"timeouts:           {r['timeouts']} / {r['n_trials']}")
+
+
+if __name__ == "__main__":
+    theta = math.radians(30.0)
+
+    state_pure_plus = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+
+    phi = math.pi / 3.0
+    state_equator = np.array([1.0, np.exp(1j * phi)], dtype=np.complex128) / math.sqrt(2.0)
+
+    common = dict(
+        n_trials=20000,
+        Gamma=1.0,
+        alpha=0.05,   # weak pre-click closure growth
+        beta=1.0,     # closure relaxation
+        epsilon=0.10, # weak feedback strength
+        dt=1e-3,
+        t_max=20.0,
+    )
+
+    # Common-mode feedback: should preserve Born
+    r1 = run_experiment(state_pure_plus, theta, mode="common", seed=1234, **common)
+    print_result("Pure + sequence / common-mode pre-click feedback", r1)
+
+    r2 = run_experiment(state_equator, theta, mode="common", seed=5678, **common)
+    print_result("Equatorial state / common-mode pre-click feedback", r2)
+
+    # Differential feedback: should distort Born slightly
+    r3 = run_experiment(state_pure_plus, theta, mode="differential", seed=2468, **common)
+    print_result("Pure + sequence / differential pre-click feedback", r3)
+
+    r4 = run_experiment(state_equator, theta, mode="differential", seed=1357, **common)
+    print_result("Equatorial state / differential pre-click feedback", r4)
+```
+
+---
+
+# 9. What to expect
+
+## Common-mode case
+
+You should see empirical winner probabilities stay very close to Born:
+[
+\Pr(1)\approx w_1.
+]
+
+That is not approximate by theory — it is exact in the continuous-time model.
+
+## Differential case
+
+You should see a small shift:
+[
+\Pr(1)-w_1 \approx 2\varepsilon w_1 w_2 \frac{\alpha}{\Gamma+\beta}.
+]
+
+For your example with
+
+* (\Gamma=1)
+* (\alpha=0.05)
+* (\beta=1)
+* (\varepsilon=0.10)
+
+the distortion scale is
+[
+\frac{\alpha}{\Gamma+\beta} = \frac{0.05}{2}=0.025.
+]
+
+So for the equatorial-ish case (w_1\approx 0.7165,;w_2\approx 0.2835),
+[
+\delta p_1 \approx 2(0.10)(0.7165)(0.2835)(0.025)\approx 0.0010.
+]
+
+So you should only see about a 0.1% shift there.
+
+For stronger distortion, increase `epsilon` or `alpha`, or decrease `Gamma+beta`.
+
+---
+
+# 10. Main conclusion
+
+The math says something clean:
+
+* **shared pre-click closure is fine** if it is common-mode
+* **Born is fragile only to differential pre-click backaction**
+* the distortion is largest for equatorial states and smallest near the poles
+* the small parameter is roughly
+  [
+  |\varepsilon|,\frac{\alpha}{\Gamma+\beta}
+  ]
+
+So this gives you a concrete engineering criterion for how weak the pre-click closure coupling must be if you want to preserve Born-like statistics.
+
+If you want, the next useful step is to replace this toy (Z) with a physically interpretable zero-sequence variable derived from an actual delta measurement closure network.
