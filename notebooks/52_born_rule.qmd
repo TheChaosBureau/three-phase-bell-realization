@@ -1,0 +1,453 @@
+## Born-exact for nucleation, not for long accumulation
+
+Let the prepared two-mode state be
+[
+a\in\mathbb C^2,\qquad |a|^2=1,
+]
+and let the analyzer basis be orthonormal:
+[
+u_1,u_2\in\mathbb C^2,\qquad u_i^\dagger u_j=\delta_{ij}.
+]
+
+Define the analyzer amplitudes
+[
+c_i=u_i^\dagger a,
+]
+and weights
+[
+w_i=|c_i|^2,\qquad w_1+w_2=1.
+]
+
+Assume measurement occurs in two stages:
+
+1. **nucleation**: branch (i) generates an irreversible initiation event as a point process with hazard
+   [
+   \lambda_i(t)=\gamma(t),w_i,
+   ]
+   where (\gamma(t)\ge 0) is common to both branches;
+
+2. **latch**: the first initiated branch captures the measurement, suppresses the rival, and drains the remaining stored energy.
+
+Let
+[
+T_i=\inf{t\ge 0:\text{branch }i\text{ nucleates}},
+\qquad
+i_*=\arg\min(T_1,T_2).
+]
+
+Then, provided the first nucleation event terminates the competition, the outcome probabilities are exactly
+[
+\Pr(i_*=1)=w_1=|u_1^\dagger a|^2,
+\qquad
+\Pr(i_*=2)=w_2=|u_2^\dagger a|^2.
+]
+
+### Proof
+
+The winner probability for branch 1 is
+[
+\Pr(i_*=1)=\int_0^\infty \lambda_1(t),
+\exp!\left[-\int_0^t(\lambda_1(\tau)+\lambda_2(\tau)),d\tau\right]dt.
+]
+
+Substitute
+[
+\lambda_1(t)=\gamma(t)w_1,\qquad
+\lambda_2(t)=\gamma(t)w_2.
+]
+
+Since (w_1+w_2=1),
+[
+\Pr(i_*=1)=
+w_1\int_0^\infty \gamma(t),
+\exp!\left[-\int_0^t\gamma(\tau),d\tau\right]dt.
+]
+
+Let
+[
+G(t)=\int_0^t\gamma(\tau),d\tau.
+]
+Then
+[
+\Pr(i_*=1)=w_1\int_0^\infty e^{-u},du=w_1.
+]
+Likewise (\Pr(i_*=2)=w_2). QED.
+
+---
+
+## Corollary (why long accumulation fails)
+
+If instead each branch must accumulate many additive arrivals before clicking, then the measurement is no longer a first-nucleation race. It becomes a threshold race of integrated evidence, and the higher-rate branch wins much more often than (w_i). Therefore long accumulation generally does **not** preserve Born weights.
+
+That matches your simulation results.
+
+---
+
+# Physical interpretation for the 3-delta-LC system
+
+This gives a cleaner measurement story:
+
+## State
+
+The unloaded delta ring is prepared in a normalized balanced two-mode state
+[
+a=
+\begin{bmatrix}
+a_+\
+a_-
+\end{bmatrix}.
+]
+
+This is the Bloch-like state.
+
+## Analyzer
+
+The analyzer defines two candidate measurement channels
+[
+c_i=u_i^\dagger a.
+]
+
+These are amplitudes, and
+[
+|c_i|^2
+]
+are the branch intensities / available extraction weights.
+
+## Nucleation
+
+Each branch has a microscopic irreversible initiation mechanism:
+
+* avalanche onset,
+* tunneling event,
+* breakdown seed,
+* latch trigger,
+* first absorptive microscopic event,
+
+with hazard proportional to branch intensity:
+[
+\lambda_i(t)=\gamma(t)|c_i|^2.
+]
+
+## Latch
+
+Whichever branch nucleates first:
+
+* engages a common-mode / zero-sequence closure,
+* suppresses the competing branch,
+* drains the remaining stored tank energy through itself.
+
+So the event statistics come from **first nucleation**, while the macroscopic energy dump happens **after** selection.
+
+That is the clean split.
+
+---
+
+# Toy model: nucleation + latch
+
+Here is the smallest dynamical version.
+
+## Variables
+
+* (W(t)\ge 0): remaining stored energy in the delta
+* (n_i(t)\in{0,1}): whether branch (i) has nucleated
+* (L_i(t)\in[0,1]): latch state of branch (i)
+* (Z(t)): shared zero-sequence / closure variable
+
+Prepared state gives fixed weights
+[
+w_i=|u_i^\dagger a|^2,\qquad w_1+w_2=1.
+]
+
+## Stage 1: nucleation hazards
+
+Before any click,
+[
+\lambda_i(t)=\kappa,W(t),w_i.
+]
+
+This says:
+
+* more stored energy gives more opportunity for initiation,
+* branch preference is set by (w_i).
+
+As long as neither branch has nucleated,
+[
+\Pr(i_*=i)=w_i
+]
+exactly, by the theorem above.
+
+## Stage 2: latch dynamics
+
+Once branch (i_*) nucleates at time (T_*), set
+[
+L_{i_*}(T_*^+)=1,\qquad L_{j\neq i_*}(T_*^+)=0.
+]
+
+Then let the closure variable rise quickly:
+[
+\dot Z = \alpha_Z(1-Z),\qquad t>T_*.
+]
+
+Use (Z) to suppress the losing branch and open the winning drain.
+
+For example, after nucleation:
+[
+\dot L_{i_*}=0,\qquad
+\dot L_j=-\beta_L Z,L_j,\quad j\neq i_*.
+]
+
+## Stage 3: energy drainage
+
+After latching, the winning branch drains the reservoir:
+[
+\dot W = -g,L_{i_*},W,
+]
+so
+[
+W(t)=W(T_*)e^{-g(t-T_*)}.
+]
+
+The winning branch absorbs
+[
+E_{i_*}^{(\infty)}=W(T_*),
+]
+up to any parasitic losses.
+
+The losing branch gets negligible post-latch energy.
+
+---
+
+# Even more minimal stochastic-event version
+
+You can compress the whole thing to:
+
+1. Sample first nucleation event from hazards
+   [
+   \lambda_i(t)=\kappa W(t)|u_i^\dagger a|^2.
+   ]
+
+2. Winner is first nucleated branch (i_*).
+
+3. After that, set
+   [
+   \dot W=-gW
+   ]
+   through the winning branch only.
+
+This is enough to separate:
+
+* **Born-like selection**
+* **classical energy extraction**
+
+---
+
+# Why this is better than the threshold-accumulator model
+
+The accumulator model made the detector decide only after many additive increments, which amplified the stronger branch and destroyed Born weights.
+
+The nucleation+latch model instead says:
+
+* the random choice happens at the **first microscopic irreversible onset**
+* once that happens, the rest is just macroscopic drainage and record formation
+
+That is much closer to how an avalanche detector, spark, latch, or breakdown event actually behaves.
+
+---
+
+# Best concise statement
+
+> In the corrected model, the Bloch/sequence state determines branch intensities (w_i=|u_i^\dagger a|^2). Detector branches nucleate irreversibly with hazards proportional to these intensities. The first nucleation event selects the outcome with exact Born weights, and a subsequent latch/common-mode closure drains the remaining stored delta energy through the winning branch.
+
+
+# Simple Python Experiment
+## Function Definitions
+```{python}
+import math
+import numpy as np
+
+
+def normalize_state(a: np.ndarray) -> np.ndarray:
+    a = np.asarray(a, dtype=np.complex128).reshape(2)
+    n = np.linalg.norm(a)
+    if n == 0:
+        raise ValueError("State must be nonzero.")
+    return a / n
+
+
+def analyzer_basis(theta: float) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Real orthonormal analyzer basis in the +/- mode plane.
+    """
+    c = math.cos(theta)
+    s = math.sin(theta)
+    u1 = np.array([c, s], dtype=np.complex128)
+    u2 = np.array([-s, c], dtype=np.complex128)
+    return u1, u2
+
+
+def projected_weights(a: np.ndarray, u1: np.ndarray, u2: np.ndarray) -> tuple[float, float]:
+    """
+    Born weights from analyzer projections.
+    """
+    c1 = np.vdot(u1, a)
+    c2 = np.vdot(u2, a)
+    w1 = float(abs(c1) ** 2)
+    w2 = float(abs(c2) ** 2)
+    total = w1 + w2
+    if total <= 0:
+        raise ValueError("Invalid projected weights.")
+    return w1 / total, w2 / total
+
+
+def run_one_trial(
+    w1: float,
+    w2: float,
+    *,
+    kappa: float,
+    W0: float,
+    g_drain: float,
+    rng: np.random.Generator,
+) -> dict:
+    """
+    Minimal nucleation + latch model.
+
+    Nucleation hazards:
+        lambda_i = kappa * W0 * w_i
+
+    First nucleation wins.
+    After winner selection, the remaining stored energy drains
+    exponentially through the winning branch at rate g_drain.
+
+    Returns a dict with winner, nucleation times, and drainage summary.
+    """
+    if abs((w1 + w2) - 1.0) > 1e-12:
+        raise ValueError("Weights must sum to 1.")
+    if kappa <= 0 or W0 <= 0 or g_drain <= 0:
+        raise ValueError("kappa, W0, g_drain must be positive.")
+
+    lam1 = kappa * W0 * w1
+    lam2 = kappa * W0 * w2
+
+    # If one branch has zero weight, it can never nucleate.
+    t1 = rng.exponential(1.0 / lam1) if lam1 > 0 else math.inf
+    t2 = rng.exponential(1.0 / lam2) if lam2 > 0 else math.inf
+
+    if t1 < t2:
+        winner = 1
+        t_click = t1
+    elif t2 < t1:
+        winner = 2
+        t_click = t2
+    else:
+        winner = 1 if rng.random() < 0.5 else 2
+        t_click = t1
+
+    # Post-click latch/drain model:
+    # W(t) = W0 * exp(-g_drain * (t - t_click)), t >= t_click
+    # Total post-click absorbed energy by winner is W0.
+    tau_drain = 1.0 / g_drain
+
+    return {
+        "winner": winner,
+        "t1": t1,
+        "t2": t2,
+        "t_click": t_click,
+        "tau_drain": tau_drain,
+        "E_winner_total": W0,
+    }
+
+
+def run_experiment(
+    a: np.ndarray,
+    theta: float,
+    *,
+    n_trials: int = 20000,
+    kappa: float = 1.0,
+    W0: float = 1.0,
+    g_drain: float = 5.0,
+    seed: int = 0,
+) -> dict:
+    rng = np.random.default_rng(seed)
+
+    a = normalize_state(a)
+    u1, u2 = analyzer_basis(theta)
+    w1, w2 = projected_weights(a, u1, u2)
+
+    wins1 = 0
+    wins2 = 0
+    click_times = []
+
+    for _ in range(n_trials):
+        out = run_one_trial(
+            w1,
+            w2,
+            kappa=kappa,
+            W0=W0,
+            g_drain=g_drain,
+            rng=rng,
+        )
+        if out["winner"] == 1:
+            wins1 += 1
+        else:
+            wins2 += 1
+        click_times.append(out["t_click"])
+
+    p1_emp = wins1 / n_trials
+    p2_emp = wins2 / n_trials
+
+    return {
+        "theta_deg": math.degrees(theta),
+        "state": a,
+        "w1_born": w1,
+        "w2_born": w2,
+        "wins1": wins1,
+        "wins2": wins2,
+        "p1_emp": p1_emp,
+        "p2_emp": p2_emp,
+        "mean_click_time": float(np.mean(click_times)),
+        "n_trials": n_trials,
+        "kappa": kappa,
+        "W0": W0,
+        "g_drain": g_drain,
+    }
+
+
+def print_result(name: str, r: dict) -> None:
+    a = r["state"]
+    print(f"\n=== {name} ===")
+    print(f"theta = {r['theta_deg']:.2f} deg")
+    print(f"state a = [{a[0]:.6g}, {a[1]:.6g}]")
+    print(f"kappa = {r['kappa']}, W0 = {r['W0']}, g_drain = {r['g_drain']}")
+    print(f"Born target:  p1 = {r['w1_born']:.6f}, p2 = {r['w2_born']:.6f}")
+    print(f"Empirical:    p1 = {r['p1_emp']:.6f}, p2 = {r['p2_emp']:.6f}")
+    print(f"wins:         n1 = {r['wins1']}, n2 = {r['wins2']}")
+    print(f"mean click t: {r['mean_click_time']:.6f}")
+
+
+```
+
+## Experiment & Results
+```{python}
+    theta = math.radians(30.0)
+
+    # Example 1: pure positive-sequence state
+    state_pure_plus = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+
+    # Example 2: equatorial state
+    phi = math.pi / 3.0
+    state_equator = np.array([1.0, np.exp(1j * phi)], dtype=np.complex128) / math.sqrt(2.0)
+
+    common = dict(
+        n_trials=20000,
+        kappa=1.0,
+        W0=1.0,
+        g_drain=5.0,
+    )
+
+    r1 = run_experiment(state_pure_plus, theta, seed=1234, **common)
+    print_result("Pure + sequence", r1)
+
+    r2 = run_experiment(state_equator, theta, seed=5678, **common)
+    print_result("Equatorial state", r2)
+
+```
