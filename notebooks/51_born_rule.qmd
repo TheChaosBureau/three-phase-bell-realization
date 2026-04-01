@@ -1,0 +1,703 @@
+## Theorem (Born-exact and Born-approximate regimes for compound-Poisson threshold detection)
+
+Let a prepared two-mode state be
+[
+a \in \mathbb C^2,\qquad |a|^2=1,
+]
+and let an orthonormal analyzer basis be ({u_1,u_2}). Define branch amplitudes
+[
+c_i = u_i^\dagger a,\qquad i=1,2,
+]
+and weights
+[
+w_i = |c_i|^2,\qquad w_1+w_2=1.
+]
+
+Assume detector branch (i) receives random absorbed-energy packets according to a Poisson point process (N_i(t)) with rate
+[
+\lambda_i(t)=\gamma(t),w_i,
+]
+where (\gamma(t)\ge 0) is a common measurement envelope shared by both branches.
+
+Let the packet energies for branch (i) be i.i.d. nonnegative random variables
+[
+Q_{i,1},Q_{i,2},\dots
+]
+with common law (\nu), independent of the Poisson processes and identical across branches.
+
+Define the accumulated absorbed energy in branch (i) by
+[
+E_i(t)=\sum_{k=1}^{N_i(t)} Q_{i,k}.
+]
+
+Fix a threshold (L>0), and define the branch click times
+[
+T_i=\inf{t\ge 0:,E_i(t)\ge L}.
+]
+The observed outcome is the first click:
+[
+i_*=\arg\min(T_1,T_2),
+]
+with ties broken symmetrically.
+
+Then:
+
+### Part A: Exact Born law in the single-packet threshold regime
+
+If the threshold is one packet, i.e. either
+[
+L\le \inf \operatorname{supp}(\nu),
+]
+or equivalently every first packet causes a click, then
+[
+\Pr(i_*=1)=w_1=|c_1|^2,\qquad
+\Pr(i_*=2)=w_2=|c_2|^2.
+]
+
+### Part B: Exact Born law for fixed packet count threshold
+
+More generally, if each packet has deterministic energy (q>0), and the threshold requires exactly (m) packets:
+[
+L\in((m-1)q,mq],
+]
+then
+[
+T_i=\inf{t:N_i(t)\ge m}.
+]
+In this case, if both branches share the same packet law and differ only by the rate factors (w_i), then the winner probabilities are
+[
+\Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
+]
+
+### Part C: Approximate Born law in the many-packet threshold regime
+
+If packet energies are i.i.d. with finite mean
+[
+\mu_Q=\mathbb E[Q]>0
+]
+and finite variance, and if the threshold (L) is large compared to the typical packet energy scale, then under matched branches and weak pre-click backaction,
+[
+\Pr(i_*=i)\approx w_i=|c_i|^2.
+]
+
+The approximation becomes accurate when:
+
+1. both branches share the same packet-energy law (\nu),
+2. the only branch dependence is through the rate factor (w_i),
+3. the common envelope (\gamma(t)) is the same for both branches,
+4. the first click ends the trial,
+5. pre-click depletion/backaction does not significantly alter the (w_i).
+
+---
+
+## Proof
+
+### Step 1: Competing Poisson processes with weighted rates
+
+The branch rates are
+[
+\lambda_1(t)=\gamma(t)w_1,\qquad
+\lambda_2(t)=\gamma(t)w_2.
+]
+Thus both branches share the same time envelope, differing only by constant factors (w_i).
+
+Define the integrated common envelope
+[
+G(t)=\int_0^t \gamma(\tau),d\tau.
+]
+
+By standard time-change for nonhomogeneous Poisson processes, the processes (N_i(t)) are equivalent to homogeneous Poisson processes observed in operational time (G(t)), with rates (w_i).
+
+So all winner probabilities reduce to a homogeneous-rate problem with rates (w_1,w_2).
+
+---
+
+### Step 2: Part A, single-packet threshold
+
+If any first packet triggers, then the click time (T_i) is just the first arrival time of branch (i).
+
+Thus the measurement outcome is the first event in the superposed Poisson process
+[
+N(t)=N_1(t)+N_2(t),
+]
+whose total rate is (w_1+w_2=1) in operational time.
+
+Conditional on an arrival occurring, the probability it belongs to branch (i) is
+[
+\frac{w_i}{w_1+w_2}=w_i.
+]
+Hence
+[
+\Pr(i_*=i)=w_i=|c_i|^2.
+]
+
+---
+
+### Step 3: Part B, fixed packet count threshold
+
+Suppose every packet has energy (q), and threshold (L) requires exactly (m) arrivals.
+
+Then branch (i) clicks when it accumulates (m) arrivals:
+[
+T_i=\inf{t:N_i(t)\ge m}.
+]
+
+Now regard the superposed process (N(t)=N_1(t)+N_2(t)). Each arrival in (N) is independently labeled branch 1 with probability (w_1) and branch 2 with probability (w_2).
+
+So the race is equivalent to repeatedly drawing branch labels i.i.d. with probabilities (w_1,w_2), and stopping when one branch has collected (m) labels.
+
+By exchangeability and symmetry of the stopping rule, the probability that branch (i) is the first to reach (m) arrivals is exactly (w_i).
+
+Therefore
+[
+\Pr(i_*=i)=w_i.
+]
+
+---
+
+### Step 4: Part C, large-threshold compound Poisson regime
+
+Now let packet sizes be random with common law (\nu).
+
+For branch (i), the compound Poisson energy process has drift
+[
+\frac{d}{dt}\mathbb E[E_i(t)] = \lambda_i(t)\mu_Q = \gamma(t)w_i\mu_Q.
+]
+
+Because the packet law is identical across branches, the only branch-dependent factor is still (w_i).
+
+For large threshold (L), the click time is governed by many arrivals. By renewal/LLN reasoning, the time to threshold is approximately
+[
+T_i \approx \frac{L}{w_i,\mu_Q,\bar\gamma}
+]
+in a slowly varying envelope, with fluctuations controlled by the common packet law and the Poisson counting noise.
+
+Since both branches have matched packet statistics and differ only by (w_i), the first-to-threshold race inherits the same weighting as the underlying arrival process. Thus the winner law is approximately
+[
+\Pr(i_*=i)\approx w_i.
+]
+
+The approximation improves as:
+
+* packet count to threshold increases,
+* branch asymmetries decrease,
+* common-envelope factorization becomes more accurate,
+* pre-click coupling remains weak.
+
+This proves the stated approximation.
+
+---
+
+## Corollary (delta-LC interpretation)
+
+For a 3-LC-tank delta prepared in reduced sequence state
+[
+a=
+\begin{bmatrix}
+a_+\
+a_-
+\end{bmatrix},
+]
+and analyzer branches defined by orthonormal vectors (u_1,u_2), set
+[
+c_i=u_i^\dagger a,\qquad w_i=|c_i|^2.
+]
+
+If detector branch (i) receives stochastic absorbed-energy packets with rate proportional to projected branch intensity,
+[
+\lambda_i(t)=\gamma(t)|c_i|^2,
+]
+and matched packet-energy statistics across branches, then the first-click outcome satisfies:
+
+* exactly,
+  [
+  \Pr(i_*=i)=|c_i|^2
+  ]
+  in the single-packet or fixed-count threshold regimes;
+* approximately,
+  [
+  \Pr(i_*=i)\approx |c_i|^2
+  ]
+  in the large-threshold matched compound-Poisson regime.
+
+Thus the Born weights arise whenever:
+
+1. analyzer projection is linear,
+2. detector initiation packets arrive with rate proportional to absorbed branch intensity,
+3. branch packet statistics are matched,
+4. one click terminates the trial.
+
+---
+
+## What this theorem is really saying
+
+The square law comes from two ingredients:
+
+1. **Projection geometry**
+   [
+   w_i = |u_i^\dagger a|^2
+   ]
+
+2. **Poissonian detector initiation**
+   with branch rate proportional to that weight.
+
+Then first-click competition gives Born exactly or approximately, depending on threshold details.
+
+The theorem does **not** derive why the microscopic detector packet rate must be proportional to ( |u_i^\dagger a|^2 ). That remains the physical assumption to justify from the actual delta/analyzer/load hardware.
+
+
+## Python Experiment
+
+### Function Definitions
+```{python}
+import math
+import numpy as np
+
+
+def normalize_state(a: np.ndarray) -> np.ndarray:
+    a = np.asarray(a, dtype=np.complex128).reshape(2)
+    n = np.linalg.norm(a)
+    if n == 0:
+        raise ValueError("State must be nonzero.")
+    return a / n
+
+
+def analyzer_basis(theta: float) -> tuple[np.ndarray, np.ndarray]:
+    """Real orthonormal analyzer basis in the +/- space."""
+    c = math.cos(theta)
+    s = math.sin(theta)
+    u1 = np.array([c, s], dtype=np.complex128)
+    u2 = np.array([-s, c], dtype=np.complex128)
+    return u1, u2
+
+
+def projected_weights(a: np.ndarray, u1: np.ndarray, u2: np.ndarray) -> tuple[float, float]:
+    c1 = np.vdot(u1, a)
+    c2 = np.vdot(u2, a)
+    w1 = float(abs(c1) ** 2)
+    w2 = float(abs(c2) ** 2)
+    total = w1 + w2
+    if total <= 0:
+        raise ValueError("Invalid projected weights.")
+    return w1 / total, w2 / total
+
+
+def draw_packet_energy(rng: np.random.Generator, mode: str, packet_size: float) -> float:
+    if mode == "fixed":
+        return packet_size
+    if mode == "exp":
+        return rng.exponential(packet_size)
+    raise ValueError("mode must be 'fixed' or 'exp'")
+
+
+def run_one_trial(
+    w1: float,
+    w2: float,
+    *,
+    gamma0: float,
+    threshold: float,
+    packet_mode: str,
+    packet_size: float,
+    t_max: float,
+    rng: np.random.Generator,
+) -> tuple[int, float, float, float]:
+    """
+    Competing nonhomogeneous Poisson race with constant envelope gamma0.
+
+    Branch i has packet arrival rate lambda_i = gamma0 * w_i.
+    Each packet deposits random energy Q.
+    First branch whose accumulated energy crosses threshold wins.
+
+    Returns:
+        (winner, t_event, e1, e2)
+        winner in {0,1,2}; 0 means timeout/no click before t_max
+    """
+    if abs((w1 + w2) - 1.0) > 1e-12:
+        raise ValueError("Weights must sum to 1.")
+    if gamma0 <= 0 or threshold <= 0 or packet_size <= 0 or t_max <= 0:
+        raise ValueError("gamma0, threshold, packet_size, t_max must be positive.")
+
+    e1 = 0.0
+    e2 = 0.0
+    t = 0.0
+
+    # Total event process; each event is labeled branch 1 with prob w1, else branch 2.
+    while t < t_max:
+        dt = rng.exponential(1.0 / gamma0)
+        t += dt
+        if t > t_max:
+            return 0, t, e1, e2
+
+        branch = 1 if rng.random() < w1 else 2
+        q = draw_packet_energy(rng, packet_mode, packet_size)
+
+        if branch == 1:
+            e1 += q
+            if e1 >= threshold:
+                return 1, t, e1, e2
+        else:
+            e2 += q
+            if e2 >= threshold:
+                return 2, t, e1, e2
+
+    return 0, t, e1, e2
+
+
+def run_experiment(
+    a: np.ndarray,
+    theta: float,
+    *,
+    n_trials: int = 20000,
+    gamma0: float = 20.0,
+    threshold: float = 1.0,
+    packet_mode: str = "fixed",
+    packet_size: float = 1.0,
+    t_max: float = 10.0,
+    seed: int = 0,
+) -> dict:
+    rng = np.random.default_rng(seed)
+    a = normalize_state(a)
+    u1, u2 = analyzer_basis(theta)
+    w1, w2 = projected_weights(a, u1, u2)
+
+    wins1 = 0
+    wins2 = 0
+    timeouts = 0
+    times = []
+
+    for _ in range(n_trials):
+        winner, t_event, _, _ = run_one_trial(
+            w1,
+            w2,
+            gamma0=gamma0,
+            threshold=threshold,
+            packet_mode=packet_mode,
+            packet_size=packet_size,
+            t_max=t_max,
+            rng=rng,
+        )
+        if winner == 1:
+            wins1 += 1
+            times.append(t_event)
+        elif winner == 2:
+            wins2 += 1
+            times.append(t_event)
+        else:
+            timeouts += 1
+
+    completed = wins1 + wins2
+    p1_emp = wins1 / completed if completed else float("nan")
+    p2_emp = wins2 / completed if completed else float("nan")
+    mean_t = float(np.mean(times)) if times else float("nan")
+
+    return {
+        "theta_deg": math.degrees(theta),
+        "state": a,
+        "w1_born": w1,
+        "w2_born": w2,
+        "wins1": wins1,
+        "wins2": wins2,
+        "timeouts": timeouts,
+        "completed": completed,
+        "total_trials": n_trials,
+        "p1_emp": p1_emp,
+        "p2_emp": p2_emp,
+        "mean_click_time": mean_t,
+        "packet_mode": packet_mode,
+        "packet_size": packet_size,
+        "threshold": threshold,
+    }
+
+
+def print_result(name: str, r: dict) -> None:
+    a = r["state"]
+    print(f"\n=== {name} ===")
+    print(f"theta = {r['theta_deg']:.2f} deg")
+    print(f"state a = [{a[0]:.6g}, {a[1]:.6g}]")
+    print(f"packet mode = {r['packet_mode']}, packet_size = {r['packet_size']}, threshold = {r['threshold']}")
+    print(f"Born target:  p1 = {r['w1_born']:.6f}, p2 = {r['w2_born']:.6f}")
+    print(f"Empirical:    p1 = {r['p1_emp']:.6f}, p2 = {r['p2_emp']:.6f}")
+    print(f"wins:         n1 = {r['wins1']}, n2 = {r['wins2']}")
+    print(f"timeouts:     {r['timeouts']} / {r['total_trials']}")
+    print(f"mean click t: {r['mean_click_time']:.6f}")
+
+
+```
+
+### Experiment & Result
+```{python}
+theta = math.radians(30.0)
+
+# Example 1: pure positive-sequence state
+state_pure_plus = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+
+# Example 2: equatorial state with phase phi
+phi = math.pi / 3.0
+state_equator = np.array([1.0, np.exp(1j * phi)], dtype=np.complex128) / math.sqrt(2.0)
+
+common = dict(
+    n_trials=20000,
+    gamma0=20.0,
+    t_max=10.0,
+)
+
+# Single-packet threshold: exact Born law expected
+r1 = run_experiment(
+    state_pure_plus,
+    theta,
+    threshold=1.0,
+    packet_mode="fixed",
+    packet_size=1.0,
+    seed=1234,
+    **common,
+)
+print_result("Pure + sequence (single-packet threshold)", r1)
+
+r2 = run_experiment(
+    state_equator,
+    theta,
+    threshold=1.0,
+    packet_mode="fixed",
+    packet_size=1.0,
+    seed=5678,
+    **common,
+)
+print_result("Equatorial state (single-packet threshold)", r2)
+
+# Multi-packet threshold: approximate Born law
+r3 = run_experiment(
+    state_pure_plus,
+    theta,
+    threshold=5.0,
+    packet_mode="exp",
+    packet_size=0.25,
+    seed=2468,
+    **common,
+)
+print_result("Pure + sequence (multi-packet threshold)", r3)
+
+r4 = run_experiment(
+    state_equator,
+    theta,
+    threshold=5.0,
+    packet_mode="exp",
+    packet_size=0.25,
+    seed=1357,
+    **common,
+)
+print_result("Equatorial state (multi-packet threshold)", r4)
+```
+
+
+# Analysis
+## What worked
+
+The **single-packet threshold** case matches Born well because it is just a **first-arrival race**:
+
+* branch 1 packet rate ( \lambda_1 \propto w_1 )
+* branch 2 packet rate ( \lambda_2 \propto w_2 )
+
+Then the first packet belongs to branch 1 with probability
+
+[
+\Pr(1)=\frac{\lambda_1}{\lambda_1+\lambda_2}=w_1.
+]
+
+That part is solid.
+
+## What failed
+
+The **multi-packet threshold** case is **not** a Born race.
+
+Once each branch must accumulate many packets before clicking, the process becomes:
+
+> which branch builds up enough total energy first over many arrivals?
+
+The higher-rate branch then has two advantages:
+
+* it gets arrivals more often
+* it reaches threshold sooner on average
+* over many arrivals, law-of-large-numbers behavior suppresses the weaker branch
+
+So the stronger branch wins **much more often** than (w_i).
+
+That is exactly what your output shows.
+
+For the (0.75/0.25) case, if branch 1 needs many packet arrivals to click, then of course it almost always gets there first.
+
+So the multi-packet result is not “almost Born.” It is actually telling us:
+
+> **first-to-threshold after many additive arrivals strongly amplifies branch asymmetry.**
+
+That is why you got (0.99) instead of (0.75).
+
+## Correction to the theorem
+
+So I need to correct the earlier claim:
+
+* **Part A** was right: single-packet threshold gives Born exactly.
+* **The many-packet threshold claim was wrong** in general.
+
+That was my mistake.
+
+A fixed-count or large-threshold compound Poisson race does **not** preserve the original weights as winner probabilities. It becomes a sequential accumulation contest, and the larger-rate branch dominates.
+
+## Physical meaning
+
+This is actually a really useful result for your measurement picture.
+
+It says:
+
+### Born-like behavior wants
+
+* **rare stochastic initiation**
+* one decisive nucleation event
+* first trigger wins
+
+### Born-like behavior does not want
+
+* long smooth accumulation to threshold
+* many arrivals being summed before the decision
+* majority-wins integration
+
+Because once you let the detector “count up evidence” for too long, the stronger branch almost deterministically wins.
+
+That is not quantum-like.
+
+## So what detector class is favored?
+
+Your results now point toward a detector that behaves more like:
+
+### Good candidate
+
+A **single stochastic nucleation/avalanche trigger** with rate proportional to branch absorbed intensity.
+
+Meaning:
+
+* branch (i) has hazard
+  [
+  \lambda_i(t)\propto |c_i|^2
+  ]
+* once it nucleates, it latches and drains the energy
+* the trial ends immediately
+
+That gives Born.
+
+### Bad candidate
+
+A detector that waits to integrate many little packets until threshold.
+
+That gives winner-take-most, not Born.
+
+## The clean interpretation
+
+So the measurement chain now looks like this:
+
+### Preparation
+
+Unloaded 3-delta-LC ring in state
+[
+a=\begin{bmatrix}a_+\a_-\end{bmatrix}.
+]
+
+### Analyzer
+
+Projects into branch amplitudes
+[
+c_i=u_i^\dagger a.
+]
+
+### Detector
+
+Must not be a long accumulator.
+
+It must be something like:
+
+* avalanche onset
+* tunneling initiation
+* breakdown event
+* metastable latch nucleation
+* first absorptive microscopic event that irreversibly commits the branch
+
+with onset rate proportional to branch intensity:
+[
+\lambda_i \propto |c_i|^2.
+]
+
+Then Born follows.
+
+## Stronger conclusion
+
+Your simulations have now ruled out a whole mechanism family:
+
+* drift-diffusion threshold accumulation: bad
+* many-packet compound Poisson threshold accumulation: also bad
+
+And they support a narrower family:
+
+* **first-event / first-nucleation detectors**: good
+
+That is actually a major narrowing.
+
+## The right revised theorem
+
+The safe theorem is now:
+
+> If branch (i) generates irreversible detector initiation events as a Poisson process with hazard (\lambda_i(t)=\gamma(t)|u_i^\dagger a|^2), and the first initiation event terminates the trial, then the winner probabilities are exactly (|u_i^\dagger a|^2).
+
+And the converse lesson from your new tests is:
+
+> If the detector instead waits for many additive stochastic arrivals to cross threshold, the stronger branch wins much more often than (|u_i^\dagger a|^2), so Born-like statistics are generally lost.
+
+That is the clean corrected statement.
+
+## Why this matters for zero-sequence / closure
+
+This actually makes your earlier zero-sequence intuition sharper.
+
+You probably want:
+
+* (+)/(-) subspace for the prepared state
+* analyzer projections (c_i)
+* a **single-shot closure/nucleation event**
+* common-mode / zero-sequence variable to enforce exclusivity after nucleation
+
+So zero-sequence may belong **after** the Born-like random initiation, not as part of a long accumulation contest.
+
+That is a useful refinement.
+
+## Best next model
+
+The next model should be:
+
+### Two-branch stochastic nucleation + latch
+
+For branch (i):
+[
+\lambda_i(t)=\gamma(t)|c_i|^2
+]
+draw first initiation time (T_i),
+winner is
+[
+i_*=\arg\min(T_1,T_2).
+]
+
+Then after winner selection:
+
+* zero-sequence/common-mode latch engages
+* remaining tank energy drains through the winning branch
+* loser is suppressed
+
+That cleanly separates:
+
+* **Born-like selection**
+* **macroscopic energy extraction**
+
+This is probably the right architecture.
+
+## Short blunt summary
+
+What you found is not “almost works.” It is:
+
+* **single-shot stochastic initiation works**
+* **multi-shot accumulation does not**
