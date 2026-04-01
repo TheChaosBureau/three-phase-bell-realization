@@ -1,331 +1,168 @@
-# 1. Minimal two-branch stochastic threshold model
+## Proposition (approximate Born law from noisy energy-threshold detection)
 
-**Abstract**
-If you want an analytic route to
-
+Consider a prepared two-mode state
 [
-\Pr(1)=|c_1|^2,\qquad \Pr(2)=|c_2|^2,
+a \in \mathbb C^2,\qquad |a|^2=1,
+]
+and an orthonormal analyzer basis ({u_1,u_2}). Define branch amplitudes
+[
+c_i = u_i^\dagger a,\qquad i=1,2,
+]
+so that
+[
+|c_1|^2+|c_2|^2=1.
 ]
 
-then the simplest model is:
-
-* the prepared state sets two nonnegative branch weights
-  [
-  w_1=|c_1|^2,\qquad w_2=|c_2|^2,\qquad w_1+w_2=1,
-  ]
-* each detector branch has a stochastic trigger rate proportional to its weight,
-* the first branch to trigger wins.
-
-That gives the square law exactly.
-
----
-
-Let the prepared two-mode state be (a), and let the analyzer basis be (u_1,u_2). Define
-
+Assume each detector branch accumulates absorbed energy (E_i(t)) according to
 [
-c_1=u_1^\dagger a,\qquad c_2=u_2^\dagger a,
+dE_i = \Gamma(t),|c_i|^2,dt + \sigma,dB_i(t),
+\qquad E_i(0)=0,
 ]
-so
-[
-w_1=|c_1|^2,\qquad w_2=|c_2|^2,\qquad w_1+w_2=1.
-]
+where:
 
-Now model the two detector branches as stochastic event processes with hazards
+* (\Gamma(t)\ge 0) is a common envelope shared by both branches,
+* (\sigma>0) is small,
+* (B_1,B_2) are independent standard Brownian motions.
 
+Define the observed outcome as the first branch to hit threshold (L>0):
 [
-\lambda_1(t)=\gamma(t),w_1,
+T_i = \inf{t\ge 0: E_i(t)=L},
 \qquad
-\lambda_2(t)=\gamma(t),w_2,
+i_*=\arg\min(T_1,T_2).
 ]
 
-where (\gamma(t)\ge 0) is a common time-dependent measurement-strength function.
+If the following hold:
 
-Interpretation:
+1. **Matched branches**: both branches have the same threshold (L), same noise scale (\sigma), and same coupling apart from the factor (|c_i|^2),
+2. **Drift-dominated crossing**: over the typical detection interval,
+   [
+   \Gamma(t),|c_i|^2
+   ]
+   dominates the noise in setting the mean first-passage time,
+3. **Slow envelope**: (\Gamma(t)) varies slowly compared to the local first-passage dynamics,
+4. **Weak pre-click backaction**: the analyzer weights (c_i) remain effectively fixed until the first click,
 
-* (\gamma(t)) captures detector aperture, coupling strength, reservoir depletion, etc.
-* (w_i) is the state-dependent branch weighting.
+then the detector winner probabilities satisfy
+[
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
+]
 
-A click occurs when one of the two processes fires first. After the first click, measurement stops.
+### Proof sketch
+
+Freeze the common envelope locally over the relevant crossing window:
+[
+\Gamma(t)\approx \Gamma.
+]
+Then each branch is a drift-diffusion process
+[
+dE_i = \mu_i,dt+\sigma,dB_i,
+\qquad
+\mu_i=\Gamma |c_i|^2.
+]
+
+For drift-dominated first passage to threshold (L), the mean hitting time is approximately
+[
+\mathbb E[T_i]\approx \frac{L}{\mu_i}.
+]
+So the effective click rate is
+[
+\lambda_i^{\mathrm{eff}} \approx \frac{1}{\mathbb E[T_i]}
+\approx \frac{\mu_i}{L}
+= \frac{\Gamma}{L}|c_i|^2.
+]
+
+Thus the two-branch first-click race is approximately a hazard race with
+[
+\lambda_i(t)\propto |c_i|^2.
+]
+For a two-branch first-event race with matched common envelope, winner probabilities are proportional to the rates, hence
+[
+\Pr(i_*=1)\approx
+\frac{|c_1|^2}{|c_1|^2+|c_2|^2}
+===============================
+
+|c_1|^2,
+]
+and similarly for branch 2.
+
+That is the result.
 
 ---
 
-# 2. Exact winner probability
+## More physical version for the 3-delta-LC picture
 
-The probability that branch 1 wins is
-
-[
-\Pr(1)=\int_0^\infty \lambda_1(t),
-\exp!\left(-\int_0^t[\lambda_1(\tau)+\lambda_2(\tau)],d\tau\right),dt.
-]
-
-Substitute (\lambda_i(t)=\gamma(t)w_i):
-
-[
-\Pr(1)=\int_0^\infty \gamma(t)w_1,
-\exp!\left(-\int_0^t \gamma(\tau)(w_1+w_2),d\tau\right),dt.
-]
-
-Since (w_1+w_2=1),
-
-[
-\Pr(1)=w_1\int_0^\infty \gamma(t),
-\exp!\left(-\int_0^t \gamma(\tau),d\tau\right),dt.
-]
-
-Let
-[
-G(t)=\int_0^t\gamma(\tau),d\tau.
-]
-Then
-[
-\Pr(1)=w_1\int_0^\infty \gamma(t)e^{-G(t)},dt
-= w_1\int_0^\infty e^{-u},du
-= w_1.
-]
-
-So exactly:
-
-[
-\boxed{\Pr(1)=|c_1|^2,\qquad \Pr(2)=|c_2|^2.}
-]
-
-That is the cleanest exact derivation.
-
----
-
-# 3. What this model means physically
-
-This model says:
-
-* the analyzer converts the prepared state into two branch weights (w_i),
-* the detector is noisy and only produces one discrete event,
-* the branch-specific event rates are proportional to those weights,
-* the first event is the measured outcome.
-
-So the square law enters through the **rate law**:
-[
-\lambda_i \propto |c_i|^2.
-]
-
-That is the crucial assumption.
-
----
-
-# 4. Why this is not yet a full derivation
-
-Because the model does **not** explain from lower-level tank physics why the click hazard must be proportional to ( |c_i|^2 ).
-
-It only shows:
-
-> if the detector branch event rate is proportional to the branch’s projected energy/intensity weight, then the first-click probability is exactly the Born rule.
-
-So this is an **exact stochastic threshold realization** of Born’s rule, but not yet a derivation from raw LC hardware.
-
----
-
-# 5. A more threshold-like version
-
-If you want something closer to “energy accumulation to threshold,” define random threshold times through integrated hazard.
-
-Let branch (i) accumulate a detection drive
-
-[
-H_i(t)=\int_0^t \lambda_i(\tau),d\tau.
-]
-
-Generate one exponential random variable (\Theta_i\sim \mathrm{Exp}(1)) per branch, and say branch (i) clicks when
-
-[
-H_i(t)=\Theta_i.
-]
-
-That is equivalent to the Poisson race above.
-
-With
-[
-\lambda_i(t)=\gamma(t)|c_i|^2,
-]
-the first-click probabilities are still exactly
-
-[
-\Pr(i)=|c_i|^2.
-]
-
-So this is the cleanest “stochastic threshold” version.
-
----
-
-# 6. Mapping to the delta-LC picture
-
-For the 3-tank delta:
-
-## Prepared state
-
-[
-a=
-\begin{bmatrix}
-a_+\
-a_-
-\end{bmatrix}
-]
-is the unloaded ring’s normalized (+)/(-) mode state.
-
-## Analyzer
-
-Two measurement branches define
+Let the unloaded delta contain remaining stored energy (W(t)), and let analyzer branch (i) see projected amplitude
 [
 c_i=u_i^\dagger a.
 ]
 
-## Physical meaning of ( |c_i|^2 )
-
-This is the fraction of initial stored energy that would go into branch (i) under ideal linear complete extraction.
-
-## Detector model
-
-Instead of smooth resistor split, assume each branch has a noisy threshold detector whose instantaneous event rate is proportional to its available extraction intensity:
-
+Assume branch (i) absorbs power
 [
-\lambda_i(t)=\gamma(t),|c_i|^2.
+p_i(t)=g,W(t),|c_i|^2,
+]
+with matched branch coupling (g), and accumulates noisy absorbed energy
+[
+dE_i = g,W(t),|c_i|^2,dt + \sigma,dB_i(t).
 ]
 
-Then first-click probabilities are exactly
-
+If (W(t)) is common to both branches before the first click, then the same reasoning gives
 [
-\Pr(i)=|c_i|^2.
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
 ]
 
-That is the simplest bridge from the delta energy split to discrete outcomes.
+So in delta-LC language, the approximation works when:
+
+* the analyzer projection is linear,
+* absorbed branch power is quadratic in projection amplitude,
+* the noisy detector threshold converts absorbed power into click rate approximately linearly,
+* branches are matched,
+* the first click ends the trial.
 
 ---
 
-# 7. When this assumption is plausible
+## What would break it
 
-The assumption
+The approximation fails or distorts if:
+
 [
-\lambda_i \propto |c_i|^2
+\lambda_i \propto |c_i|^{2\nu},\qquad \nu\neq 1,
 ]
-is plausible if:
+or if branch thresholds/couplings differ, or if one branch significantly changes the state before threshold.
 
-* analyzer output amplitude is linear in the prepared state,
-* available absorbed power in branch (i) is quadratic in that amplitude,
-* microscopic trigger attempts are proportional to local absorbed power/intensity,
-* branches share a common time envelope (\gamma(t)).
-
-This is exactly the usual “linear field amplitude + quadratic detector response” logic.
-
-So the whole question becomes:
-
-> can a real delta-LC detector branch be reduced to a trigger process whose hazard is proportional to the branch’s projected absorbed power?
-
-If yes, you get Born exactly in this race model.
+Then the outcome law becomes biased away from Born.
 
 ---
 
-# 8. A slightly more physical finite-reservoir variant
+## Concrete SDE model
 
-Let the ring contain remaining energy (W(t)), and let branch hazards be
-
+Use:
 [
-\lambda_1(t)=\kappa W(t)|c_1|^2,\qquad
-\lambda_2(t)=\kappa W(t)|c_2|^2.
+c_i=u_i^\dagger a,\qquad |c_1|^2+|c_2|^2=1,
+]
+and
+[
+dE_i = g,W_0 e^{-\beta t},|c_i|^2,dt + \sigma,dB_i(t),
+\qquad i=1,2.
 ]
 
-As long as both branches share the same (W(t)), the same derivation goes through:
-
+Thresholds:
 [
-\Pr(1)=|c_1|^2,\qquad \Pr(2)=|c_2|^2.
+T_i=\inf{t:E_i(t)=L}.
 ]
 
-So shared depletion does **not** spoil the exact rule, provided the branch dependence factors only through (|c_i|^2).
-
-That is actually a useful result.
-
----
-
-# 9. A diffusion/accumulator version
-
-If you want a more “analog threshold crossing” model, use two stochastic accumulators:
-
+Recorded outcome:
 [
-dX_i = \mu |c_i|^2,dt + \sigma,dB_i(t),
-\qquad i=1,2,
+i_*=\arg\min(T_1,T_2).
 ]
 
-with click when (X_i) first reaches threshold (L).
-
-This is more intuitive physically, but the winner probabilities are no longer exactly (|c_i|^2) in general. They depend on:
-
-* (\mu),
-* (\sigma),
-* (L),
-* whether the noises are independent or shared,
-* whether there is depletion/coupling.
-
-So the diffusion model is good for intuition, but bad if you want a clean exact analytic Born law.
-
-The **Poisson race / integrated-hazard threshold** model is the one that gives the exact result.
-
----
-
-# 10. Conditions for exact Born behavior
-
-You get exact
+In the regime
 [
-\Pr(i)=|c_i|^2
+\sigma^2 \ll L,gW_0,\qquad \beta T_i \ll 1,
 ]
-if these hold:
-
-## Condition 1: linear analyzer projection
-
+you get approximately
 [
-c_i=u_i^\dagger a.
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
 ]
-
-## Condition 2: normalized weights
-
-[
-\sum_i |c_i|^2=1.
-]
-
-## Condition 3: branch hazards factorize
-
-[
-\lambda_i(t)=\gamma(t),|c_i|^2.
-]
-
-## Condition 4: first-event selection
-
-The measurement outcome is the first branch to cross its stochastic threshold.
-
-That is the full minimal recipe.
-
----
-
-# 11. What this says about your bigger program
-
-This gives a very sharp target:
-
-* the unloaded delta gives the state geometry,
-* the analyzer gives the projections (c_i),
-* the missing piece is a detector physics that makes branch event hazard proportional to projected absorbed intensity.
-
-If you can build a credible detector mechanism with that property, then the stochastic threshold race gives Born exactly.
-
-That is probably the cleanest reduced problem you have now.
-
----
-
-# 12. The clean one-line answer
-
-A minimal two-branch stochastic threshold model that yields Born exactly is:
-
-[
-c_i=u_i^\dagger a,\qquad
-\lambda_i(t)=\gamma(t),|c_i|^2,
-]
-with the observed outcome defined as the first branch to trigger. Then
-[
-\Pr(i)=|c_i|^2
-]
-exactly.
