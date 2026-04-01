@@ -14,10 +14,10 @@ ALLURE_PDF_FILE ?= report_$(GIT_COMMIT_HASH).pdf
 .PHONY: qmd ipynb pdf pdf-all test test-pdf 
 
 qmd:
-	quarto convert paper/paper.ipynb -o qmd
+	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
 
 ipynb:
-	quarto convert paper/paper.qmd
+	quarto convert notebooks/20_clarke-surface.qmd
 
 pdf:
 	QUARTO_PYTHON=.venv/bin/python quarto render notebooks/$(PAPER).qmd \
