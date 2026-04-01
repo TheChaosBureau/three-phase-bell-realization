@@ -1,0 +1,346 @@
+# Zero Sequence Closure
+
+The cleanest way to add zero-sequence closure is to make it a **post-click common-mode variable** that does three jobs:
+
+* turns on only after first nucleation,
+* suppresses the losing branch,
+* opens the winning drain path.
+
+That keeps the Born-like selection untouched, while making the **measurement completion** more physical.
+
+## Updated model idea
+
+Before nucleation:
+
+* no closure
+* branch hazards are
+  [
+  \lambda_i = \kappa W_0 w_i
+  ]
+
+After branch (i_*) nucleates at (t=t_*):
+
+* zero-sequence closure (Z(t)) rises from 0 to 1:
+  [
+  \dot Z = \alpha_Z(1-Z)
+  ]
+* winner latch (L_i) is set:
+  [
+  L_{i_*}=1,\qquad L_{j\neq i_*}=0
+  ]
+* losing branch suppression rises with (Z)
+* winner drain conductance rises with (Z)
+
+A simple drain model is:
+[
+\dot W = -g_{\text{drain}},Z,W
+]
+so before closure builds, drain is weak; after closure saturates, the stored energy is rapidly extracted.
+
+Below is a compact script.
+
+```{python}
+#| echo: false
+import math
+import numpy as np
+
+
+def normalize_state(a: np.ndarray) -> np.ndarray:
+    a = np.asarray(a, dtype=np.complex128).reshape(2)
+    n = np.linalg.norm(a)
+    if n == 0:
+        raise ValueError("State must be nonzero.")
+    return a / n
+
+
+def analyzer_basis(theta: float) -> tuple[np.ndarray, np.ndarray]:
+    c = math.cos(theta)
+    s = math.sin(theta)
+    u1 = np.array([c, s], dtype=np.complex128)
+    u2 = np.array([-s, c], dtype=np.complex128)
+    return u1, u2
+
+
+def projected_weights(a: np.ndarray, u1: np.ndarray, u2: np.ndarray) -> tuple[float, float]:
+    c1 = np.vdot(u1, a)
+    c2 = np.vdot(u2, a)
+    w1 = float(abs(c1) ** 2)
+    w2 = float(abs(c2) ** 2)
+    total = w1 + w2
+    if total <= 0:
+        raise ValueError("Invalid projected weights.")
+    return w1 / total, w2 / total
+
+
+def run_one_trial_with_closure(
+    w1: float,
+    w2: float,
+    *,
+    kappa: float,
+    W0: float,
+    alpha_z: float,
+    g_drain: float,
+    dt_post: float,
+    z_stop: float,
+    rng: np.random.Generator,
+) -> dict:
+    """
+    Minimal nucleation + shared zero-sequence closure + winner drain model.
+
+    Pre-click:
+        branch hazards lambda_i = kappa * W0 * w_i
+
+    First nucleation chooses winner.
+    Post-click:
+        Z rises from 0 toward 1 via dZ/dt = alpha_z * (1 - Z)
+        winner drain opens as g_drain * Z
+        loser is suppressed by the latch (explicitly recorded, not re-raced)
+
+    Returns:
+        winner, t_click, t_settle, final absorbed winner energy, trace summaries
+    """
+    if abs((w1 + w2) - 1.0) > 1e-12:
+        raise ValueError("Weights must sum to 1.")
+    if min(kappa, W0, alpha_z, g_drain, dt_post) <= 0:
+        raise ValueError("All positive parameters required.")
+    if not (0.0 < z_stop < 1.0):
+        raise ValueError("z_stop must lie in (0,1).")
+
+    lam1 = kappa * W0 * w1
+    lam2 = kappa * W0 * w2
+
+    t1 = rng.exponential(1.0 / lam1) if lam1 > 0 else math.inf
+    t2 = rng.exponential(1.0 / lam2) if lam2 > 0 else math.inf
+
+    if t1 < t2:
+        winner = 1
+        loser = 2
+        t_click = t1
+    elif t2 < t1:
+        winner = 2
+        loser = 1
+        t_click = t2
+    else:
+        winner = 1 if rng.random() < 0.5 else 2
+        loser = 2 if winner == 1 else 1
+        t_click = t1
+
+    # Post-click latch states
+    L1 = 1.0 if winner == 1 else 0.0
+    L2 = 1.0 if winner == 2 else 0.0
+
+    # Shared zero-sequence closure and reservoir
+    Z = 0.0
+    W = W0
+    E1 = 0.0
+    E2 = 0.0
+    t = t_click
+
+    # Integrate until closure has essentially saturated and energy is nearly drained
+    # or until the closure variable reaches z_stop and the reservoir is tiny.
+    z_reached = False
+    t_z = None
+
+    for _ in range(2_000_000):
+        # Closure rise
+        dZ = alpha_z * (1.0 - Z) * dt_post
+        Z = min(1.0, Z + dZ)
+
+        if (not z_reached) and Z >= z_stop:
+            z_reached = True
+            t_z = t
+
+        # Winner-only drain opened by closure
+        p_drain = g_drain * Z * W
+        dW = -p_drain * dt_post
+        if -dW > W:
+            dW = -W
+
+        if winner == 1:
+            E1 += -dW
+        else:
+            E2 += -dW
+
+        W += dW
+        t += dt_post
+
+        if z_reached and W <= 1e-9 * W0:
+            break
+
+    t_settle = t
+    if t_z is None:
+        t_z = t_settle
+
+    return {
+        "winner": winner,
+        "loser": loser,
+        "t1": t1,
+        "t2": t2,
+        "t_click": t_click,
+        "t_z": t_z,
+        "t_settle": t_settle,
+        "L1": L1,
+        "L2": L2,
+        "E1": E1,
+        "E2": E2,
+        "W_final": W,
+    }
+
+
+def run_experiment_with_closure(
+    a: np.ndarray,
+    theta: float,
+    *,
+    n_trials: int = 20000,
+    kappa: float = 1.0,
+    W0: float = 1.0,
+    alpha_z: float = 20.0,
+    g_drain: float = 10.0,
+    dt_post: float = 1e-3,
+    z_stop: float = 0.99,
+    seed: int = 0,
+) -> dict:
+    rng = np.random.default_rng(seed)
+    a = normalize_state(a)
+    u1, u2 = analyzer_basis(theta)
+    w1, w2 = projected_weights(a, u1, u2)
+
+    wins1 = 0
+    wins2 = 0
+    click_times = []
+    z_times = []
+    settle_times = []
+    e1_total = 0.0
+    e2_total = 0.0
+
+    for _ in range(n_trials):
+        out = run_one_trial_with_closure(
+            w1,
+            w2,
+            kappa=kappa,
+            W0=W0,
+            alpha_z=alpha_z,
+            g_drain=g_drain,
+            dt_post=dt_post,
+            z_stop=z_stop,
+            rng=rng,
+        )
+        if out["winner"] == 1:
+            wins1 += 1
+        else:
+            wins2 += 1
+
+        click_times.append(out["t_click"])
+        z_times.append(out["t_z"] - out["t_click"])
+        settle_times.append(out["t_settle"] - out["t_click"])
+        e1_total += out["E1"]
+        e2_total += out["E2"]
+
+    p1_emp = wins1 / n_trials
+    p2_emp = wins2 / n_trials
+
+    return {
+        "theta_deg": math.degrees(theta),
+        "state": a,
+        "w1_born": w1,
+        "w2_born": w2,
+        "wins1": wins1,
+        "wins2": wins2,
+        "p1_emp": p1_emp,
+        "p2_emp": p2_emp,
+        "mean_click_time": float(np.mean(click_times)),
+        "mean_closure_rise_time": float(np.mean(z_times)),
+        "mean_settle_time": float(np.mean(settle_times)),
+        "mean_E1": e1_total / n_trials,
+        "mean_E2": e2_total / n_trials,
+        "n_trials": n_trials,
+        "kappa": kappa,
+        "W0": W0,
+        "alpha_z": alpha_z,
+        "g_drain": g_drain,
+        "z_stop": z_stop,
+    }
+
+
+def print_result(name: str, r: dict) -> None:
+    a = r["state"]
+    print(f"\n=== {name} ===")
+    print(f"theta = {r['theta_deg']:.2f} deg")
+    print(f"state a = [{a[0]:.6g}, {a[1]:.6g}]")
+    print(f"kappa = {r['kappa']}, W0 = {r['W0']}, alpha_z = {r['alpha_z']}, g_drain = {r['g_drain']}")
+    print(f"Born target:    p1 = {r['w1_born']:.6f}, p2 = {r['w2_born']:.6f}")
+    print(f"Empirical:      p1 = {r['p1_emp']:.6f}, p2 = {r['p2_emp']:.6f}")
+    print(f"wins:           n1 = {r['wins1']}, n2 = {r['wins2']}")
+    print(f"mean click t:   {r['mean_click_time']:.6f}")
+    print(f"mean Z-rise t:  {r['mean_closure_rise_time']:.6f}  (from click to Z≈{r['z_stop']})")
+    print(f"mean settle t:  {r['mean_settle_time']:.6f}  (from click to near-full drain)")
+    print(f"mean absorbed:  E1 = {r['mean_E1']:.6f}, E2 = {r['mean_E2']:.6f}")
+
+
+if __name__ == "__main__":
+    theta = math.radians(30.0)
+
+    state_pure_plus = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+
+    phi = math.pi / 3.0
+    state_equator = np.array([1.0, np.exp(1j * phi)], dtype=np.complex128) / math.sqrt(2.0)
+
+    common = dict(
+        n_trials=20000,
+        kappa=1.0,
+        W0=1.0,
+        alpha_z=20.0,
+        g_drain=10.0,
+        dt_post=1e-3,
+        z_stop=0.99,
+    )
+
+    r1 = run_experiment_with_closure(state_pure_plus, theta, seed=1234, **common)
+    print_result("Pure + sequence with shared zero-sequence closure", r1)
+
+    r2 = run_experiment_with_closure(state_equator, theta, seed=5678, **common)
+    print_result("Equatorial state with shared zero-sequence closure", r2)
+```
+
+## What this model means
+
+Before click:
+
+* no closure
+* no drain
+* only nucleation race matters
+* so Born-like frequencies should stay intact
+
+After click:
+
+* `Z` rises
+* winner branch is already selected
+* `Z` opens the winner drain and suppresses the loser
+* ring energy empties through the winner
+
+So this explicitly separates:
+
+* **selection**: microscopic stochastic nucleation
+* **completion**: zero-sequence/common-mode closure and macroscopic drainage
+
+## What to check
+
+You should still see:
+
+* empirical winner frequencies close to Born targets
+
+And now you also get:
+
+* mean time from click to closure saturation
+* mean time from click to near-full energy drain
+* average absorbed energy by each branch
+
+For matched, lossless post-click drainage, the mean absorbed energies over many trials should be roughly:
+[
+\mathbb E[E_1] \approx W_0,p_1,\qquad
+\mathbb E[E_2] \approx W_0,p_2.
+]
+
+That is a nice consistency check.
+
+The next interesting extension is to let `Z` weakly feed back into the pre-click hazards and test how much such backaction you can tolerate before Born-like statistics distort.
