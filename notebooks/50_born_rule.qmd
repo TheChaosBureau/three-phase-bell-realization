@@ -1,0 +1,424 @@
+# Born Law from Noisy Energy-Threshold Detection
+  
+## Proposition
+  
+**Approximate Born law from noisy energy-threshold detection**
+
+Consider a prepared two-mode state
+
+$$
+a \in \mathbb C^2,\qquad \lVert a \rVert^2 = 1,
+$$
+
+and an orthonormal analyzer basis $\{u_1,u_2\}$. Define branch amplitudes
+
+$$
+c_i = u_i^\dagger a,\qquad i=1,2,
+$$
+
+so that
+
+$$
+|c_1|^2+|c_2|^2=1.
+$$
+
+Assume each detector branch accumulates absorbed energy $E_i(t)$ according to
+
+$$
+dE_i = \Gamma(t)\,|c_i|^2\,dt + \sigma\,dB_i(t),
+\qquad E_i(0)=0,
+$$
+
+where:
+
+* $\Gamma(t)\ge 0$ is a common envelope shared by both branches,
+* $\sigma>0$ is small,
+* $B_1,B_2$ are independent standard Brownian motions.
+
+Define the observed outcome as the first branch to hit threshold $L>0$:
+
+$$
+T_i = \inf\{t\ge 0: E_i(t)=L\},
+\qquad
+i_*=\arg\min(T_1,T_2).
+$$
+
+If the following hold:
+
+1. **Matched branches**: both branches have the same threshold $L$, same noise scale $\sigma$, and same coupling apart from the factor $|c_i|^2$,
+2. **Drift-dominated crossing**: over the typical detection interval,
+
+   $$
+   \Gamma(t)\,|c_i|^2
+   $$
+
+   dominates the noise in setting the mean first-passage time,
+3. **Slow envelope**: $\Gamma(t)$ varies slowly compared to the local first-passage dynamics,
+4. **Weak pre-click backaction**: the analyzer weights $c_i$ remain effectively fixed until the first click,
+
+then the detector winner probabilities satisfy
+
+$$
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
+$$
+
+### Proof sketch
+
+Freeze the common envelope locally over the relevant crossing window:
+
+$$
+\Gamma(t)\approx \Gamma.
+$$
+
+Then each branch is a drift-diffusion process
+
+$$
+dE_i = \mu_i\,dt+\sigma\,dB_i,
+\qquad
+\mu_i=\Gamma |c_i|^2.
+$$
+
+For drift-dominated first passage to threshold $L$, the mean hitting time is approximately
+
+$$
+\mathbb E[T_i]\approx \frac{L}{\mu_i}.
+$$
+
+So the effective click rate is
+
+$$
+\lambda_i^{\mathrm{eff}} \approx \frac{1}{\mathbb E[T_i]}
+\approx \frac{\mu_i}{L}
+= \frac{\Gamma}{L}|c_i|^2.
+$$
+
+Thus the two-branch first-click race is approximately a hazard race with
+
+$$
+\lambda_i(t)\propto |c_i|^2.
+$$
+
+For a two-branch first-event race with matched common envelope, winner probabilities are proportional to the rates, hence
+
+$$
+\Pr(i_*=1)\approx
+\frac{|c_1|^2}{|c_1|^2+|c_2|^2}
+= |c_1|^2,
+$$
+
+and similarly for branch 2.
+
+---
+
+## More physical version for the 3-delta-LC picture
+
+Let the unloaded delta contain remaining stored energy $W(t)$, and let analyzer branch $i$ see projected amplitude
+
+$$
+c_i=u_i^\dagger a.
+$$
+
+Assume branch $i$ absorbs power
+
+$$
+p_i(t)=g\,W(t)\,|c_i|^2,
+$$
+
+with matched branch coupling $g$, and accumulates noisy absorbed energy
+
+$$
+dE_i = g\,W(t)\,|c_i|^2\,dt + \sigma\,dB_i(t).
+$$
+
+If $W(t)$ is common to both branches before the first click, then the same reasoning gives
+
+$$
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
+$$
+
+So in delta-LC language, the approximation works when:
+
+* the analyzer projection is linear,
+* absorbed branch power is quadratic in projection amplitude,
+* the noisy detector threshold converts absorbed power into click rate approximately linearly,
+* branches are matched,
+* the first click ends the trial.
+
+---
+
+## What would break it
+
+The approximation fails or distorts if:
+
+$$
+\lambda_i \propto |c_i|^{2\nu},\qquad \nu\neq 1,
+$$
+
+or if branch thresholds/couplings differ, or if one branch significantly changes the state before threshold.
+
+Then the outcome law becomes biased away from Born.
+
+---
+
+## Concrete SDE model
+
+Use:
+
+$$
+c_i=u_i^\dagger a,\qquad |c_1|^2+|c_2|^2=1,
+$$
+
+and
+
+$$
+dE_i = g\,W_0 e^{-\beta t}\,|c_i|^2\,dt + \sigma\,dB_i(t),
+\qquad i=1,2.
+$$
+
+Thresholds:
+
+$$
+T_i=\inf\{t:E_i(t)=L\}.
+$$
+
+Recorded outcome:
+
+$$
+i_*=\arg\min(T_1,T_2).
+$$
+
+In the regime
+
+$$
+\sigma^2 \ll L,\; gW_0,\qquad \beta T_i \ll 1,
+$$
+
+you get approximately
+
+$$
+\Pr(i_*=1)\approx |c_1|^2,\qquad
+\Pr(i_*=2)\approx |c_2|^2.
+$$
+
+## Simple Python Expriment Implementation
+
+### Function Definitions
+
+```{python}
+import numpy as np
+
+
+def normalize_state(a: np.ndarray) -> np.ndarray:
+    """Normalize a 2-component complex state."""
+    a = np.asarray(a, dtype=np.complex128).reshape(2)
+    n = np.linalg.norm(a)
+    if n == 0:
+        raise ValueError("State vector must be nonzero.")
+    return a / n
+
+
+def analyzer_basis(theta: float) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Real orthonormal analyzer basis in the +/- mode plane.
+
+    u1 = [cos(theta), sin(theta)]
+    u2 = [-sin(theta), cos(theta)]
+    """
+    c = np.cos(theta)
+    s = np.sin(theta)
+    u1 = np.array([c, s], dtype=np.complex128)
+    u2 = np.array([-s, c], dtype=np.complex128)
+    return u1, u2
+
+
+def projected_weights(a: np.ndarray, u1: np.ndarray, u2: np.ndarray) -> tuple[float, float]:
+    """Compute Born-like analyzer weights w_i = |u_i^dagger a|^2."""
+    c1 = np.vdot(u1, a)
+    c2 = np.vdot(u2, a)
+    w1 = float(np.abs(c1) ** 2)
+    w2 = float(np.abs(c2) ** 2)
+
+    # Clean tiny numerical drift.
+    total = w1 + w2
+    if total <= 0:
+        raise ValueError("Invalid projected weights.")
+    w1 /= total
+    w2 /= total
+    return w1, w2
+
+
+def run_one_trial(
+    w1: float,
+    w2: float,
+    *,
+    threshold: float = 1.0,
+    gamma0: float = 1.0,
+    beta: float = 0.0,
+    sigma: float = 0.15,
+    dt: float = 1e-3,
+    t_max: float = 20.0,
+    rng: np.random.Generator,
+) -> int:
+    """
+    Simulate one first-click race between two noisy energy accumulators.
+
+    dE_i = gamma(t) * w_i * dt + sigma * sqrt(dt) * dB_i
+    gamma(t) = gamma0 * exp(-beta t)
+
+    Winner is first branch to reach threshold.
+    Returns:
+        1 if branch 1 wins
+        2 if branch 2 wins
+        0 if no threshold crossing before t_max
+    """
+    if not (0.0 <= w1 <= 1.0 and 0.0 <= w2 <= 1.0):
+        raise ValueError("Weights must lie in [0, 1].")
+    if abs((w1 + w2) - 1.0) > 1e-9:
+        raise ValueError("Weights must sum to 1.")
+    if dt <= 0 or t_max <= 0:
+        raise ValueError("dt and t_max must be positive.")
+    if threshold <= 0:
+        raise ValueError("threshold must be positive.")
+
+    e1 = 0.0
+    e2 = 0.0
+    n_steps = int(np.ceil(t_max / dt))
+
+    for k in range(n_steps):
+        t = k * dt
+        gamma_t = gamma0 * np.exp(-beta * t)
+
+        # Euler-Maruyama update
+        e1 += gamma_t * w1 * dt + sigma * np.sqrt(dt) * rng.normal()
+        e2 += gamma_t * w2 * dt + sigma * np.sqrt(dt) * rng.normal()
+
+        # Optional: clip negative accumulated energy
+        if e1 < 0.0:
+            e1 = 0.0
+        if e2 < 0.0:
+            e2 = 0.0
+
+        # First threshold crossing wins
+        hit1 = e1 >= threshold
+        hit2 = e2 >= threshold
+
+        if hit1 and hit2:
+            # Resolve simultaneous crossing by larger overshoot;
+            # if equal within tolerance, break tie randomly.
+            if abs(e1 - e2) < 1e-12:
+                return 1 if rng.random() < 0.5 else 2
+            return 1 if e1 > e2 else 2
+        if hit1:
+            return 1
+        if hit2:
+            return 2
+
+    return 0
+
+
+def run_experiment(
+    a: np.ndarray,
+    theta: float,
+    *,
+    n_trials: int = 20000,
+    threshold: float = 1.0,
+    gamma0: float = 1.0,
+    beta: float = 0.0,
+    sigma: float = 0.15,
+    dt: float = 1e-3,
+    t_max: float = 20.0,
+    seed: int = 0,
+) -> dict:
+    """Run Monte Carlo for one prepared state and one analyzer angle."""
+    rng = np.random.default_rng(seed)
+    a = normalize_state(a)
+    u1, u2 = analyzer_basis(theta)
+    w1, w2 = projected_weights(a, u1, u2)
+
+    wins1 = 0
+    wins2 = 0
+    timeouts = 0
+
+    for _ in range(n_trials):
+        outcome = run_one_trial(
+            w1,
+            w2,
+            threshold=threshold,
+            gamma0=gamma0,
+            beta=beta,
+            sigma=sigma,
+            dt=dt,
+            t_max=t_max,
+            rng=rng,
+        )
+        if outcome == 1:
+            wins1 += 1
+        elif outcome == 2:
+            wins2 += 1
+        else:
+            timeouts += 1
+
+    completed = wins1 + wins2
+    p1_emp = wins1 / completed if completed > 0 else np.nan
+    p2_emp = wins2 / completed if completed > 0 else np.nan
+
+    return {
+        "theta_deg": np.degrees(theta),
+        "state": a,
+        "w1_born": w1,
+        "w2_born": w2,
+        "wins1": wins1,
+        "wins2": wins2,
+        "timeouts": timeouts,
+        "p1_emp": p1_emp,
+        "p2_emp": p2_emp,
+        "completed_trials": completed,
+        "total_trials": n_trials,
+    }
+
+
+def pretty_print_result(name: str, result: dict) -> None:
+    """Print one experiment summary."""
+    a = result["state"]
+    print(f"\n=== {name} ===")
+    print(f"theta = {result['theta_deg']:.2f} deg")
+    print(f"state a = [{a[0]:.6g}, {a[1]:.6g}]")
+    print(f"Born target:  p1 = {result['w1_born']:.6f}, p2 = {result['w2_born']:.6f}")
+    print(f"Empirical:    p1 = {result['p1_emp']:.6f}, p2 = {result['p2_emp']:.6f}")
+    print(f"wins:         n1 = {result['wins1']}, n2 = {result['wins2']}")
+    print(f"timeouts:     {result['timeouts']} / {result['total_trials']}")
+```
+
+### Experiment
+```{python}
+# Example 1: pure positive-sequence state
+state_pure_plus = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+
+# Example 2: equatorial state with relative phase phi
+phi = np.pi / 3.0
+state_equator = np.array([1.0, np.exp(1j * phi)], dtype=np.complex128) / np.sqrt(2.0)
+
+# Analyzer angle
+theta = np.radians(30.0)
+
+common_kwargs = dict(
+    n_trials=20000,
+    threshold=1.0,
+    gamma0=1.0,
+    beta=0.0,     # set >0 to model common reservoir decay envelope
+    sigma=0.15,   # smaller sigma -> closer to drift-dominated regime
+    dt=1e-3,
+    t_max=20.0,
+    seed=1234,
+)
+
+res1 = run_experiment(state_pure_plus, theta, **common_kwargs)
+pretty_print_result("Pure + sequence", res1)
+
+# Change seed so the second run is statistically independent
+common_kwargs["seed"] = 5678
+res2 = run_experiment(state_equator, theta, **common_kwargs)
+pretty_print_result("Equatorial state", res2)
+```
