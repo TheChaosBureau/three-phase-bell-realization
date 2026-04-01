@@ -422,3 +422,107 @@ common_kwargs["seed"] = 5678
 res2 = run_experiment(state_equator, theta, **common_kwargs)
 pretty_print_result("Equatorial state", res2)
 ```
+
+
+# EXPERIMENT FAILED.
+
+Here is a clean theorem-style statement of what the failed simulation means.
+
+## Theorem (drifted Gaussian threshold races do not generically yield Born weights)
+
+Consider two detector branches with analyzer weights
+[
+w_1 = |c_1|^2,\qquad w_2 = |c_2|^2,\qquad w_1+w_2=1,\qquad w_1>w_2,
+]
+and stochastic absorbed-energy accumulators
+[
+dE_i(t)=\mu_i,dt+\sigma,dB_i(t),\qquad E_i(0)=0,\qquad i\in{1,2},
+]
+where
+
+* (B_1,B_2) are independent standard Brownian motions,
+* (\sigma>0) is common noise strength,
+* (\mu_i = \Gamma w_i) for some common scale (\Gamma>0).
+
+Let the observed outcome be the first branch to hit threshold (L>0):
+[
+T_i=\inf{t\ge 0:E_i(t)=L},\qquad i_*=\arg\min(T_1,T_2).
+]
+
+Then, in the drift-dominated regime
+[
+\frac{\sigma^2}{L\Gamma}\ll 1,
+]
+the winner probability is strongly biased toward the larger-drift branch:
+[
+\Pr(i_*=1)\to 1,\qquad \Pr(i_*=2)\to 0,
+]
+and therefore, except in the trivial symmetric case (w_1=w_2=\tfrac12), the model does **not** reproduce Born weights
+[
+\Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
+]
+
+### Interpretation
+
+A two-branch first-passage race with smooth upward drift and additive Gaussian noise behaves like a “faster integrator wins” mechanism, not like a Born-rule detector. The larger projected branch drift tends to reach threshold first almost always once the threshold is appreciable and the noise is not overwhelming.
+
+### Sketch of reason
+
+Each process has mean hitting time approximately
+[
+\mathbb E[T_i]\approx \frac{L}{\mu_i}
+]
+in the drift-dominated regime. Since (\mu_1>\mu_2), branch 1 reaches threshold earlier by a deterministic margin of order
+[
+L\left(\frac{1}{\mu_2}-\frac{1}{\mu_1}\right),
+]
+while the stochastic spread of hitting times grows only like
+[
+O!\left(\frac{\sigma\sqrt{L}}{\mu_i^{3/2}}\right).
+]
+As (L\Gamma/\sigma^2) grows, the deterministic separation dominates the fluctuation width, so the faster branch wins with probability approaching 1.
+
+---
+
+## Corollary (what a Born-like detector must avoid)
+
+A detector model of the form
+
+* smooth absorbed-energy accumulation,
+* additive Gaussian noise,
+* first-to-threshold winner,
+
+is not a good candidate for Born-rule statistics unless it is tuned into a noise-dominated regime so strong that the state dependence is largely washed out.
+
+Therefore, a plausible Born-like detector must rely on a different stochastic structure, namely **discrete stochastic initiation** or **hazard-based triggering**, rather than smooth deterministic accumulation plus small Gaussian perturbations.
+
+---
+
+## Positive contrast theorem (why the Poisson race works)
+
+Let the same branch weights be
+[
+w_i=|c_i|^2,\qquad w_1+w_2=1,
+]
+and suppose each detector branch triggers as a point process with hazard
+[
+\lambda_i(t)=\gamma(t),w_i,
+]
+where (\gamma(t)\ge 0) is a common envelope. Let the observed outcome be the first branch to trigger.
+
+Then
+[
+\Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
+]
+
+### Interpretation
+
+Born weights arise exactly when the detector is a **first-event race with branch initiation rates proportional to projected intensity**. This is fundamentally different from a noisy drift-to-threshold race.
+
+---
+
+## Practical conclusion
+
+Your simulation result supports the following proposition:
+
+> If the 3-delta-LC analog is to produce Born-like statistics, the detector stage should be modeled as stochastic nucleation/triggering with branch rates proportional to projected absorbed intensity, not as two smoothly drifting noisy accumulators racing to threshold.
