@@ -11,7 +11,7 @@ ALLURE_REPORT_FILE ?= index_$(GIT_COMMIT_HASH).html
 ALLURE_MD_FILE ?= report_$(GIT_COMMIT_HASH).md
 ALLURE_PDF_FILE ?= report_$(GIT_COMMIT_HASH).pdf
 
-.PHONY: qmd ipynb pdf test test-pdf sim-artifacts spice-artifacts refresh-spice-fixtures
+.PHONY: qmd ipynb pdf test test-pdf 
 
 qmd:
 	quarto convert paper/paper.ipynb -o qmd
