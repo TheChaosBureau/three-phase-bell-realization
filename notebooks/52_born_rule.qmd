@@ -1,77 +1,77 @@
 ## Born-exact for nucleation, not for long accumulation
 
 Let the prepared two-mode state be
-[
+$$
 a\in\mathbb C^2,\qquad |a|^2=1,
-]
+$$
 and let the analyzer basis be orthonormal:
-[
+$$
 u_1,u_2\in\mathbb C^2,\qquad u_i^\dagger u_j=\delta_{ij}.
-]
+$$
 
 Define the analyzer amplitudes
-[
+$$
 c_i=u_i^\dagger a,
-]
+$$
 and weights
-[
+$$
 w_i=|c_i|^2,\qquad w_1+w_2=1.
-]
+$$
 
 Assume measurement occurs in two stages:
 
 1. **nucleation**: branch (i) generates an irreversible initiation event as a point process with hazard
-   [
-   \lambda_i(t)=\gamma(t),w_i,
-   ]
-   where (\gamma(t)\ge 0) is common to both branches;
+   $$
+   \lambda_i(t)=\gamma(t)\,w_i,
+   $$
+   where $\gamma(t)\ge 0$ is common to both branches;
 
 2. **latch**: the first initiated branch captures the measurement, suppresses the rival, and drains the remaining stored energy.
 
 Let
-[
-T_i=\inf{t\ge 0:\text{branch }i\text{ nucleates}},
+$$
+T_i=\inf\{t\ge 0:\text{branch }i\text{ nucleates}\},
 \qquad
 i_*=\arg\min(T_1,T_2).
-]
+$$
 
 Then, provided the first nucleation event terminates the competition, the outcome probabilities are exactly
-[
+$$
 \Pr(i_*=1)=w_1=|u_1^\dagger a|^2,
 \qquad
 \Pr(i_*=2)=w_2=|u_2^\dagger a|^2.
-]
+$$
 
 ### Proof
 
 The winner probability for branch 1 is
-[
-\Pr(i_*=1)=\int_0^\infty \lambda_1(t),
-\exp!\left[-\int_0^t(\lambda_1(\tau)+\lambda_2(\tau)),d\tau\right]dt.
-]
+$$
+\Pr(i_*=1)=\int_0^\infty \lambda_1(t)\,
+\exp\!\left[-\int_0^t(\lambda_1(\tau)+\lambda_2(\tau))\,d\tau\right]dt.
+$$
 
 Substitute
-[
+$$
 \lambda_1(t)=\gamma(t)w_1,\qquad
 \lambda_2(t)=\gamma(t)w_2.
-]
+$$
 
-Since (w_1+w_2=1),
-[
+Since $w_1+w_2=1$,
+$$
 \Pr(i_*=1)=
-w_1\int_0^\infty \gamma(t),
-\exp!\left[-\int_0^t\gamma(\tau),d\tau\right]dt.
-]
+w_1\int_0^\infty \gamma(t)\,
+\exp\!\left[-\int_0^t\gamma(\tau)\,d\tau\right]dt.
+$$
 
 Let
-[
+$$
 G(t)=\int_0^t\gamma(\tau),d\tau.
-]
+$$
 Then
-[
+$$
 \Pr(i_*=1)=w_1\int_0^\infty e^{-u},du=w_1.
-]
-Likewise (\Pr(i_*=2)=w_2). QED.
+$$
+Likewise $\Pr(i_*=2)=w_2$. QED.
 
 ---
 
@@ -90,27 +90,27 @@ This gives a cleaner measurement story:
 ## State
 
 The unloaded delta ring is prepared in a normalized balanced two-mode state
-[
+$$
 a=
 \begin{bmatrix}
-a_+\
+a_+ \\
 a_-
 \end{bmatrix}.
-]
+$$
 
 This is the Bloch-like state.
 
 ## Analyzer
 
 The analyzer defines two candidate measurement channels
-[
+$$
 c_i=u_i^\dagger a.
-]
+$$
 
 These are amplitudes, and
-[
+$$
 |c_i|^2
-]
+$$
 are the branch intensities / available extraction weights.
 
 ## Nucleation
@@ -124,9 +124,9 @@ Each branch has a microscopic irreversible initiation mechanism:
 * first absorptive microscopic event,
 
 with hazard proportional to branch intensity:
-[
+$$
 \lambda_i(t)=\gamma(t)|c_i|^2.
-]
+$$
 
 ## Latch
 
@@ -148,69 +148,69 @@ Here is the smallest dynamical version.
 
 ## Variables
 
-* (W(t)\ge 0): remaining stored energy in the delta
-* (n_i(t)\in{0,1}): whether branch (i) has nucleated
-* (L_i(t)\in[0,1]): latch state of branch (i)
-* (Z(t)): shared zero-sequence / closure variable
+* $W(t)\ge 0$: remaining stored energy in the delta
+* $n_i(t)\in\{0,1\}$: whether branch $i$ has nucleated
+* $L_i(t)\in[0,1]$: latch state of branch $i$
+* $Z(t)$: shared zero-sequence / closure variable
 
 Prepared state gives fixed weights
-[
+$$
 w_i=|u_i^\dagger a|^2,\qquad w_1+w_2=1.
-]
+$$
 
 ## Stage 1: nucleation hazards
 
 Before any click,
-[
-\lambda_i(t)=\kappa,W(t),w_i.
-]
+$$
+\lambda_i(t)=\kappa\,W(t)\,w_i.
+$$
 
 This says:
 
 * more stored energy gives more opportunity for initiation,
-* branch preference is set by (w_i).
+* branch preference is set by $w_i$.
 
 As long as neither branch has nucleated,
-[
+$$
 \Pr(i_*=i)=w_i
-]
+$$
 exactly, by the theorem above.
 
 ## Stage 2: latch dynamics
 
-Once branch (i_*) nucleates at time (T_*), set
-[
+Once branch $i_*$ nucleates at time $T_*$, set
+$$
 L_{i_*}(T_*^+)=1,\qquad L_{j\neq i_*}(T_*^+)=0.
-]
+$$
 
 Then let the closure variable rise quickly:
-[
+$$
 \dot Z = \alpha_Z(1-Z),\qquad t>T_*.
-]
+$$
 
-Use (Z) to suppress the losing branch and open the winning drain.
+Use $Z$ to suppress the losing branch and open the winning drain.
 
 For example, after nucleation:
-[
+$$
 \dot L_{i_*}=0,\qquad
-\dot L_j=-\beta_L Z,L_j,\quad j\neq i_*.
-]
+\dot L_j=-\beta_L Z\,L_j,\quad j\neq i_*.
+$$
 
 ## Stage 3: energy drainage
 
 After latching, the winning branch drains the reservoir:
-[
-\dot W = -g,L_{i_*},W,
-]
+$$
+\dot W = -g\,L_{i_*}\,W,
+$$
 so
-[
+$$
 W(t)=W(T_*)e^{-g(t-T_*)}.
-]
+$$
 
 The winning branch absorbs
-[
+$$
 E_{i_*}^{(\infty)}=W(T_*),
-]
+$$
 up to any parasitic losses.
 
 The losing branch gets negligible post-latch energy.
@@ -222,16 +222,16 @@ The losing branch gets negligible post-latch energy.
 You can compress the whole thing to:
 
 1. Sample first nucleation event from hazards
-   [
+   $$
    \lambda_i(t)=\kappa W(t)|u_i^\dagger a|^2.
-   ]
+   $$
 
 2. Winner is first nucleated branch (i_*).
 
 3. After that, set
-   [
+   $$
    \dot W=-gW
-   ]
+   $$
    through the winning branch only.
 
 This is enough to separate:
@@ -256,7 +256,7 @@ That is much closer to how an avalanche detector, spark, latch, or breakdown eve
 
 # Best concise statement
 
-> In the corrected model, the Bloch/sequence state determines branch intensities (w_i=|u_i^\dagger a|^2). Detector branches nucleate irreversibly with hazards proportional to these intensities. The first nucleation event selects the outcome with exact Born weights, and a subsequent latch/common-mode closure drains the remaining stored delta energy through the winning branch.
+> In the corrected model, the Bloch/sequence state determines branch intensities $w_i=|u_i^\dagger a|^2$. Detector branches nucleate irreversibly with hazards proportional to these intensities. The first nucleation event selects the outcome with exact Born weights, and a subsequent latch/common-mode closure drains the remaining stored delta energy through the winning branch.
 
 
 # Simple Python Experiment

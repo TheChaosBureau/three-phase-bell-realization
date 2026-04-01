@@ -14,27 +14,27 @@ Before nucleation:
 
 * no closure
 * branch hazards are
-  [
+  $$
   \lambda_i = \kappa W_0 w_i
-  ]
+  $$
 
 After branch (i_*) nucleates at (t=t_*):
 
 * zero-sequence closure (Z(t)) rises from 0 to 1:
-  [
+  $$
   \dot Z = \alpha_Z(1-Z)
-  ]
+  $$
 * winner latch (L_i) is set:
-  [
+  $$
   L_{i_*}=1,\qquad L_{j\neq i_*}=0
-  ]
+  $$
 * losing branch suppression rises with (Z)
 * winner drain conductance rises with (Z)
 
 A simple drain model is:
-[
-\dot W = -g_{\text{drain}},Z,W
-]
+$$
+\dot W = -g_{\text{drain}}\,Z\,W
+$$
 so before closure builds, drain is weak; after closure saturates, the stored energy is rapidly extracted.
 
 Below is a compact script.
@@ -336,10 +336,10 @@ And now you also get:
 * average absorbed energy by each branch
 
 For matched, lossless post-click drainage, the mean absorbed energies over many trials should be roughly:
-[
-\mathbb E[E_1] \approx W_0,p_1,\qquad
-\mathbb E[E_2] \approx W_0,p_2.
-]
+$$
+\mathbb E[E_1] \approx W_0\,p_1,\qquad
+\mathbb E[E_2] \approx W_0\,p_2.
+$$
 
 That is a nice consistency check.
 

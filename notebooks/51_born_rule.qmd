@@ -1,43 +1,43 @@
 ## Theorem (Born-exact and Born-approximate regimes for compound-Poisson threshold detection)
 
 Let a prepared two-mode state be
-[
-a \in \mathbb C^2,\qquad |a|^2=1,
-]
-and let an orthonormal analyzer basis be ({u_1,u_2}). Define branch amplitudes
-[
+$$
+a \in \mathbb C^2,\qquad \lVert a \rVert^2=1,
+$$
+and let an orthonormal analyzer basis be $\{u_1,u_2\}$. Define branch amplitudes
+$$
 c_i = u_i^\dagger a,\qquad i=1,2,
-]
+$$
 and weights
-[
+$$
 w_i = |c_i|^2,\qquad w_1+w_2=1.
-]
+$$
 
-Assume detector branch (i) receives random absorbed-energy packets according to a Poisson point process (N_i(t)) with rate
-[
-\lambda_i(t)=\gamma(t),w_i,
-]
-where (\gamma(t)\ge 0) is a common measurement envelope shared by both branches.
+Assume detector branch $i$ receives random absorbed-energy packets according to a Poisson point process $N_i(t)$ with rate
+$$
+\lambda_i(t)=\gamma(t)\,w_i,
+$$
+where $\gamma(t)\ge 0$ is a common measurement envelope shared by both branches.
 
-Let the packet energies for branch (i) be i.i.d. nonnegative random variables
-[
+Let the packet energies for branch $i$ be i.i.d. nonnegative random variables
+$$
 Q_{i,1},Q_{i,2},\dots
-]
-with common law (\nu), independent of the Poisson processes and identical across branches.
+$$
+with common law $\nu$, independent of the Poisson processes and identical across branches.
 
-Define the accumulated absorbed energy in branch (i) by
-[
+Define the accumulated absorbed energy in branch $i$ by
+$$
 E_i(t)=\sum_{k=1}^{N_i(t)} Q_{i,k}.
-]
+$$
 
-Fix a threshold (L>0), and define the branch click times
-[
-T_i=\inf{t\ge 0:,E_i(t)\ge L}.
-]
+Fix a threshold $L>0$, and define the branch click times
+$$
+T_i=\inf\{t\ge 0: E_i(t)\ge L\}.
+$$
 The observed outcome is the first click:
-[
+$$
 i_*=\arg\min(T_1,T_2),
-]
+$$
 with ties broken symmetrically.
 
 Then:
@@ -45,46 +45,46 @@ Then:
 ### Part A: Exact Born law in the single-packet threshold regime
 
 If the threshold is one packet, i.e. either
-[
+$$
 L\le \inf \operatorname{supp}(\nu),
-]
+$$
 or equivalently every first packet causes a click, then
-[
+$$
 \Pr(i_*=1)=w_1=|c_1|^2,\qquad
 \Pr(i_*=2)=w_2=|c_2|^2.
-]
+$$
 
 ### Part B: Exact Born law for fixed packet count threshold
 
-More generally, if each packet has deterministic energy (q>0), and the threshold requires exactly (m) packets:
-[
+More generally, if each packet has deterministic energy $q>0$, and the threshold requires exactly $m$ packets:
+$$
 L\in((m-1)q,mq],
-]
+$$
 then
-[
-T_i=\inf{t:N_i(t)\ge m}.
-]
-In this case, if both branches share the same packet law and differ only by the rate factors (w_i), then the winner probabilities are
-[
+$$
+T_i=\inf\{t:N_i(t)\ge m\}.
+$$
+In this case, if both branches share the same packet law and differ only by the rate factors $w_i$, then the winner probabilities are
+$$
 \Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
-]
+$$
 
 ### Part C: Approximate Born law in the many-packet threshold regime
 
 If packet energies are i.i.d. with finite mean
-[
+$$
 \mu_Q=\mathbb E[Q]>0
-]
-and finite variance, and if the threshold (L) is large compared to the typical packet energy scale, then under matched branches and weak pre-click backaction,
-[
+$$
+and finite variance, and if the threshold $L$ is large compared to the typical packet energy scale, then under matched branches and weak pre-click backaction,
+$$
 \Pr(i_*=i)\approx w_i=|c_i|^2.
-]
+$$
 
 The approximation becomes accurate when:
 
-1. both branches share the same packet-energy law (\nu),
-2. the only branch dependence is through the rate factor (w_i),
-3. the common envelope (\gamma(t)) is the same for both branches,
+1. both branches share the same packet-energy law $\nu$,
+2. the only branch dependence is through the rate factor $w_i$,
+3. the common envelope $\gamma(t)$ is the same for both branches,
 4. the first click ends the trial,
 5. pre-click depletion/backaction does not significantly alter the (w_i).
 
@@ -95,87 +95,87 @@ The approximation becomes accurate when:
 ### Step 1: Competing Poisson processes with weighted rates
 
 The branch rates are
-[
+$$
 \lambda_1(t)=\gamma(t)w_1,\qquad
 \lambda_2(t)=\gamma(t)w_2.
-]
-Thus both branches share the same time envelope, differing only by constant factors (w_i).
+$$
+Thus both branches share the same time envelope, differing only by constant factors $w_i$.
 
 Define the integrated common envelope
-[
+$$
 G(t)=\int_0^t \gamma(\tau),d\tau.
-]
+$$
 
-By standard time-change for nonhomogeneous Poisson processes, the processes (N_i(t)) are equivalent to homogeneous Poisson processes observed in operational time (G(t)), with rates (w_i).
+By standard time-change for nonhomogeneous Poisson processes, the processes $N_i(t)$ are equivalent to homogeneous Poisson processes observed in operational time $G(t)$, with rates $w_i$.
 
-So all winner probabilities reduce to a homogeneous-rate problem with rates (w_1,w_2).
+So all winner probabilities reduce to a homogeneous-rate problem with rates $(w_1,w_2)$.
 
 ---
 
 ### Step 2: Part A, single-packet threshold
 
-If any first packet triggers, then the click time (T_i) is just the first arrival time of branch (i).
+If any first packet triggers, then the click time $T_i$ is just the first arrival time of branch $i$.
 
 Thus the measurement outcome is the first event in the superposed Poisson process
-[
+$$
 N(t)=N_1(t)+N_2(t),
-]
-whose total rate is (w_1+w_2=1) in operational time.
+$$
+whose total rate is $w_1+w_2=1$ in operational time.
 
 Conditional on an arrival occurring, the probability it belongs to branch (i) is
-[
+$$
 \frac{w_i}{w_1+w_2}=w_i.
-]
+$$
 Hence
-[
+$$
 \Pr(i_*=i)=w_i=|c_i|^2.
-]
+$$
 
 ---
 
 ### Step 3: Part B, fixed packet count threshold
 
-Suppose every packet has energy (q), and threshold (L) requires exactly (m) arrivals.
+Suppose every packet has energy $q$, and threshold $L$ requires exactly $m$ arrivals.
 
-Then branch (i) clicks when it accumulates (m) arrivals:
-[
+Then branch $i$ clicks when it accumulates $m$ arrivals:
+$$
 T_i=\inf{t:N_i(t)\ge m}.
-]
+$$
 
-Now regard the superposed process (N(t)=N_1(t)+N_2(t)). Each arrival in (N) is independently labeled branch 1 with probability (w_1) and branch 2 with probability (w_2).
+Now regard the superposed process $N(t)=N_1(t)+N_2(t)$. Each arrival in $N$ is independently labeled branch 1 with probability $w_1$ and branch 2 with probability $w_2$.
 
-So the race is equivalent to repeatedly drawing branch labels i.i.d. with probabilities (w_1,w_2), and stopping when one branch has collected (m) labels.
+So the race is equivalent to repeatedly drawing branch labels i.i.d. with probabilities $(w_1,w_2)$, and stopping when one branch has collected $m$ labels.
 
-By exchangeability and symmetry of the stopping rule, the probability that branch (i) is the first to reach (m) arrivals is exactly (w_i).
+By exchangeability and symmetry of the stopping rule, the probability that branch $i$ is the first to reach $m$ arrivals is exactly $w_i$.
 
 Therefore
-[
+$$
 \Pr(i_*=i)=w_i.
-]
+$$
 
 ---
 
 ### Step 4: Part C, large-threshold compound Poisson regime
 
-Now let packet sizes be random with common law (\nu).
+Now let packet sizes be random with common law $\nu$.
 
-For branch (i), the compound Poisson energy process has drift
-[
+For branch $i$, the compound Poisson energy process has drift
+$$
 \frac{d}{dt}\mathbb E[E_i(t)] = \lambda_i(t)\mu_Q = \gamma(t)w_i\mu_Q.
-]
+$$
 
-Because the packet law is identical across branches, the only branch-dependent factor is still (w_i).
+Because the packet law is identical across branches, the only branch-dependent factor is still $w_i$.
 
-For large threshold (L), the click time is governed by many arrivals. By renewal/LLN reasoning, the time to threshold is approximately
-[
-T_i \approx \frac{L}{w_i,\mu_Q,\bar\gamma}
-]
+For large threshold $L$, the click time is governed by many arrivals. By renewal/LLN reasoning, the time to threshold is approximately
+$$
+T_i \approx \frac{L}{w_i\,\mu_Q\,\bar\gamma}
+$$
 in a slowly varying envelope, with fluctuations controlled by the common packet law and the Poisson counting noise.
 
 Since both branches have matched packet statistics and differ only by (w_i), the first-to-threshold race inherits the same weighting as the underlying arrival process. Thus the winner law is approximately
-[
+$$
 \Pr(i_*=i)\approx w_i.
-]
+$$
 
 The approximation improves as:
 
@@ -191,33 +191,33 @@ This proves the stated approximation.
 ## Corollary (delta-LC interpretation)
 
 For a 3-LC-tank delta prepared in reduced sequence state
-[
+$$
 a=
 \begin{bmatrix}
-a_+\
+a_+ \\
 a_-
 \end{bmatrix},
-]
-and analyzer branches defined by orthonormal vectors (u_1,u_2), set
-[
+$$
+and analyzer branches defined by orthonormal vectors $u_1,u_2$, set
+$$
 c_i=u_i^\dagger a,\qquad w_i=|c_i|^2.
-]
+$$
 
-If detector branch (i) receives stochastic absorbed-energy packets with rate proportional to projected branch intensity,
-[
+If detector branch $i$ receives stochastic absorbed-energy packets with rate proportional to projected branch intensity,
+$$
 \lambda_i(t)=\gamma(t)|c_i|^2,
-]
+$$
 and matched packet-energy statistics across branches, then the first-click outcome satisfies:
 
 * exactly,
-  [
+  $$
   \Pr(i_*=i)=|c_i|^2
-  ]
+  $$
   in the single-packet or fixed-count threshold regimes;
 * approximately,
-  [
+  $$
   \Pr(i_*=i)\approx |c_i|^2
-  ]
+  $$
   in the large-threshold matched compound-Poisson regime.
 
 Thus the Born weights arise whenever:
@@ -234,16 +234,16 @@ Thus the Born weights arise whenever:
 The square law comes from two ingredients:
 
 1. **Projection geometry**
-   [
+   $$
    w_i = |u_i^\dagger a|^2
-   ]
+   $$
 
 2. **Poissonian detector initiation**
    with branch rate proportional to that weight.
 
 Then first-click competition gives Born exactly or approximately, depending on threshold details.
 
-The theorem does **not** derive why the microscopic detector packet rate must be proportional to ( |u_i^\dagger a|^2 ). That remains the physical assumption to justify from the actual delta/analyzer/load hardware.
+The theorem does **not** derive why the microscopic detector packet rate must be proportional to $|u_i^\dagger a|^2$. That remains the physical assumption to justify from the actual delta/analyzer/load hardware.
 
 
 ## Python Experiment
@@ -494,14 +494,14 @@ print_result("Equatorial state (multi-packet threshold)", r4)
 
 The **single-packet threshold** case matches Born well because it is just a **first-arrival race**:
 
-* branch 1 packet rate ( \lambda_1 \propto w_1 )
-* branch 2 packet rate ( \lambda_2 \propto w_2 )
+* branch 1 packet rate $\lambda_1 \propto w_1$
+* branch 2 packet rate $\lambda_2 \propto w_2$
 
 Then the first packet belongs to branch 1 with probability
 
-[
+$$
 \Pr(1)=\frac{\lambda_1}{\lambda_1+\lambda_2}=w_1.
-]
+$$
 
 That part is solid.
 
@@ -519,7 +519,7 @@ The higher-rate branch then has two advantages:
 * it reaches threshold sooner on average
 * over many arrivals, law-of-large-numbers behavior suppresses the weaker branch
 
-So the stronger branch wins **much more often** than (w_i).
+So the stronger branch wins **much more often** than $w_i$.
 
 That is exactly what your output shows.
 
@@ -574,10 +574,10 @@ A **single stochastic nucleation/avalanche trigger** with rate proportional to b
 
 Meaning:
 
-* branch (i) has hazard
-  [
+* branch $i$ has hazard
+  $$
   \lambda_i(t)\propto |c_i|^2
-  ]
+  $$
 * once it nucleates, it latches and drains the energy
 * the trial ends immediately
 
@@ -596,16 +596,16 @@ So the measurement chain now looks like this:
 ### Preparation
 
 Unloaded 3-delta-LC ring in state
-[
-a=\begin{bmatrix}a_+\a_-\end{bmatrix}.
-]
+$$
+a=\begin{bmatrix}a_+ \\ a_-\end{bmatrix}.
+$$
 
 ### Analyzer
 
 Projects into branch amplitudes
-[
+$$
 c_i=u_i^\dagger a.
-]
+$$
 
 ### Detector
 
@@ -620,9 +620,9 @@ It must be something like:
 * first absorptive microscopic event that irreversibly commits the branch
 
 with onset rate proportional to branch intensity:
-[
+$$
 \lambda_i \propto |c_i|^2.
-]
+$$
 
 Then Born follows.
 
@@ -657,8 +657,8 @@ This actually makes your earlier zero-sequence intuition sharper.
 
 You probably want:
 
-* (+)/(-) subspace for the prepared state
-* analyzer projections (c_i)
+* $(+)/(-)$ subspace for the prepared state
+* analyzer projections $c_i$
 * a **single-shot closure/nucleation event**
 * common-mode / zero-sequence variable to enforce exclusivity after nucleation
 
@@ -672,15 +672,15 @@ The next model should be:
 
 ### Two-branch stochastic nucleation + latch
 
-For branch (i):
-[
+For branch $i$:
+$$
 \lambda_i(t)=\gamma(t)|c_i|^2
-]
+$$
 draw first initiation time (T_i),
 winner is
-[
+$$
 i_*=\arg\min(T_1,T_2).
-]
+$$
 
 Then after winner selection:
 

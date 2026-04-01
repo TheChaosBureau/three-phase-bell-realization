@@ -431,56 +431,56 @@ Here is a clean theorem-style statement of what the failed simulation means.
 ## Theorem (drifted Gaussian threshold races do not generically yield Born weights)
 
 Consider two detector branches with analyzer weights
-[
+$$
 w_1 = |c_1|^2,\qquad w_2 = |c_2|^2,\qquad w_1+w_2=1,\qquad w_1>w_2,
-]
+$$
 and stochastic absorbed-energy accumulators
-[
-dE_i(t)=\mu_i,dt+\sigma,dB_i(t),\qquad E_i(0)=0,\qquad i\in{1,2},
-]
+$$
+dE_i(t)=\mu_i\,dt+\sigma\,dB_i(t),\qquad E_i(0)=0,\qquad i\in\{1,2\},
+$$
 where
 
-* (B_1,B_2) are independent standard Brownian motions,
-* (\sigma>0) is common noise strength,
-* (\mu_i = \Gamma w_i) for some common scale (\Gamma>0).
+* $B_1,B_2$ are independent standard Brownian motions,
+* $\sigma>0$ is common noise strength,
+* $\mu_i = \Gamma w_i$ for some common scale $\Gamma>0$.
 
-Let the observed outcome be the first branch to hit threshold (L>0):
-[
-T_i=\inf{t\ge 0:E_i(t)=L},\qquad i_*=\arg\min(T_1,T_2).
-]
+Let the observed outcome be the first branch to hit threshold $L>0$:
+$$
+T_i=\inf\{t\ge 0:E_i(t)=L\},\qquad i_*=\arg\min(T_1,T_2).
+$$
 
 Then, in the drift-dominated regime
-[
+$$
 \frac{\sigma^2}{L\Gamma}\ll 1,
-]
+$$
 the winner probability is strongly biased toward the larger-drift branch:
-[
+$$
 \Pr(i_*=1)\to 1,\qquad \Pr(i_*=2)\to 0,
-]
-and therefore, except in the trivial symmetric case (w_1=w_2=\tfrac12), the model does **not** reproduce Born weights
-[
+$$
+and therefore, except in the trivial symmetric case $w_1=w_2=\tfrac12$, the model does **not** reproduce Born weights
+$$
 \Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
-]
+$$
 
 ### Interpretation
 
-A two-branch first-passage race with smooth upward drift and additive Gaussian noise behaves like a “faster integrator wins” mechanism, not like a Born-rule detector. The larger projected branch drift tends to reach threshold first almost always once the threshold is appreciable and the noise is not overwhelming.
+A two-branch first-passage race with smooth upward drift and additive Gaussian noise behaves like a "faster integrator wins" mechanism, not like a Born-rule detector. The larger projected branch drift tends to reach threshold first almost always once the threshold is appreciable and the noise is not overwhelming.
 
 ### Sketch of reason
 
 Each process has mean hitting time approximately
-[
+$$
 \mathbb E[T_i]\approx \frac{L}{\mu_i}
-]
-in the drift-dominated regime. Since (\mu_1>\mu_2), branch 1 reaches threshold earlier by a deterministic margin of order
-[
+$$
+in the drift-dominated regime. Since $\mu_1>\mu_2$, branch 1 reaches threshold earlier by a deterministic margin of order
+$$
 L\left(\frac{1}{\mu_2}-\frac{1}{\mu_1}\right),
-]
+$$
 while the stochastic spread of hitting times grows only like
-[
-O!\left(\frac{\sigma\sqrt{L}}{\mu_i^{3/2}}\right).
-]
-As (L\Gamma/\sigma^2) grows, the deterministic separation dominates the fluctuation width, so the faster branch wins with probability approaching 1.
+$$
+O\!\left(\frac{\sigma\sqrt{L}}{\mu_i^{3/2}}\right).
+$$
+As $L\Gamma/\sigma^2$ grows, the deterministic separation dominates the fluctuation width, so the faster branch wins with probability approaching 1.
 
 ---
 
@@ -501,19 +501,19 @@ Therefore, a plausible Born-like detector must rely on a different stochastic st
 ## Positive contrast theorem (why the Poisson race works)
 
 Let the same branch weights be
-[
+$$
 w_i=|c_i|^2,\qquad w_1+w_2=1,
-]
+$$
 and suppose each detector branch triggers as a point process with hazard
-[
-\lambda_i(t)=\gamma(t),w_i,
-]
-where (\gamma(t)\ge 0) is a common envelope. Let the observed outcome be the first branch to trigger.
+$$
+\lambda_i(t)=\gamma(t)\,w_i,
+$$
+where $\gamma(t)\ge 0$ is a common envelope. Let the observed outcome be the first branch to trigger.
 
 Then
-[
+$$
 \Pr(i_*=1)=w_1,\qquad \Pr(i_*=2)=w_2.
-]
+$$
 
 ### Interpretation
 

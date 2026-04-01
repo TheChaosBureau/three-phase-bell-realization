@@ -8,13 +8,13 @@ Yes. The cleanest way to do this is:
 The key question is:
 
 > if the ideal pre-click hazards are
-> [
-> \lambda_i^{(0)}(t)=\gamma(t),w_i,\qquad w_i=|u_i^\dagger a|^2,
-> ]
-> how much state-dependent or asymmetric (Z)-feedback can you add before
-> [
+> $$
+> \lambda_i^{(0)}(t)=\gamma(t)\,w_i,\qquad w_i=|u_i^\dagger a|^2,
+> $$
+> how much state-dependent or asymmetric $Z$-feedback can you add before
+> $$
 > \Pr(i)\approx w_i
-> ]
+> $$
 > stops being a good approximation?
 
 ---
@@ -22,19 +22,19 @@ The key question is:
 # 1. Ideal Born-exact hazard model
 
 Without pre-click backaction, the branch hazards are
-[
+$$
 \lambda_1^{(0)}(t)=\gamma(t)w_1,\qquad
 \lambda_2^{(0)}(t)=\gamma(t)w_2,
-]
+$$
 with
-[
+$$
 w_1+w_2=1.
-]
+$$
 
 Then
-[
+$$
 \Pr(1)=w_1,\qquad \Pr(2)=w_2.
-]
+$$
 
 That is the exact reference point.
 
@@ -42,33 +42,33 @@ That is the exact reference point.
 
 # 2. Add weak pre-click closure feedback
 
-Let (Z(t)) be a small shared closure variable that begins to rise even before the click, due to weak incipient measurement coupling.
+Let $Z(t)$ be a small shared closure variable that begins to rise even before the click, due to weak incipient measurement coupling.
 
 A minimal pre-click model is
-[
+$$
 \dot Z = \alpha - \beta Z,\qquad Z(0)=0,
-]
+$$
 so
-[
+$$
 Z(t)=\frac{\alpha}{\beta}\left(1-e^{-\beta t}\right).
-]
+$$
 
-If (\alpha/\beta\ll 1), then (Z(t)) stays small before the click.
+If $\alpha/\beta\ll 1$, then $Z(t)$ stays small before the click.
 
-Now let (Z) perturb the hazards.
+Now let $Z$ perturb the hazards.
 
 There are two qualitatively different ways it can enter.
 
 ## Case A: common-mode feedback only
 
-[
-\lambda_i(t)=\gamma(t),w_i,[1+\varepsilon Z(t)].
-]
+$$
+\lambda_i(t)=\gamma(t)\,w_i\,[1+\varepsilon Z(t)].
+$$
 
 This multiplies both hazards by the same factor. Then the ratio
-[
+$$
 \frac{\lambda_1(t)}{\lambda_1(t)+\lambda_2(t)}=w_1
-]
+$$
 is unchanged.
 
 So:
@@ -82,42 +82,41 @@ That is an important result.
 ## Case B: differential feedback
 
 The simplest asymmetric perturbation is
-[
-\lambda_1(t)=\gamma(t),w_1,[1+\varepsilon Z(t)],
-]
-[
-\lambda_2(t)=\gamma(t),w_2,[1-\varepsilon Z(t)].
-]
+$$
+\lambda_1(t)=\gamma(t)\,w_1\,[1+\varepsilon Z(t)],
+$$
+$$
+\lambda_2(t)=\gamma(t)\,w_2\,[1-\varepsilon Z(t)].
+$$
 
 Now the branch ratio is perturbed, so Born will distort.
 
-This is the right model for “how much backaction can you tolerate?”
+This is the right model for "how much backaction can you tolerate?"
 
 ---
 
 # 3. Exact winner probability formula with differential feedback
 
-For any hazards (\lambda_i(t)), the probability branch 1 wins is
-[
-\Pr(1)=\int_0^\infty \lambda_1(t),
-\exp!\left[-\int_0^t\bigl(\lambda_1(\tau)+\lambda_2(\tau)\bigr),d\tau\right]dt.
-]
+For any hazards $\lambda_i(t)$, the probability branch 1 wins is
+$$
+\Pr(1)=\int_0^\infty \lambda_1(t)\,
+\exp\!\left[-\int_0^t\bigl(\lambda_1(\tau)+\lambda_2(\tau)\bigr)\,d\tau\right]dt.
+$$
 
 Substitute
-[
+$$
 \lambda_1(t)=\gamma(t)w_1[1+\varepsilon Z(t)],
-]
-[
+$$
+$$
 \lambda_2(t)=\gamma(t)w_2[1-\varepsilon Z(t)].
-]
+$$
 
 Then
-[
+$$
 \lambda_1+\lambda_2
-===================
-
+=
 \gamma(t)\Bigl[1+\varepsilon Z(t)(w_1-w_2)\Bigr].
-]
+$$
 
 This is exact, but not yet transparent.
 
@@ -125,53 +124,53 @@ This is exact, but not yet transparent.
 
 # 4. First-order distortion formula
 
-Assume (\varepsilon Z(t)) is small, so we can expand to first order.
+Assume $\varepsilon Z(t)$ is small, so we can expand to first order.
 
 Define
-[
+$$
 \Delta = w_1-w_2 = 2w_1-1.
-]
+$$
 
 Also define the ideal cumulative envelope
-[
+$$
 G(t)=\int_0^t \gamma(\tau),d\tau.
-]
+$$
 
-Then, to first order in (\varepsilon),
-[
+Then, to first order in $\varepsilon$,
+$$
 \Pr(1)
 \approx
 w_1
 +
-\varepsilon,w_1(1-\Delta),I_Z,
-]
+\varepsilon\,w_1(1-\Delta)\,I_Z,
+$$
 where
-[
-I_Z=\int_0^\infty \gamma(t)Z(t)e^{-G(t)},dt.
-]
+$$
+I_Z=\int_0^\infty \gamma(t)Z(t)e^{-G(t)}\,dt.
+$$
 
-Since (1-\Delta = 1-(w_1-w_2)=2w_2), this becomes
-[
+Since $1-\Delta = 1-(w_1-w_2)=2w_2$, this becomes
+$$
 \boxed{
-\Pr(1)\approx w_1 + 2\varepsilon,w_1w_2,I_Z.
+\Pr(1)\approx w_1 + 2\varepsilon\,w_1w_2\,I_Z.
 }
-]
+$$
 
 Similarly
-[
+$$
 \boxed{
-\Pr(2)\approx w_2 - 2\varepsilon,w_1w_2,I_Z.
+\Pr(2)\approx w_2 - 2\varepsilon\,w_1w_2\,I_Z.
 }
-]
+$$
 
 This is the main perturbative result.
 
 ## Interpretation
 
-* distortion is proportional to (\varepsilon)
-* distortion is proportional to (w_1w_2), so it is largest near the equator ((w_1\approx w_2\approx 1/2))
-* distortion vanishes near the poles ((w_1\approx 0) or (1))
-* distortion depends on the weighted average amount of pre-click closure, (I_Z)
+* distortion is proportional to $\varepsilon$
+* distortion is proportional to $w_1w_2$, so it is largest near the equator $(w_1\approx w_2\approx 1/2)$
+* distortion vanishes near the poles $(w_1\approx 0)$ or $(w_1\approx 1)$
+* distortion depends on the weighted average amount of pre-click closure, $I_Z$
 
 So the **most sensitive states** are equatorial superpositions.
 
@@ -182,74 +181,69 @@ That is exactly what you would expect.
 # 5. Simple closed form for constant envelope
 
 Take the simplest case:
-[
+$$
 \gamma(t)=\Gamma \quad \text{constant},
-]
+$$
 and
-[
+$$
 Z(t)=\frac{\alpha}{\beta}(1-e^{-\beta t}).
-]
+$$
 
 Then
-[
+$$
 G(t)=\Gamma t,
-]
+$$
 and
-[
+$$
 I_Z
-===
-
-\int_0^\infty \Gamma,\frac{\alpha}{\beta}(1-e^{-\beta t})e^{-\Gamma t},dt.
-]
+=
+\int_0^\infty \Gamma\,\frac{\alpha}{\beta}(1-e^{-\beta t})e^{-\Gamma t}\,dt.
+$$
 
 Compute it:
-[
+$$
 I_Z
-===
-
+=
 \frac{\alpha}{\beta}
 \left[
-\int_0^\infty \Gamma e^{-\Gamma t},dt
--------------------------------------
-
-\int_0^\infty \Gamma e^{-(\Gamma+\beta)t},dt
+\int_0^\infty \Gamma e^{-\Gamma t}\,dt
+-
+\int_0^\infty \Gamma e^{-(\Gamma+\beta)t}\,dt
 \right].
-]
+$$
 
 So
-[
+$$
 I_Z
-===
-
+=
 \frac{\alpha}{\beta}
 \left[
 1-\frac{\Gamma}{\Gamma+\beta}
 \right]
-=======
-
+=
 \frac{\alpha}{\Gamma+\beta}.
-]
+$$
 
 Therefore
-[
+$$
 \boxed{
-\Pr(1)\approx w_1 + 2\varepsilon,w_1w_2,\frac{\alpha}{\Gamma+\beta}.
+\Pr(1)\approx w_1 + 2\varepsilon\,w_1w_2\,\frac{\alpha}{\Gamma+\beta}.
 }
-]
+$$
 
 This is very useful.
 
 It says the distortion scale is
-[
-\delta p \sim 2\varepsilon,w_1w_2,\frac{\alpha}{\Gamma+\beta}.
-]
+$$
+\delta p \sim 2\varepsilon\,w_1w_2\,\frac{\alpha}{\Gamma+\beta}.
+$$
 
 So tolerance improves when:
 
-* (\varepsilon) is small
-* pre-click closure growth (\alpha) is small
-* clicks happen fast ((\Gamma) large)
-* closure relaxes fast ((\beta) large)
+* $\varepsilon$ is small
+* pre-click closure growth $\alpha$ is small
+* clicks happen fast with large $\Gamma$
+* closure relaxes fast with large $\beta$
 
 That is a very clear design rule.
 
@@ -257,40 +251,40 @@ That is a very clear design rule.
 
 # 6. Tolerance criterion
 
-Suppose you want the deviation from Born to stay below some target (\delta):
-[
+Suppose you want the deviation from Born to stay below some target $\delta$:
+$$
 |\Pr(1)-w_1| \le \delta.
-]
+$$
 
 Using the first-order formula,
-[
-2|\varepsilon|,w_1w_2,\frac{\alpha}{\Gamma+\beta}\le \delta.
-]
+$$
+2|\varepsilon|\,w_1w_2\,\frac{\alpha}{\Gamma+\beta}\le \delta.
+$$
 
 Worst case is at
-[
+$$
 w_1=w_2=\frac12,
-]
+$$
 so
-[
+$$
 w_1w_2=\frac14.
-]
+$$
 
 Then the worst-case tolerance condition is
-[
+$$
 \boxed{
-|\varepsilon|,\frac{\alpha}{\Gamma+\beta}\le 2\delta.
+|\varepsilon|\,\frac{\alpha}{\Gamma+\beta}\le 2\delta.
 }
-]
+$$
 
 For example, if you want error below 1% in the worst case,
-[
+$$
 \delta=0.01,
-]
+$$
 then you need roughly
-[
-|\varepsilon|,\frac{\alpha}{\Gamma+\beta}\lesssim 0.02.
-]
+$$
+|\varepsilon|\,\frac{\alpha}{\Gamma+\beta}\lesssim 0.02.
+$$
 
 That is a nice engineering criterion.
 
@@ -301,35 +295,35 @@ That is a nice engineering criterion.
 ## No distortion
 
 If pre-click feedback is common-mode only:
-[
+$$
 \lambda_i=\gamma w_i(1+\varepsilon Z),
-]
+$$
 then
-[
+$$
 \Pr(i)=w_i
-]
+$$
 exactly.
 
 ## Small distortion
 
 If pre-click feedback is differential:
-[
+$$
 \lambda_1=\gamma w_1(1+\varepsilon Z),\qquad
 \lambda_2=\gamma w_2(1-\varepsilon Z),
-]
+$$
 then
-[
+$$
 \Pr(1)\approx w_1 + 2\varepsilon w_1w_2 I_Z,
-]
+$$
 with
-[
+$$
 I_Z=\int_0^\infty \gamma(t)Z(t)e^{-G(t)}dt.
-]
+$$
 
-For constant (\gamma=\Gamma) and (Z(t)=\frac{\alpha}{\beta}(1-e^{-\beta t})),
-[
+For constant $\gamma=\Gamma$ and $Z(t)=\frac{\alpha}{\beta}(1-e^{-\beta t})$,
+$$
 \Pr(1)\approx w_1 + 2\varepsilon w_1w_2\frac{\alpha}{\Gamma+\beta}.
-]
+$$
 
 That is the clean result.
 
@@ -596,35 +590,35 @@ if __name__ == "__main__":
 ## Common-mode case
 
 You should see empirical winner probabilities stay very close to Born:
-[
+$$
 \Pr(1)\approx w_1.
-]
+$$
 
-That is not approximate by theory — it is exact in the continuous-time model.
+That is not approximate by theory; it is exact in the continuous-time model.
 
 ## Differential case
 
 You should see a small shift:
-[
+$$
 \Pr(1)-w_1 \approx 2\varepsilon w_1 w_2 \frac{\alpha}{\Gamma+\beta}.
-]
+$$
 
 For your example with
 
-* (\Gamma=1)
-* (\alpha=0.05)
-* (\beta=1)
-* (\varepsilon=0.10)
+* $\Gamma=1$
+* $\alpha=0.05$
+* $\beta=1$
+* $\varepsilon=0.10$
 
 the distortion scale is
-[
+$$
 \frac{\alpha}{\Gamma+\beta} = \frac{0.05}{2}=0.025.
-]
+$$
 
-So for the equatorial-ish case (w_1\approx 0.7165,;w_2\approx 0.2835),
-[
+So for the equatorial-ish case $w_1\approx 0.7165,\;w_2\approx 0.2835$,
+$$
 \delta p_1 \approx 2(0.10)(0.7165)(0.2835)(0.025)\approx 0.0010.
-]
+$$
 
 So you should only see about a 0.1% shift there.
 
@@ -640,10 +634,10 @@ The math says something clean:
 * **Born is fragile only to differential pre-click backaction**
 * the distortion is largest for equatorial states and smallest near the poles
 * the small parameter is roughly
-  [
-  |\varepsilon|,\frac{\alpha}{\Gamma+\beta}
-  ]
+  $$
+  |\varepsilon|\,\frac{\alpha}{\Gamma+\beta}
+  $$
 
 So this gives you a concrete engineering criterion for how weak the pre-click closure coupling must be if you want to preserve Born-like statistics.
 
-If you want, the next useful step is to replace this toy (Z) with a physically interpretable zero-sequence variable derived from an actual delta measurement closure network.
+If you want, the next useful step is to replace this toy $Z$ with a physically interpretable zero-sequence variable derived from an actual delta measurement closure network.

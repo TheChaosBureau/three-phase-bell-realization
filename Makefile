@@ -32,7 +32,8 @@ pdf:
 
 pdf-all:
 	@mkdir -p artifacts/paper
-	@for f in notebooks/*.md notebooks/*.qmd; do \
+	@set -e; \
+	for f in notebooks/*.md notebooks/*.qmd; do \
 		[ -e "$$f" ] || continue; \
 		QUARTO_PYTHON=.venv/bin/python quarto render "$$f" \
 			--to pdf \
