@@ -71,3 +71,31 @@ def race_error_metric(target_probs: Sequence[float], empirical_probs: Sequence[f
         "race_rms_error": float(np.sqrt(np.mean(errors**2))),
         "race_max_error": float(np.max(np.abs(errors))),
     }
+
+
+def branch_asymmetry_metrics(
+    target_probs: Sequence[float],
+    empirical_probs: Sequence[float],
+) -> dict[str, float | np.ndarray]:
+    """
+    Measure whether branch imbalance is amplified beyond the target race law.
+    """
+    target = np.asarray(target_probs, dtype=float)
+    empirical = np.asarray(empirical_probs, dtype=float)
+    mask = np.abs(target - 0.5) > 1e-9
+    if not np.any(mask):
+        return {
+            "amplification_factors": np.asarray([], dtype=float),
+            "branch_asymmetry_amplification": 0.0,
+            "branch_asymmetry_worst": 0.0,
+        }
+
+    target_margin = np.abs(2.0 * target[mask] - 1.0)
+    empirical_margin = np.abs(2.0 * empirical[mask] - 1.0)
+    amplification = empirical_margin / np.maximum(target_margin, 1e-9)
+    deviation = np.abs(amplification - 1.0)
+    return {
+        "amplification_factors": amplification,
+        "branch_asymmetry_amplification": float(np.mean(deviation)),
+        "branch_asymmetry_worst": float(np.max(deviation)),
+    }

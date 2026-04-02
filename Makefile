@@ -15,8 +15,12 @@ DETECTOR_SAMPLES ?= 20
 DETECTOR_OUTDIR ?= artifacts/detector_search/$(DETECTOR_MODEL)
 DETECTOR_JSONL ?= $(DETECTOR_OUTDIR)/results.jsonl
 DETECTOR_CSV ?= $(DETECTOR_OUTDIR)/results.csv
+DETECTOR_NEXT_OUTDIR ?= artifacts/detector_next
+DETECTOR_NEXT_SAMPLES ?= 8
+DETECTOR_NEXT_TOP_K ?= 5
+DETECTOR_NEXT_GRID ?= 9
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -78,3 +82,11 @@ detector-search:
 		--jsonl "$(DETECTOR_JSONL)" \
 		--csv "$(DETECTOR_CSV)" \
 		--outdir "$(DETECTOR_OUTDIR)"
+
+detector-next-report:
+	mkdir -p "$(DETECTOR_NEXT_OUTDIR)"
+	poetry run $(PYTHON) -m detector_search.experiments.run_next_steps_report \
+		--outdir "$(DETECTOR_NEXT_OUTDIR)" \
+		--samples-per-model "$(DETECTOR_NEXT_SAMPLES)" \
+		--top-k "$(DETECTOR_NEXT_TOP_K)" \
+		--grid-size "$(DETECTOR_NEXT_GRID)"

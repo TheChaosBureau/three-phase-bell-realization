@@ -24,10 +24,10 @@ class SearchConfig:
     score_weights: dict[str, float] = field(
         default_factory=lambda: {
             "linearity_rms_rel": 3.0,
-            "race_rms_error": 4.0,
+            "race_rms_error": 5.0,
             "dark_penalty": 2.0,
-            "waiting_time_penalty": 1.5,
-            "mismatch_penalty": 3.0,
+            "waiting_time_penalty": 1.0,
+            "mismatch_penalty": 1.5,
         }
     )
 

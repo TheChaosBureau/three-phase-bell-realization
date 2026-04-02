@@ -13,7 +13,12 @@ import numpy as np
 from detector_search.config import DEFAULT_SEARCH_CONFIG, SearchConfig
 from detector_search.models.base import DetectorModel, ParamGridValue
 
-from .metrics import fit_rate_vs_power, race_error_metric, waiting_time_metrics
+from .metrics import (
+    branch_asymmetry_metrics,
+    fit_rate_vs_power,
+    race_error_metric,
+    waiting_time_metrics,
+)
 from .race import simulate_many_races
 from .single_branch import simulate_many_trials
 
@@ -160,6 +165,7 @@ def evaluate_candidate(
         race_rows.append({"P1": P1, "P2": P2, "target_p1": target, "empirical_p1": empirical, **row})
 
     race_metrics = race_error_metric(target_probs, empirical_probs)
+    asymmetry_metrics = branch_asymmetry_metrics(target_probs, empirical_probs)
 
     mismatch_rows: list[dict[str, Any]] = []
     mismatch_errors: list[float] = []
@@ -196,6 +202,8 @@ def evaluate_candidate(
         "alpha_fit": float(rate_fit["alpha_fit"]),
         "race_rms_error": float(race_metrics["race_rms_error"]),
         "race_max_error": float(race_metrics["race_max_error"]),
+        "branch_asymmetry_amplification": float(asymmetry_metrics["branch_asymmetry_amplification"]),
+        "branch_asymmetry_worst": float(asymmetry_metrics["branch_asymmetry_worst"]),
         "dark_penalty": dark_penalty,
         "waiting_time_penalty": waiting_penalty,
         "mismatch_penalty": mismatch_penalty,
