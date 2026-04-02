@@ -3,7 +3,7 @@ Good. We should lock in **Option A: reduced 4-mode shared-state simulator** firs
 That means:
 
 * no tank-level hardware yet
-* one shared ( \mathbb C^4 ) state
+* one shared $\mathbb C^4$ state
 * local analyzer rotations
 * four joint branch weights
 * stochastic nucleation + latch readout
@@ -12,22 +12,22 @@ That means:
 ## Core equations
 
 State:
-[
+$$
 \Psi(t)\in\mathbb C^4
-]
+$$
 
 Basis ordering:
-[
-{|++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle}
-]
+$$
+\{|++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle\}
+$$
 
 Reduced dynamics:
-[
+$$
 i\dot\Psi = H\Psi
-]
+$$
 
 Prepared singlet-like state:
-[
+$$
 \Psi_0=\frac{1}{\sqrt2}
 \begin{bmatrix}
 0\
@@ -35,32 +35,32 @@ Prepared singlet-like state:
 -1\
 0
 \end{bmatrix}
-]
+$$
 
 Minimal Hamiltonian:
-[
-H=\omega_0 I_4+\Delta,|\Psi_0\rangle\langle\Psi_0|
-]
+$$
+H=\omega_0 I_4+\Delta\,|\Psi_0\rangle\langle\Psi_0|
+$$
 
 Local analyzer rotations:
-[
+$$
 R(\theta)=
 \begin{bmatrix}
 \cos\theta & \sin\theta\
 -\sin\theta & \cos\theta
 \end{bmatrix}
-]
-[
+$$
+$$
 U(a,b)=R(a)\otimes R(b)
-]
+$$
 
 Rotated state:
-[
+$$
 \Psi'(a,b)=U(a,b)\Psi_0
-]
+$$
 
 Joint branch amplitudes:
-[
+$$
 \Psi'(a,b)=
 \begin{bmatrix}
 c_{++}\
@@ -68,38 +68,38 @@ c_{+-}\
 c_{-+}\
 c_{--}
 \end{bmatrix}
-]
+$$
 
 Joint weights:
-[
+$$
 w_{xy}(a,b)=|c_{xy}(a,b)|^2
-]
+$$
 with
-[
+$$
 \sum_{x,y} w_{xy}=1
-]
+$$
 
-Correlator with (+ \mapsto +1), (- \mapsto -1):
-[
+Correlator with $(+ \mapsto +1)$, $(- \mapsto -1)$:
+$$
 E(a,b)=w_{++}-w_{+-}-w_{-+}+w_{--}
-]
+$$
 
 For the singlet-like state:
-[
+$$
 E(a,b)=-\cos 2(a-b)
-]
+$$
 
 Nucleation model:
-[
-\lambda_{xy}(t)=\gamma(t),w_{xy}(a,b)
-]
+$$
+\lambda_{xy}(t)=\gamma(t)\,w_{xy}(a,b)
+$$
 
 First nucleation winner has exact joint probability:
-[
+$$
 P(x,y\mid a,b)=w_{xy}(a,b)
-]
+$$
 
-After winner ((x_*,y_*)) nucleates, latch engages and drains remaining stored energy through that branch only.
+After winner $(x_*,y_*)$ nucleates, latch engages and drains remaining stored energy through that branch only.
 
 ## Minimal repo structure
 
@@ -225,56 +225,56 @@ Tests:
 1. state normalization
 2. analyzer unitarity
 3. joint weights sum to 1
-4. singlet correlator matches (-\cos 2(a-b))
-5. CHSH value near (2\sqrt2)
+4. singlet correlator matches $-\cos 2(a-b)$
+5. CHSH value near $2\sqrt2$
 6. Monte Carlo frequencies match exact weights within tolerance
 
 ## Minimal implementation targets
 
 ### Test 1: normalization
 
-[
+$$
 |\Psi_0|=1
-]
+$$
 
 ### Test 2: local unitaries
 
-[
+$$
 U^\dagger U = I_4
-]
+$$
 
 ### Test 3: branch weight normalization
 
-[
+$$
 \sum_{xy} w_{xy}=1
-]
+$$
 
 ### Test 4: exact singlet formulas
 
 For singlet state:
-[
+$$
 w_{++}=w_{--}=\tfrac12\sin^2(a-b)
-]
-[
+$$
+$$
 w_{+-}=w_{-+}=\tfrac12\cos^2(a-b)
-]
+$$
 
 ### Test 5: correlator
 
-[
+$$
 E(a,b)=-\cos 2(a-b)
-]
+$$
 
 ### Test 6: CHSH
 
 Using
-[
+$$
 a_0=0^\circ,\quad a_1=45^\circ,\quad b_0=22.5^\circ,\quad b_1=-22.5^\circ
-]
+$$
 expect
-[
+$$
 S=2\sqrt2
-]
+$$
 up to floating-point tolerance.
 
 ## Recommended first milestone

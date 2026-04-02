@@ -81,7 +81,7 @@ def chsh_S(psi0: np.ndarray, a0_deg: float, a1_deg: float,
     e_a0b1 = E_for_angles(psi0, a0_deg, b1_deg)
     e_a1b0 = E_for_angles(psi0, a1_deg, b0_deg)
     e_a1b1 = E_for_angles(psi0, a1_deg, b1_deg)
-    return abs(e_a0b0 + e_a0b1 + e_a1b0 - e_a1b1)
+    return e_a0b0 + e_a0b1 + e_a1b0 - e_a1b1
 
 @dataclass
 class OneCaseResult:
@@ -134,7 +134,7 @@ def run_tests(verbose: bool = True) -> None:
         e_exact = -math.cos(2 * delta)
         assert_close(e_num, e_exact, tol=1e-12, msg=f"Correlator mismatch at ({a_deg}, {b_deg}).")
     S = chsh_S(psi0, 0.0, 45.0, 22.5, -22.5)
-    assert_close(S, 2 * math.sqrt(2), tol=1e-12, msg="CHSH S mismatch.")
+    assert_close(abs(S), 2 * math.sqrt(2), tol=1e-12, msg="CHSH |S| mismatch.")
     rng = np.random.default_rng(1234)
     w = joint_weights(rotate_state(psi0, math.radians(45.0), math.radians(22.5)))
     w_emp = sample_joint_outcomes(w, 50000, rng)
@@ -184,7 +184,7 @@ def main() -> None:
         e_a0b1 = E_for_angles(psi0, a0, b1)
         e_a1b0 = E_for_angles(psi0, a1, b0)
         e_a1b1 = E_for_angles(psi0, a1, b1)
-        S = chsh_S(psi0, a0, a1, b0, b1)
+        S = e_a0b0 + e_a0b1 + e_a1b0 - e_a1b1
         print("CHSH settings:")
         print(f"E({a0:5.1f},{b0:5.1f}) = {e_a0b0:.6f}")
         print(f"E({a0:5.1f},{b1:5.1f}) = {e_a0b1:.6f}")
