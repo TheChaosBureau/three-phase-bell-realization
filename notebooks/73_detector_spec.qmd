@@ -1,0 +1,323 @@
+You need to write a spec for a **three-layer measurement front-end**.
+
+Not a theory spec. An engineering spec.
+
+## The three things to design
+
+### 1. Linear branch-intensity generator
+
+This is the passive front-end that takes the prepared state and produces physical branch intensities.
+
+Its job is:
+
+* accept the stored resonant state from the shared core
+* apply the analyzer settings
+* expose physical output branches
+* guarantee branch absorbed-power envelopes proportional to the target weights
+
+Single-particle version:
+[
+p_i(t)\propto w_i
+]
+
+Joint version:
+[
+p_{xy}(t)\propto w_{xy}(a,b)
+]
+
+This block is basically:
+
+* shared core
+* analyzer couplers
+* passive output branches
+
+### 2. Stochastic nucleation element
+
+This is the real missing detector physics.
+
+Its job is:
+
+* sit on each output branch
+* remain quiescent under sub-threshold branch activity
+* undergo a rare irreversible initiation event
+* have initiation hazard approximately proportional to branch absorbed intensity
+
+Target behavior:
+[
+\lambda_i(t)\approx \kappa,p_i(t)
+]
+or after normalization
+[
+\lambda_i(t)=\gamma(t),w_i
+]
+
+This is the hardest block.
+
+### 3. Common-mode / zero-sequence latch
+
+This is the post-click completion block.
+
+Its job is:
+
+* detect that one branch has nucleated
+* suppress all other branches quickly
+* open a strong drain path for the winner
+* route remaining stored energy into the winning branch
+* produce a single macroscopic recorded outcome
+
+This is not where Born comes from. This is where **one-click exclusivity** comes from.
+
+---
+
+# So what spec should you write?
+
+I would write **one engineering spec with three subcircuits**.
+
+## Subcircuit A — Analyzer/readout network
+
+### Inputs
+
+* prepared resonant state from shared core
+* analyzer settings (a,b)
+
+### Outputs
+
+* branch voltages/currents for
+  [
+  ++,\ +-,\ -+,\ --
+  ]
+
+### Requirement
+
+Before any detector nonlinearity,
+[
+p_k(t)=v_k(t)i_k(t)
+]
+must satisfy
+[
+p_k(t)=\Gamma(t),w_k(a,b)
+]
+to within tolerance, with a common envelope (\Gamma(t)).
+
+### Acceptance metric
+
+Normalized absorbed energies with linear resistive loads:
+[
+f_k=\frac{E_k}{\sum_j E_j}
+]
+must match (w_k).
+
+So this block proves the front-end computes the right weights.
+
+---
+
+## Subcircuit B — Nucleation detector cell
+
+One copy per branch.
+
+### Inputs
+
+* local branch voltage/current or absorbed power signal
+
+### Output
+
+* binary nucleation event
+
+### Required behavior
+
+* no continuous analog output is the recorded outcome
+* branch should produce a **rare discrete initiation**
+* hazard should be approximately linear in absorbed branch power over operating range
+
+Engineering target:
+[
+\lambda_k \approx \alpha,p_k
+]
+
+### Candidate implementations
+
+* avalanche trigger
+* metastable latch biased near instability
+* breakdown element
+* tunneling/noise-assisted trigger
+* shot-noise absorber with one-shot commit
+
+### What to characterize
+
+* hazard vs absorbed power curve
+* dead time / reset
+* timing jitter
+* dark-count rate
+* branch-to-branch matching
+
+### Acceptance metric
+
+Across calibrated operating range,
+[
+\lambda_k / p_k
+]
+should be approximately constant and matched across branches.
+
+This is the most important spec.
+
+---
+
+## Subcircuit C — Zero-sequence/common-mode latch
+
+Shared across all branches.
+
+### Inputs
+
+* branch nucleation flags
+
+### Outputs
+
+* winner latch
+* loser suppression
+* winner drain enable
+
+### Required behavior
+
+Once branch (k) nucleates:
+
+* all other branches are inhibited fast
+* winner drain path turns on
+* remaining shared stored energy is extracted through winner
+* only one outcome is recorded
+
+### Physical interpretation
+
+This is the common-mode/zero-sequence closure channel.
+
+### Acceptance metric
+
+* one nucleation event leads to one and only one final recorded winner
+* losing branches absorb negligible post-click energy
+* winner absorbs nearly all remaining reservoir energy
+
+---
+
+# The actual engineering document outline
+
+## Section 1 — Functional decomposition
+
+Describe the three blocks:
+
+1. branch-weight generator
+2. nucleation detector
+3. common latch/closure
+
+## Section 2 — Signals and interfaces
+
+Define:
+
+* resonant input ports
+* analyzer controls
+* branch output ports
+* nucleation event signal
+* latch signal
+* winner drain signal
+
+## Section 3 — Quantitative requirements
+
+### Front-end
+
+[
+p_k(t)=\Gamma(t)w_k + \text{error}
+]
+with branch-weight error tolerance.
+
+### Detector cell
+
+[
+\lambda_k \approx \alpha p_k
+]
+with linearity tolerance and matching tolerance.
+
+### Latch
+
+Winner-take-all settling time, suppression ratio, and post-click energy-capture requirement.
+
+## Section 4 — Test plan
+
+Three separate tests:
+
+### Test A: linear front-end only
+
+Replace detectors with resistors and verify (f_k\approx w_k).
+
+### Test B: single detector-cell characterization
+
+Drive one branch with controlled absorbed power and fit (\lambda(p)).
+
+### Test C: full competition
+
+Run all branches together, verify:
+
+* one winner per trial
+* loser suppression
+* winner frequency tracks target weights
+
+---
+
+# What specifically has to be designed
+
+Here is the blunt list.
+
+## Must design now
+
+* analyzer/readout coupler network
+* branch detector cell
+* common latch/closure network
+* measurement/reset procedure
+
+## Must choose now
+
+* what physical effect provides nucleation
+* what physical variable the latch watches
+* what component implements loser suppression
+* what component opens winner drain
+
+## Can postpone
+
+* exact tank hardware realization of the shared core
+* full SPICE of the entire apparatus
+* entanglement-scale 4-branch build
+
+Because until the detector cell is specified, the rest is premature.
+
+---
+
+# The most important design question
+
+The single most important engineering question is:
+
+> **What physical device gives you a nucleation rate approximately proportional to absorbed branch power?**
+
+That is the heart of the detector layer.
+
+Everything else is easier.
+
+---
+
+# Best immediate deliverable
+
+Write a spec called something like:
+
+**Detector-layer implementation contract**
+
+with three modules:
+
+* `BranchWeightGenerator`
+* `NucleationCell`
+* `CommonClosureLatch`
+
+and for each module define:
+
+* purpose
+* inputs/outputs
+* equations/target behavior
+* tolerances
+* standalone tests
+
+If you want, I can draft that implementation contract next in exactly that structure.

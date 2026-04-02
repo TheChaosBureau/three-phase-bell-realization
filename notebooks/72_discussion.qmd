@@ -1,0 +1,503 @@
+If it works, it shows something narrow but important:
+
+You would have a **physical linear resonant network** that realizes the reduced 4-mode model as an actual energy-partition machine, not just as post-processed math. In particular, it would show that a shared 4-mode core plus local analyzer couplers can produce four joint branch energies (E_{xy}^{(\infty)}) whose normalized fractions match the joint weights (w_{xy}(a,b)), and therefore reproduce the target correlator (E(a,b)=-\cos 2(a-b)) and CHSH magnitude near (2\sqrt2) at the **linear energy-fraction level**.
+
+What that would mean conceptually:
+
+* It would validate the **shared-state / local-rotation / joint-readout** architecture.
+* It would show the four joint weights are being computed by the network itself, not multiplied together afterward in software.
+* It would strengthen the claim that the single-delta Bloch picture extends naturally to a **shared 4-mode resonant core** for joint outcomes. 
+
+What it would **not** show yet:
+
+* not a derivation of quantum Born rule in full
+* not a proof of Bell-nonlocal physics
+* not a full detector theory
+* not discrete one-shot outcomes by itself
+
+It would still be a **linear analog energy-partition demonstrator**. The missing step would remain the detector layer: why one branch nucleates/clicks first with the right statistics rather than all four simply sharing energy continuously. That distinction is exactly the one already identified in your delta notes: deterministic absorbed-energy fractions are real and clean, but discrete click probabilities require extra detector assumptions. 
+
+So the honest “if it works” statement is:
+
+> A real passive/shared resonant network can physically compute the joint branch intensities associated with a singlet-like shared state and local analyzer rotations, yielding the correct CHSH-style energy-fraction geometry without post-hoc multiplication.
+
+That is already a serious result.
+
+## Can it be ported to SPICE?
+
+Yes, very plausibly.
+
+For this phase, SPICE is actually a good fit because the whole v0 target is:
+
+* linear resonators
+* linear couplings
+* passive readout
+* resistive extraction
+* time-domain energy integration
+
+That is squarely in SPICE territory.
+
+## Best SPICE path
+
+### 1. Start with a linear surrogate, not the full nonlinear detector
+
+Model:
+
+* four resonant tanks
+* coupling elements implementing the target (H)
+* analyzer couplers as parameterized linear subcircuits
+* four resistive output branches
+
+Then measure:
+[
+E_{xy}^{(\infty)}=\int_0^\infty v_{xy}(t)i_{xy}(t),dt
+]
+
+This is exactly what SPICE is good at.
+
+### 2. Use state-prep as initial conditions or short drive pulses
+
+You have two practical choices:
+
+* initialize the tank states to the singlet-like mode using `.ic` / initial conditions
+* or apply a short differential drive pulse that excites the target eigenmode and then disconnect it
+
+I would start with initial conditions because it is cleaner and avoids prep-network ambiguity.
+
+### 3. Parameterize analyzers by angle
+
+Implement (R(a)) and (R(b)) as tunable coupling ratios/signs. In SPICE this could be done with:
+
+* ideal transformers / coupled inductors
+* controlled sources for an abstract first pass
+* parameterized linear dependent sources if you want to verify the reduced model before committing to a transformer realization
+
+For a first SPICE port, controlled sources are fine. After that, replace them with more physical couplers.
+
+### 4. Post-process energies
+
+SPICE itself can give branch voltages/currents; then compute absorbed energies numerically:
+[
+E=\int v(t)i(t),dt
+]
+
+That can be done either:
+
+* inside ngspice with measurements if convenient
+* or outside in Python after exporting waveforms
+
+## What SPICE will show well
+
+SPICE will show well:
+
+* eigenfrequency splitting
+* ringdown and mode purity
+* energy transfer to each resistor
+* sensitivity to component mismatch
+* whether the analyzer couplers are really implementing the intended rotations
+* whether the normalized energy fractions match the reduced-model (w_{xy}(a,b))
+
+## What SPICE will not show cleanly yet
+
+Not without more work:
+
+* stochastic nucleation / first-click detection
+* hazard-based Born selection
+* latch / closure logic
+* microscopic detector noise
+
+Those would need either:
+
+* behavioral sources and random event models inside SPICE, or
+* a hybrid SPICE + Python Monte Carlo workflow
+
+So my recommendation is:
+
+> Yes, port v0 to SPICE now, but keep it strictly linear and energy-fraction based.
+
+That gives you the cleanest bridge from reduced theory to circuit physics.
+
+## Practical SPICE staging
+
+I’d do it in this order:
+
+1. One 3-delta tank, verify (+)/(-) modes and matched extraction
+2. Four uncoupled tanks, verify basis bookkeeping
+3. Add the shared coupling matrix, verify singlet-like eigenmode
+4. Add analyzer couplers, verify (R(a)\otimes R(b)) action
+5. Add four resistive loads, verify (E_{xy}^{(\infty)}) fractions and CHSH surface
+6. Only after that, think about stochastic detector add-ons
+
+## My blunt answer
+
+If it works, it shows you have likely found the right **linear physical front-end** for the project.
+
+And yes, it should be portable to SPICE — in fact, SPICE is probably the right next proving ground for the linear shared-core stage before you touch discrete detector physics.
+
+---
+
+The missing step would remain the detector layer: why one branch nucleates/clicks first with the right statistics rather than all four simply sharing energy continuously. That distinction is exactly the one already identified in your delta notes: deterministic absorbed-energy fractions are real and clean, but discrete click probabilities require extra detector assumptions.
+
+
+I think we should focus on that before moving to spice. explore how discrete click probabilities require extra detector assumptions. I thought we covered that earlier with the work we did on born? (see attached file)
+
+---
+
+Yes — and I think the right answer is:
+
+**we covered the single-particle Born-like intensity rule earlier, but not the full detector problem.**
+
+Your delta notes already say exactly that: in the unloaded 3-delta-LC analog, ideal orthogonal resistive extraction gives deterministic absorbed-energy fractions
+[
+E_i = W_0 |u_i^\dagger a|^2,
+]
+so the square law is real and clean at the **energy-partition** level. But that still does **not** explain why a single trial yields one click rather than simultaneous partial absorption in multiple branches.
+
+So the missing step is not “derive the square again.”
+It is:
+
+> **what detector assumptions turn exact branch energy fractions into single-click probabilities?**
+
+That is a different problem.
+
+## What the earlier work already established
+
+From the delta files:
+
+* **state** = unloaded ring mode content ((a_+,a_-)) in the balanced (+)/(-) subspace, not a measurement outcome.
+
+* **measurement** = resistive extraction and absorbed energy
+  [
+  E_m^{(\infty)}=\int_0^\infty p_m(t),dt.
+  ]
+
+* **Born-like rule** = ideal linear analyzer + quadratic absorption gives
+  [
+  \frac{E_i}{W_0}=|u_i^\dagger a|^2.
+  ]
+
+That part is done.
+
+## What is still missing
+
+A detector model must add **at least one** extra assumption beyond linear resonant dynamics.
+
+The needed assumptions are basically these:
+
+### 1. Irreversible initiation
+
+A branch must undergo a microscopic event that is not just reversible energy exchange.
+
+Examples:
+
+* avalanche onset
+* tunneling / breakdown seed
+* latch trigger
+* rare absorptive nucleation event
+
+Without this, all you have is linear sharing.
+
+### 2. First-event exclusivity
+
+Once one branch initiates, the trial must end in practice.
+
+That means:
+
+* loser branches are suppressed
+* remaining stored energy is redirected into the winner
+* one recorded outcome per trial
+
+This is where your zero-sequence/common-mode closure idea is useful: **not** to compute the weights, but to enforce exclusivity **after** a branch wins.
+
+### 3. Hazard proportional to branch intensity
+
+This is the crucial Born assumption.
+
+If branch (i) has projected intensity
+[
+w_i = |u_i^\dagger a|^2,
+]
+then the detector must satisfy something like
+[
+\lambda_i(t) = \gamma(t), w_i,
+]
+or approximately that.
+
+If this holds, first-event race gives Born exactly.
+
+If instead the detector integrates many arrivals or smoothly drifts to threshold, the stronger branch wins too often — which is exactly what your simulations showed.
+
+## What your simulations already narrowed down
+
+They gave a very sharp result:
+
+* **drift-diffusion threshold accumulators**: wrong
+* **many-packet threshold accumulators**: wrong
+* **single nucleation / first-event models**: right
+
+So the detector physics cannot be “slow evidence accumulation.”
+It has to be “rare stochastic initiation, then latch.”
+
+That is the main conceptual advance.
+
+## So what should we focus on before SPICE?
+
+I would focus on one specific detector thesis:
+
+> **A branch click is a rare irreversible nucleation event whose hazard is proportional to the branch’s absorbed intensity; once the first branch nucleates, a common-mode/zero-sequence closure latches that branch and drains the remaining energy through it.**
+
+That splits the work cleanly:
+
+### Pre-click
+
+Linear network computes branch intensities:
+[
+w_i \quad \text{or} \quad w_{xy}.
+]
+
+### Click
+
+Random first nucleation with hazard (\propto w).
+
+### Post-click
+
+Zero-sequence/common-mode closure enforces exclusivity and drains energy.
+
+That is now the cleanest detector story.
+
+## What I’d explicitly **not** ask zero-sequence to do
+
+I would not ask zero-sequence to create the Born weights themselves.
+
+That seems too much.
+
+I would ask it to do only:
+
+* loser suppression
+* closure completion
+* common energy drain after winner selection
+
+That role is both more plausible and more consistent with your earlier notes.
+
+## What to prove next
+
+Before SPICE, the most useful target is a **detector theorem / detector contract**, not more resonator math.
+
+Something like:
+
+### Detector assumption set
+
+Given branch intensities (w_i),
+
+1. branch (i) nucleates with hazard (\lambda_i(t)=\gamma(t)w_i)
+2. first nucleation terminates the trial
+3. post-click closure drains remaining energy through the winner only
+
+### Then
+
+[
+P(i)=w_i
+]
+exactly.
+
+That is already true mathematically. The remaining physical question is:
+
+> can you justify (\lambda_i \propto) branch absorbed intensity from a plausible circuit detector element?
+
+That is the right pre-SPICE research problem now.
+
+## My honest read of the attached-work situation
+
+Based on the files I could inspect, your earlier work already nailed:
+
+* the state/measurement split
+* the exact squared energy split
+* the fact that discrete clicks require extra detector assumptions
+
+So yes, you were already pointing at the right issue.
+
+What we did afterward was sharpen it further by ruling out some bad detector mechanisms and identifying the good class:
+
+* bad: long accumulation
+* good: first nucleation + latch
+
+That is the extra progress.
+
+## Recommended next deliverable
+
+Before any SPICE port, I would write a short **detector-layer note** with three sections:
+
+1. what the linear delta/shared-core already proves
+2. why deterministic energy fractions are not yet single-click probabilities
+3. the minimal detector assumptions needed for Born-like outcomes
+
+That would give your coder a precise target for the next simulation step.
+
+If you want, I’ll draft that detector-layer note directly.
+
+---
+
+Here’s a compact detector-layer note.
+
+## 1. What the linear delta/shared-core already proves
+
+The linear resonant network already gives the **state geometry** and the **exact energy-partition law**.
+
+For the single-delta case, the unloaded ring has a normalized two-mode state
+[
+a=
+\begin{bmatrix}
+a_+\
+a_-
+\end{bmatrix},
+\qquad |a_+|^2+|a_-|^2=1,
+]
+and an ideal orthogonal analyzer with extracted modes (u_i) yields
+[
+E_i^{(\infty)} = W_0,|u_i^\dagger a|^2.
+]
+
+So the fraction of initial stored energy absorbed in branch (i) is
+[
+f_i=\frac{E_i^{(\infty)}}{W_0}=|u_i^\dagger a|^2.
+]
+
+That is an exact squared-projection law at the level of **absorbed energy fractions**. It follows from:
+
+* linear projection of the prepared mode into analyzer channels, and
+* quadratic energy absorption in the resistive loads.
+
+For the shared 4-mode core, the same logic lifts to the joint basis:
+[
+w_{xy}(a,b)=|c_{xy}(a,b)|^2,
+\qquad
+\sum_{x,y} w_{xy}(a,b)=1,
+]
+so the linear shared-core computes the four joint branch intensities directly, rather than by post-hoc multiplication.
+
+What this proves is:
+
+> the linear network can physically compute the correct branch **weights** or **energy fractions**.
+
+It does **not** yet prove one-click outcome statistics.
+
+---
+
+## 2. Why deterministic energy fractions are not yet single-click probabilities
+
+Energy fraction is not the same thing as a discrete trial outcome.
+
+In the linear model, multiple branches can absorb energy in the same run. The result is a deterministic split:
+[
+E_1^{(\infty)},E_2^{(\infty)},\dots
+]
+or in the joint case
+[
+E_{++}^{(\infty)},E_{+-}^{(\infty)},E_{-+}^{(\infty)},E_{--}^{(\infty)}.
+]
+
+Nothing in the linear resonant dynamics forces:
+
+* exactly one branch to register,
+* the others to remain silent,
+* the trial to end after the first branch starts absorbing.
+
+This is the key gap.
+
+Your earlier delta analysis already makes this distinction clearly: unloaded delta = state, resistive extraction = measurement, and the linear result is an exact absorbed-energy split, not yet a discrete one-shot click model.
+
+The simulations sharpened this further:
+
+* **slow accumulation / drift-to-threshold** models distort Born badly,
+* **many-packet threshold** models also distort Born,
+* **first-event / first-nucleation** models preserve the desired weights.
+
+So the missing ingredient is not more linear state geometry. It is a detector mechanism that converts continuous branch intensity into **one irreversible event**.
+
+In short:
+
+> deterministic absorbed-energy fractions tell us how much each branch could take, but not why one branch alone actually fires in a single trial.
+
+---
+
+## 3. The minimal detector assumptions needed for Born-like outcomes
+
+A minimal detector layer needs three assumptions.
+
+### A. Rare irreversible nucleation
+
+Each branch must support a microscopic event that is fundamentally one-way for the purposes of the trial:
+
+* avalanche onset,
+* breakdown seed,
+* latch trigger,
+* rare absorptive nucleation.
+
+This event is the true click precursor.
+
+### B. Hazard proportional to absorbed branch intensity
+
+If branch (i) has pre-click intensity weight
+[
+w_i=|u_i^\dagger a|^2
+]
+in the single-particle case, or
+[
+w_{xy}(a,b)=|c_{xy}(a,b)|^2
+]
+in the shared 4-mode case, then the branch nucleation hazard must satisfy
+[
+\lambda_i(t)=\gamma(t),w_i
+]
+or
+[
+\lambda_{xy}(t)=\gamma(t),w_{xy}(a,b),
+]
+with a common envelope (\gamma(t)).
+
+If this holds, then first-event race gives
+[
+P(i)=w_i
+]
+or
+[
+P(x,y\mid a,b)=w_{xy}(a,b)
+]
+exactly.
+
+This is the detector-level Born assumption.
+
+### C. Common-mode / zero-sequence closure after first nucleation
+
+Once one branch nucleates, a shared closure process must:
+
+* suppress the rival branches,
+* open a strong drain for the winner,
+* direct the remaining stored energy through the winning branch,
+* end the trial with one recorded outcome.
+
+This is the natural role for zero-sequence/common-mode closure: **not** to create the weights, but to complete the measurement after winner selection.
+
+So the clean detector thesis is:
+
+> A branch click is a rare irreversible nucleation event whose hazard is proportional to the branch’s absorbed intensity; once the first branch nucleates, a common-mode/zero-sequence closure latches that branch and drains the remaining energy through it.
+
+That is the minimum extra structure needed to turn exact linear energy fractions into Born-like single-click outcomes.
+
+---
+
+## Bottom line
+
+The linear delta/shared-core already proves the correct **projective energy weights**.
+It does not yet prove **single-click probabilities**.
+
+To get those, the minimal detector layer is:
+
+1. linear branch intensities from the prepared state,
+2. stochastic first nucleation with hazard proportional to those intensities,
+3. zero-sequence/common-mode latch that makes the winner exclusive.
+
+That is the cleanest current formulation of the missing detector step.
+
+---
+
