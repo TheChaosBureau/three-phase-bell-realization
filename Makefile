@@ -1,5 +1,5 @@
 # PAPER = 30_bell_conservation_paper
-PAPER = 20_clarke-surface
+PAPER = 62_entanglement
 
 DATE := $(shell date -u +%Y-%m-%d)
 PYTHON ?= python

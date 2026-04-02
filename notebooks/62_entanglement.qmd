@@ -1,0 +1,311 @@
+Good. We should lock in **Option A: reduced 4-mode shared-state simulator** first.
+
+That means:
+
+* no tank-level hardware yet
+* one shared ( \mathbb C^4 ) state
+* local analyzer rotations
+* four joint branch weights
+* stochastic nucleation + latch readout
+* CHSH sweep
+
+## Core equations
+
+State:
+[
+\Psi(t)\in\mathbb C^4
+]
+
+Basis ordering:
+[
+{|++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle}
+]
+
+Reduced dynamics:
+[
+i\dot\Psi = H\Psi
+]
+
+Prepared singlet-like state:
+[
+\Psi_0=\frac{1}{\sqrt2}
+\begin{bmatrix}
+0\
+1\
+-1\
+0
+\end{bmatrix}
+]
+
+Minimal Hamiltonian:
+[
+H=\omega_0 I_4+\Delta,|\Psi_0\rangle\langle\Psi_0|
+]
+
+Local analyzer rotations:
+[
+R(\theta)=
+\begin{bmatrix}
+\cos\theta & \sin\theta\
+-\sin\theta & \cos\theta
+\end{bmatrix}
+]
+[
+U(a,b)=R(a)\otimes R(b)
+]
+
+Rotated state:
+[
+\Psi'(a,b)=U(a,b)\Psi_0
+]
+
+Joint branch amplitudes:
+[
+\Psi'(a,b)=
+\begin{bmatrix}
+c_{++}\
+c_{+-}\
+c_{-+}\
+c_{--}
+\end{bmatrix}
+]
+
+Joint weights:
+[
+w_{xy}(a,b)=|c_{xy}(a,b)|^2
+]
+with
+[
+\sum_{x,y} w_{xy}=1
+]
+
+Correlator with (+ \mapsto +1), (- \mapsto -1):
+[
+E(a,b)=w_{++}-w_{+-}-w_{-+}+w_{--}
+]
+
+For the singlet-like state:
+[
+E(a,b)=-\cos 2(a-b)
+]
+
+Nucleation model:
+[
+\lambda_{xy}(t)=\gamma(t),w_{xy}(a,b)
+]
+
+First nucleation winner has exact joint probability:
+[
+P(x,y\mid a,b)=w_{xy}(a,b)
+]
+
+After winner ((x_*,y_*)) nucleates, latch engages and drains remaining stored energy through that branch only.
+
+## Minimal repo structure
+
+```text
+reduced_4mode/
+├── config.py
+├── states.py
+├── hamiltonians.py
+├── analyzers.py
+├── weights.py
+├── readout.py
+├── chsh.py
+├── cli.py
+└── test_reduced_4mode.py
+```
+
+## Module contracts
+
+### `config.py`
+
+Defines:
+
+* default angles
+* default CHSH settings
+* RNG seed
+* default nucleation envelope parameters
+
+Suggested contents:
+
+```python
+DEFAULT_W0 = 1.0
+DEFAULT_OMEGA0 = 1.0
+DEFAULT_DELTA = 0.5
+DEFAULT_GAMMA0 = 1.0
+DEFAULT_SEED = 1234
+
+CHSH_A0 = 0.0
+CHSH_A1 = 45.0
+CHSH_B0 = 22.5
+CHSH_B1 = -22.5
+```
+
+### `states.py`
+
+Functions:
+
+* `normalize(psi) -> np.ndarray`
+* `singlet_state() -> np.ndarray`
+* optionally Bell basis states:
+
+  * `phi_plus()`
+  * `phi_minus()`
+  * `psi_plus()`
+  * `psi_minus()`
+
+### `hamiltonians.py`
+
+Functions:
+
+* `projector_hamiltonian(omega0, delta, psi_ref) -> np.ndarray`
+* `bell_split_hamiltonian(omega0, d_phi_p, d_phi_m, d_psi_p, d_psi_m) -> np.ndarray`
+* `evolve_state(H, psi0, t) -> np.ndarray`
+
+For now, evolution can be optional because if you prepare directly in the singlet eigenstate, time evolution only adds global phase.
+
+### `analyzers.py`
+
+Functions:
+
+* `R(theta_rad) -> np.ndarray`
+* `joint_rotation(a_rad, b_rad) -> np.ndarray`
+* `rotate_state(psi, a_rad, b_rad) -> np.ndarray`
+
+### `weights.py`
+
+Functions:
+
+* `joint_amplitudes(psi_rot) -> np.ndarray`
+* `joint_weights(psi_rot) -> np.ndarray`
+* `same_diff_probs(weights) -> tuple[float, float]`
+* `correlator(weights) -> float`
+
+### `readout.py`
+
+Functions:
+
+* `sample_joint_outcome(weights, rng) -> int`
+* `sample_nucleation_race(weights, gamma0, rng) -> int`
+* optional:
+
+  * `sample_outcome_with_latch(weights, gamma0, W0, g_drain, rng) -> dict`
+
+For Option A, the simplest exact readout is just multinomial sampling from `weights`, or exponential first-arrival race with rates proportional to `weights`.
+
+### `chsh.py`
+
+Functions:
+
+* `E_for_angles(psi0, a_deg, b_deg) -> float`
+* `chsh_S(psi0, a0_deg, a1_deg, b0_deg, b1_deg) -> float`
+* `sweep_grid(psi0, a_list_deg, b_list_deg) -> np.ndarray`
+
+### `cli.py`
+
+Commands:
+
+* print one case
+* run CHSH settings
+* run Monte Carlo verification of exact weights vs sampled outcomes
+
+Example:
+
+```bash
+python -m reduced_4mode.cli one-case --a 45 --b 22.5
+python -m reduced_4mode.cli chsh
+python -m reduced_4mode.cli mc --trials 50000
+```
+
+### `test_reduced_4mode.py`
+
+Tests:
+
+1. state normalization
+2. analyzer unitarity
+3. joint weights sum to 1
+4. singlet correlator matches (-\cos 2(a-b))
+5. CHSH value near (2\sqrt2)
+6. Monte Carlo frequencies match exact weights within tolerance
+
+## Minimal implementation targets
+
+### Test 1: normalization
+
+[
+|\Psi_0|=1
+]
+
+### Test 2: local unitaries
+
+[
+U^\dagger U = I_4
+]
+
+### Test 3: branch weight normalization
+
+[
+\sum_{xy} w_{xy}=1
+]
+
+### Test 4: exact singlet formulas
+
+For singlet state:
+[
+w_{++}=w_{--}=\tfrac12\sin^2(a-b)
+]
+[
+w_{+-}=w_{-+}=\tfrac12\cos^2(a-b)
+]
+
+### Test 5: correlator
+
+[
+E(a,b)=-\cos 2(a-b)
+]
+
+### Test 6: CHSH
+
+Using
+[
+a_0=0^\circ,\quad a_1=45^\circ,\quad b_0=22.5^\circ,\quad b_1=-22.5^\circ
+]
+expect
+[
+S=2\sqrt2
+]
+up to floating-point tolerance.
+
+## Recommended first milestone
+
+Implement only these five functions first:
+
+* `singlet_state`
+* `R`
+* `joint_rotation`
+* `joint_weights`
+* `correlator`
+
+Then verify:
+
+* one-case weights
+* correlator law
+* CHSH value
+
+After that, add Monte Carlo `sample_joint_outcome(weights, rng)`.
+
+## What we are explicitly *not* doing yet
+
+Not yet:
+
+* physical tank realization
+* zero-sequence closure dynamics
+* Kuramoto-like competition
+* detector backaction distortions
+
+Those belong after the reduced 4-mode geometry is fully locked.
+
+## Best next artifact
+
+The next best thing is a **single-file reference implementation** of this reduced 4-mode simulator with tests baked in.

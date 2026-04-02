@@ -1,0 +1,383 @@
+The cleanest reduced model is:
+
+* a **4-mode shared state**
+* a **Hermitian 4×4 coupling matrix**
+* a **distinguished singlet-like eigenmode**
+* **local analyzer rotations** acting as $2\times 2$ rotations on each factor
+
+I'd define it in the joint basis
+$$
+\{|++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle\}.
+$$
+
+---
+
+# 1. State equation
+
+Use the reduced complex state
+$$
+\Psi(t)=
+\begin{bmatrix}
+\psi_{++}(t) \\
+\psi_{+-}(t) \\
+\psi_{-+}(t) \\
+\psi_{--}(t)
+\end{bmatrix}\in\mathbb C^4.
+$$
+
+The simplest lossless reduced dynamics are
+$$
+i\dot \Psi = H\Psi,
+$$
+or equivalently
+$$
+\dot\Psi = -i H \Psi,
+$$
+with $H = H^\dagger$.
+
+If you want a fixed prepared mode, you can either:
+
+* initialize directly in that eigenmode, or
+* add weak damping/pumping around it.
+
+---
+
+# 2. Minimal Hamiltonian with singlet eigenmode
+
+Define the singlet-like state
+$$
+|\psi_s\rangle =
+\frac{1}{\sqrt2}
+\begin{bmatrix}
+0 \\
+1 \\
+-1 \\
+0
+\end{bmatrix}.
+$$
+
+The simplest Hamiltonian that has this as an eigenmode is the projector form
+$$
+H = \omega_0 I_4 + \Delta |\psi_s\rangle\langle\psi_s|.
+$$
+
+In matrix form, that is
+$$
+H =
+\omega_0
+\begin{bmatrix}
+1&0&0&0 \\
+0&1&0&0 \\
+0&0&1&0 \\
+0&0&0&1
+\end{bmatrix}
++
+\frac{\Delta}{2}
+\begin{bmatrix}
+0&0&0&0 \\
+0&1&-1&0 \\
+0&-1&1&0 \\
+0&0&0&0
+\end{bmatrix}.
+$$
+
+So explicitly,
+$$
+H=
+\begin{bmatrix}
+\omega_0 & 0 & 0 & 0 \\
+0 & \omega_0+\Delta/2 & -\Delta/2 & 0 \\
+0 & -\Delta/2 & \omega_0+\Delta/2 & 0 \\
+0 & 0 & 0 & \omega_0
+\end{bmatrix}.
+$$
+
+This gives:
+
+* $|\psi_s\rangle$ eigenvalue $\omega_0+\Delta$
+* every state orthogonal to $|\psi_s\rangle$ eigenvalue $\omega_0$
+
+So the singlet-like mode is singled out cleanly.
+
+---
+
+# 3. Slightly richer version: Bell-basis splitting
+
+If you want something less degenerate, use the Bell basis:
+$$
+|\phi_+\rangle=\frac{1}{\sqrt2}\begin{bmatrix}1 \\ 0 \\ 0 \\ 1\end{bmatrix},\quad
+|\phi_-\rangle=\frac{1}{\sqrt2}\begin{bmatrix}1 \\ 0 \\ 0 \\ -1\end{bmatrix},
+$$
+$$
+|\psi_+\rangle=\frac{1}{\sqrt2}\begin{bmatrix}0 \\ 1 \\ 1 \\ 0\end{bmatrix},\quad
+|\psi_-\rangle=\frac{1}{\sqrt2}\begin{bmatrix}0 \\ 1 \\ -1 \\ 0\end{bmatrix}.
+$$
+
+Then define
+$$
+H = \omega_0 I
++ \Delta_s |\psi_-\rangle\langle\psi_-|
++ \Delta_t |\psi_+\rangle\langle\psi_+|
++ \Delta_{\phi+} |\phi_+\rangle\langle\phi_+|
++ \Delta_{\phi-} |\phi_-\rangle\langle\phi_-|.
+$$
+
+That gives you a fully tunable 4-mode reduced model where the singlet-like state is one explicit eigenmode, but the others are also controlled.
+
+This is often the better engineering model, because it avoids accidental degeneracies.
+
+---
+
+# 4. Equivalent spin-coupling form
+
+A more standard compact choice is the isotropic exchange form
+$$
+H = \omega_0 I + J\left(\sigma_x\otimes\sigma_x+\sigma_y\otimes\sigma_y+\sigma_z\otimes\sigma_z\right).
+$$
+
+This has the singlet as a special eigenstate. In fact:
+
+* singlet eigenvalue $\omega_0 - 3J$
+* triplet eigenvalue $\omega_0 + J$
+
+This is elegant, but for your power-systems analog I actually prefer the projector/Bell-basis version, because it is easier to map to a custom resonant network.
+
+---
+
+# 5. Local analyzer actions
+
+Now define the local analyzer rotations.
+
+Use the real $2\times 2$ rotation
+$$
+R(\theta)=
+\begin{bmatrix}
+\cos\theta & \sin\theta \\
+-\sin\theta & \cos\theta
+\end{bmatrix}.
+$$
+
+Then Alice and Bob act locally as
+$$
+U(a,b)=R_A(a)\otimes R_B(b)=R(a)\otimes R(b).
+$$
+
+So the analyzer-transformed state is
+$$
+\Psi'(a,b)=U(a,b)\Psi.
+$$
+
+The four components of $\Psi'(a,b)$ in the joint basis are then the four joint branch amplitudes:
+$$
+\Psi'(a,b)=
+\begin{bmatrix}
+c_{++}(a,b) \\
+c_{+-}(a,b) \\
+c_{-+}(a,b) \\
+c_{--}(a,b)
+\end{bmatrix}.
+$$
+
+And the pre-click branch weights are
+$$
+w_{xy}(a,b)=|c_{xy}(a,b)|^2.
+$$
+
+That is the reduced joint-measurement model.
+
+---
+
+# 6. Why these analyzer rotations are "local"
+
+This is important.
+
+Because
+$$
+U(a,b)=R(a)\otimes R(b),
+$$
+Alice only rotates her 2D factor, and Bob only rotates his.
+
+So the four-branch weights are not being hard-coded by hand. They come from:
+
+1. one shared 4-mode prepared state
+2. two local basis changes
+3. reading the four physical branch amplitudes in the fixed joint basis
+
+That is exactly the structure you wanted.
+
+---
+
+# 7. What this means in LC-network language
+
+The reduced Hamiltonian is telling you what the shared resonant core must do.
+
+The physical network should realize a 4-mode subspace whose natural coordinates are:
+
+* $++$
+* $+-$
+* $-+$
+* $--$
+
+or some equivalent basis related by a fixed unitary change.
+
+Then:
+
+* the preparation stage initializes one eigenmode, e.g. the singlet-like mode
+* Alice's analyzer implements $R(a)$ on her local 2D factor
+* Bob's analyzer implements $R(b)$ on his
+* the readout coupler exposes the four joint branches
+
+So in circuit terms, you are looking for a shared multi-tank system whose reduced normal-mode matrix is $H$, plus two local tunable couplers implementing the $R(\theta)$ maps.
+
+---
+
+# 8. Best concrete reduced equations
+
+Here is the package I would use.
+
+## Shared-state dynamics
+
+$$
+i\dot\Psi = H\Psi
+$$
+
+with
+$$
+H=
+\omega_0 I_4 + \Delta |\psi_s\rangle\langle\psi_s|
+$$
+or the fuller Bell-split version.
+
+## Analyzer action
+
+$$
+\Psi'(a,b)=(R(a)\otimes R(b))\Psi
+$$
+
+## Joint branch weights
+
+$$
+w_{xy}(a,b)=|\Psi'_{xy}(a,b)|^2
+$$
+
+## Stochastic selection
+
+$$
+\lambda_{xy}(t)=\gamma(t)\,w_{xy}(a,b)
+$$
+
+first nucleation wins.
+
+## Post-click closure
+
+After winner $(x_*,y_*)$ nucleates:
+
+* shared closure variable rises,
+* only winning branch drains the stored energy.
+
+That is the clean reduced architecture.
+
+---
+
+# 9. Concrete Python test sim
+
+Here is a short script that:
+
+* defines the projector Hamiltonian
+* verifies the singlet-like eigenmode
+* applies local analyzer rotations
+* computes the four branch weights
+
+```python
+import math
+import numpy as np
+
+
+def normalize(v: np.ndarray) -> np.ndarray:
+    v = np.asarray(v, dtype=np.complex128).reshape(-1)
+    n = np.linalg.norm(v)
+    if n == 0:
+        raise ValueError("Vector must be nonzero.")
+    return v / n
+
+
+def singlet_state() -> np.ndarray:
+    return normalize(np.array([0.0, 1.0, -1.0, 0.0], dtype=np.complex128))
+
+
+def projector_hamiltonian(omega0: float = 1.0, delta: float = 0.5) -> np.ndarray:
+    psi_s = singlet_state()
+    P_s = np.outer(psi_s, np.conjugate(psi_s))
+    return omega0 * np.eye(4, dtype=np.complex128) + delta * P_s
+
+
+def R(theta: float) -> np.ndarray:
+    c = math.cos(theta)
+    s = math.sin(theta)
+    return np.array([[c, s], [-s, c]], dtype=np.complex128)
+
+
+def joint_rotation(a: float, b: float) -> np.ndarray:
+    return np.kron(R(a), R(b))
+
+
+def branch_weights(psi: np.ndarray, a: float, b: float) -> np.ndarray:
+    U = joint_rotation(a, b)
+    psi_rot = U @ psi
+    w = np.abs(psi_rot) ** 2
+    return w / np.sum(w)
+
+
+def correlator_from_weights(w: np.ndarray) -> float:
+    # basis ordering: ++, +-, -+, --
+    return float(w[0] - w[1] - w[2] + w[3])
+
+
+if __name__ == "__main__":
+    H = projector_hamiltonian(omega0=1.0, delta=0.5)
+    evals, evecs = np.linalg.eigh(H)
+
+    psi_s = singlet_state()
+
+    # Check overlap of singlet with one of the eigenvectors
+    overlaps = np.abs(np.conjugate(evecs).T @ psi_s) ** 2
+    idx = np.argmax(overlaps)
+
+    print("Eigenvalues:", np.round(evals, 6))
+    print("Singlet overlap with eigenvectors:", np.round(overlaps, 6))
+    print("Best singlet eigenvalue:", evals[idx])
+
+    test_angles = [
+        (0.0, 0.0),
+        (45.0, 22.5),
+        (0.0, 45.0),
+    ]
+
+    for a_deg, b_deg in test_angles:
+        a = math.radians(a_deg)
+        b = math.radians(b_deg)
+        w = branch_weights(psi_s, a, b)
+        E = correlator_from_weights(w)
+        print(f"\na={a_deg:.1f} deg, b={b_deg:.1f} deg")
+        print("weights [++, +-, -+, --] =", np.round(w, 6))
+        print("E =", round(E, 6), " target =", round(-math.cos(2 * (a - b)), 6))
+```
+
+---
+
+# 10. My recommendation
+
+For Option A, I would use the **Bell-projector Hamiltonian** first:
+$$
+H=\omega_0 I + \Delta |\psi_s\rangle\langle\psi_s|.
+$$
+
+Why:
+
+* simplest matrix with the singlet as a genuine eigenmode
+* easy to tune
+* easy to generalize
+* maps naturally to "shared prepared resonant mode"
+* keeps the analyzer action separate and local
+
+Then later, if you want to get more circuit-like, replace it with a more structured 4×4 Hermitian coupling matrix that could plausibly come from coupled tanks or transformer networks.

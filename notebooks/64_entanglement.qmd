@@ -1,0 +1,40 @@
+This notebook runs the reduced 4-mode reference script for the requested checks and prints the results inline.
+
+```{python}
+from pathlib import Path
+import subprocess
+import sys
+
+
+def find_reference_script() -> Path:
+    candidates = [
+        Path("notebooks/63_reduced_4mode_reference.py"),
+        Path("notebooks/reduced_4mode_reference.py"),
+        Path("63_reduced_4mode_reference.py"),
+        Path("reduced_4mode_reference.py"),
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    raise FileNotFoundError("Could not find the reduced 4-mode reference script.")
+
+
+script = find_reference_script()
+commands = [
+    ["--run-tests"],
+    ["--one-case", "--a", "45", "--b", "22.5"],
+    ["--mc", "--a", "45", "--b", "22.5", "--trials", "50000"],
+    ["--chsh"],
+]
+
+for args in commands:
+    cmd = [sys.executable, str(script), *args]
+    print("$", " ".join(cmd))
+    completed = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    stdout = completed.stdout.strip()
+    if stdout:
+        print(stdout)
+    if completed.stderr.strip():
+        print(completed.stderr.strip())
+    print()
+```

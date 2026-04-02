@@ -12,152 +12,152 @@ That gives a reduced joint-measurement model with no post-hoc multiplication.
 # Theorem (reduced 4-mode joint-state measurement model)
 
 Let the shared prepared state be
-[
+$$
 \Psi_0 \in \mathbb C^4,\qquad |\Psi_0|^2=1.
-]
+$$
 
 Identify the 4-dimensional space with the ordered joint basis
-[
+$$
 {|++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle}.
-]
+$$
 
 Let Alice and Bob each have a local 2D analyzer rotation
-[
+$$
 R_A(a)\in U(2),\qquad R_B(b)\in U(2),
-]
-depending on local settings (a) and (b).
+$$
+depending on local settings $a$ and $b$.
 
 Define the rotated shared state
-[
+$$
 \Psi(a,b) = \bigl(R_A(a)\otimes R_B(b)\bigr)\Psi_0.
-]
+$$
 
 Write its components in the joint outcome basis as
-[
+$$
 \Psi(a,b)=
 \begin{bmatrix}
-c_{++}(a,b)\
-c_{+-}(a,b)\
-c_{-+}(a,b)\
+c_{++}(a,b)\\
+c_{+-}(a,b)\\
+c_{-+}(a,b)\\
 c_{--}(a,b)
 \end{bmatrix}.
-]
+$$
 
 Define the four joint branch weights
-[
+$$
 w_{xy}(a,b)=|c_{xy}(a,b)|^2,\qquad x,y\in{+,-}.
-]
+$$
 
 Then:
 
 ## Part 1: normalization
 
-[
+$$
 \sum_{x,y} w_{xy}(a,b)=1
-]
-for all analyzer settings (a,b).
+$$
+for all analyzer settings $(a,b)$.
 
 ## Part 2: physical meaning
 
-The quantities (w_{xy}(a,b)) are the natural pre-click branch intensities of the shared 4-mode network under local analyzer rotations.
+The quantities $w_{xy}(a,b)$ are the natural pre-click branch intensities of the shared 4-mode network under local analyzer rotations.
 
 ## Part 3: exact Born-like joint selection
 
 If the four candidate detector branches nucleate with hazards
-[
-\lambda_{xy}(t)=\gamma(t),w_{xy}(a,b),
-]
-where (\gamma(t)\ge 0) is a common envelope shared by all four branches, and the first nucleation terminates the trial, then the joint outcome probabilities are exactly
-[
+$$
+\lambda_{xy}(t)=\gamma(t)w_{xy}(a,b),
+$$
+where $\gamma(t)\ge 0$ is a common envelope shared by all four branches, and the first nucleation terminates the trial, then the joint outcome probabilities are exactly
+$$
 \Pr(x,y\mid a,b)=w_{xy}(a,b)=|c_{xy}(a,b)|^2.
-]
+$$
 
 ## Proof
 
 ### Part 1
 
-Since (R_A(a)\otimes R_B(b)) is unitary,
-[
+Since $R_A(a)\otimes R_B(b)$ is unitary,
+$$
 |\Psi(a,b)|^2=|\Psi_0|^2=1.
-]
+$$
 Therefore
-[
+$$
 |c_{++}|^2+|c_{+-}|^2+|c_{-+}|^2+|c_{--}|^2=1.
-]
+$$
 
 ### Part 2
 
-By construction, the four components of (\Psi(a,b)) are the amplitudes of the four physical joint branches after the local analyzer actions.
+By construction, the four components of $\Psi(a,b)$ are the amplitudes of the four physical joint branches after the local analyzer actions.
 
 ### Part 3
 
-For competing hazard processes (\lambda_k(t)=\gamma(t)w_k) over branches (k\in{++, +-, -+, --}), the probability branch (k) nucleates first is
-[
-\Pr(k)=\int_0^\infty \lambda_k(t)\exp!\left(-\int_0^t\sum_j \lambda_j(\tau),d\tau\right)dt.
-]
-Since (\sum_j w_j=1),
-[
+For competing hazard processes $\lambda_k(t)=\gamma(t)w_k$ over branches $k\in\{++, +-, -+, --\}$, the probability branch $k$ nucleates first is
+$$
+\Pr(k)=\int_0^\infty \lambda_k(t)\exp\!\left(-\int_0^t\sum_j \lambda_j(\tau)\,d\tau\right)dt.
+$$
+Since $\sum_j w_j=1$,
+$$
 \sum_j \lambda_j(t)=\gamma(t).
-]
+$$
 Hence
-[
-\Pr(k)=w_k\int_0^\infty \gamma(t)\exp!\left(-\int_0^t \gamma(\tau),d\tau\right)dt=w_k.
-]
+$$
+\Pr(k)=w_k\int_0^\infty \gamma(t)\exp\!\left(-\int_0^t \gamma(\tau)\,d\tau\right)dt=w_k.
+$$
 So
-[
+$$
 \Pr(x,y\mid a,b)=w_{xy}(a,b).
-]
+$$
 QED.
 
 # Useful special case: singlet-like shared state
 
 Take the real 4-vector
-[
+$$
 \Psi_{\text{singlet}}=\frac{1}{\sqrt2}
 \begin{bmatrix}
-0\
-1\
--1\
+0\\
+1\\
+-1\\
 0
 \end{bmatrix},
-]
+$$
 which corresponds to
-[
+$$
 \frac{1}{\sqrt2}\bigl(|+-\rangle-|-+\rangle\bigr).
-]
+$$
 
 Take local real analyzer rotations
-[
+$$
 R(\theta)=
 \begin{bmatrix}
-\cos\theta & \sin\theta\
+\cos\theta & \sin\theta\\
 -\sin\theta & \cos\theta
 \end{bmatrix}.
-]
+$$
 
 Then
-[
+$$
 \Psi(a,b)=\bigl(R(a)\otimes R(b)\bigr)\Psi_{\text{singlet}}.
-]
+$$
 
 A direct calculation gives
-[
+$$
 w_{++}(a,b)=w_{--}(a,b)=\frac12\sin^2(a-b),
-]
-[
+$$
+$$
 w_{+-}(a,b)=w_{-+}(a,b)=\frac12\cos^2(a-b).
-]
+$$
 
 Therefore the same-outcome and different-outcome probabilities are
-[
+$$
 P_{\text{same}}=\sin^2(a-b),\qquad
 P_{\text{diff}}=\cos^2(a-b).
-]
+$$
 
-If you code outcomes (+=+1) and (-=-1), the correlator is
-[
+If you code outcomes $+=+1$ and $-=-1$, the correlator is
+$$
 E(a,b)=P_{\text{same}}-P_{\text{diff}}=-\cos 2(a-b).
-]
+$$
 
 So the reduced 4-mode model already reproduces the same doubled-angle correlator structure you’ve been chasing.
 
@@ -285,7 +285,7 @@ This reduced model is now very clean:
 
 # What it does not yet give you
 
-It still does **not** tell you what actual LC/transformer network realizes that (\mathbb C^4) shared state physically.
+It still does **not** tell you what actual LC/transformer network realizes that $\mathbb C^4$ shared state physically.
 
 But it gives you the exact reduced target that any such network must realize.
 
