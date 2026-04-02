@@ -1,0 +1,204 @@
+The cleanest answer is:
+
+> **Poissonian micro-absorption with rare-event thinning.**
+
+That is the detector physics I would trust most.
+
+## Core idea
+
+Suppose absorbed power (P) is not treated as a smooth fluid, but as a stream of microscopic absorption opportunities.
+
+If each microscopic absorption event carries characteristic energy (\varepsilon), then the arrival rate of such events is
+
+[
+r(P) \approx \frac{P}{\varepsilon}.
+]
+
+Now assume each event has a small, approximately power-independent probability (p_{\text{trig}}) of launching the irreversible detector nucleation.
+
+Then the nucleation rate is just the thinned Poisson rate:
+
+[
+\lambda(P) \approx p_{\text{trig}},r(P)
+= \frac{p_{\text{trig}}}{\varepsilon},P.
+]
+
+So
+
+[
+\boxed{\lambda(P)\approx \alpha P,\qquad \alpha=\frac{p_{\text{trig}}}{\varepsilon}.}
+]
+
+That is the least circular route I see.
+
+## Why this is not “smuggling Born in”
+
+Because the square law is **not** coming from the detector.
+
+It comes earlier:
+
+1. **Linear analyzer projection**
+   [
+   c_i = u_i^\dagger a
+   ]
+
+2. **Absorbed branch power is quadratic in amplitude**
+   [
+   P_i \propto |c_i|^2
+   ]
+
+3. **Detector rate is linear in absorbed power**
+   [
+   \lambda_i \propto P_i
+   ]
+
+Therefore
+
+[
+\lambda_i \propto |c_i|^2.
+]
+
+So the detector is only contributing the **linear-in-power** step. The square already came from ordinary linear-wave + quadratic-energy physics.
+
+That is much better than just postulating
+[
+\lambda_i \propto |c_i|^2
+]
+directly.
+
+## What physical detector class does this correspond to?
+
+A detector with:
+
+* many microscopic absorption attempts,
+* each attempt independent,
+* each attempt individually unlikely to trigger,
+* first successful trigger launches avalanche/latch.
+
+That is the regime.
+
+## Concrete physics pictures
+
+### 1. Weakly efficient avalanche detector
+
+Each absorbed carrier or hot carrier has small chance to seed avalanche.
+
+If carrier creation rate is proportional to absorbed power, and avalanche probability per carrier is roughly constant, then
+[
+\lambda \propto P.
+]
+
+This is probably the best engineering candidate.
+
+### 2. Metastable latch with rare trigger quanta
+
+Absorbed power creates random microscopic excitations at rate (P/\varepsilon). Each excitation perturbs a near-threshold latch. If the latch is biased so each excitation has small fixed success probability, again:
+[
+\lambda \propto P.
+]
+
+### 3. Shot-noise absorber
+
+If the branch absorber naturally sees discrete arrival events whose mean rate is proportional to local intensity/power, and the detector commits on the first successful one, same result.
+
+This is basically the abstract detector theorem in physical language.
+
+## What conditions are required?
+
+For the linear law to hold over a usable range, you need:
+
+### A. Independent micro-events
+
+The absorption opportunities should look approximately Poissonian.
+
+### B. Rare-trigger regime
+
+Each event should have
+[
+p_{\text{trig}} \ll 1
+]
+so triggers are rare and independent.
+
+### C. Constant per-event trigger probability
+
+Over the operating range, (p_{\text{trig}}) should not vary much with power.
+
+If (p_{\text{trig}}) grows strongly with power, you get curvature.
+
+### D. No long integration memory
+
+The detector should not need to accumulate many events before deciding.
+
+That was exactly what broke the earlier accumulator models.
+
+### E. Fast latch after first trigger
+
+Once one event succeeds, the detector must latch quickly enough to suppress competitors.
+
+## What physics would *not* give the law cleanly?
+
+### Deterministic threshold crossing
+
+This gives “bigger branch almost always wins.”
+
+### Many-event accumulation
+
+Same problem.
+
+### Strongly exponential escape
+
+For example,
+[
+\lambda(P)\sim e^{\beta P}
+]
+unless you operate in a tiny linearized regime.
+
+### Thermal integration detectors
+
+Usually too much memory, unless run in a very special metastable rare-event mode.
+
+## Best engineering statement
+
+The detector physics you want is:
+
+> **branch absorbed power creates a Poisson stream of microscopic trigger opportunities, and each opportunity has a small approximately constant chance of launching the detector’s irreversible nucleation.**
+
+Then
+
+[
+\lambda(P)\approx \alpha P
+]
+
+falls out naturally.
+
+## Why this is the strongest answer
+
+Because it gives you an actual mechanism chain:
+
+[
+P \rightarrow \text{micro-event rate} \rightarrow \text{rare successful trigger} \rightarrow \lambda
+]
+
+instead of just assuming the answer.
+
+## The real experimental question
+
+The right next test is not “does the theory sound nice?”
+
+It is:
+
+> **Can we build or identify a detector cell whose measured click rate is linear in absorbed branch power over a calibrated range, while staying in the rare-event regime?**
+
+That is the key hardware question now.
+
+## The one-line version
+
+[
+\boxed{\text{Use a rare-event avalanche/latch detector where microscopic absorption events arrive at rate }P/\varepsilon\text{ and each has small fixed success probability.}}
+]
+
+That is the cleanest known route to
+[
+\lambda(P)\approx \alpha P
+]
+without just inserting Born by hand.

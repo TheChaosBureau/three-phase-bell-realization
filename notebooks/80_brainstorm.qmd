@@ -1,0 +1,255 @@
+A few big ones.
+
+## 1. What physical variable actually nucleates?
+
+You’ve asked for a detector cell with
+[
+\lambda \approx \alpha P_{\text{abs}},
+]
+but not yet:
+
+> **What microscopic state variable is being pushed over instability?**
+
+Examples:
+
+* charge carrier population
+* local temperature
+* electric field in a breakdown gap
+* current in a near-threshold latch
+* superconducting hotspot / phase slip analog
+
+Until that is named, the detector spec is still functional, not physical.
+
+---
+
+## 2. Why should hazard be linear in absorbed power in *this* device?
+
+You’ve asked for a detector whose rate is approximately linear in absorbed power.
+
+But the deeper question is:
+
+> **What mechanism makes the first-trigger hazard linear rather than exponential, saturating, or history-dependent?**
+
+That is probably the single most important missing question.
+
+Because if the real device gives
+[
+\lambda(P)\propto P^\nu
+]
+with (\nu\neq 1), or
+[
+\lambda(P)\propto e^{\beta P},
+]
+your Born-like statistics distort.
+
+---
+
+## 3. What separates “selection” from “completion” in time?
+
+You’ve conceptually separated:
+
+* pre-click branch weighting
+* stochastic nucleation
+* post-click zero-sequence latch
+
+But you have not yet asked:
+
+> **What timescale separation is required so that latch/closure does not contaminate the pre-click selection law?**
+
+You need something like:
+[
+\tau_{\text{nucleation}} \ll \tau_{\text{closure-feedback-on-selection}}
+]
+or at least clear inequalities among:
+
+* pre-click linear settling
+* nucleation latency
+* closure rise time
+* winner drain time
+
+Without this, the detector model is underspecified.
+
+---
+
+## 4. What is the actual source of randomness?
+
+Right now randomness is being inserted at the detector hazard level.
+
+But you have not asked:
+
+> **What is the physical origin of the stochasticity?**
+
+Examples:
+
+* thermal noise
+* shot noise
+* microscopic absorption discreteness
+* defect fluctuations
+* quantum tunneling in the detector element
+* environmental jitter
+
+That matters, because different noise sources give different rate laws and correlations.
+
+---
+
+## 5. Are the branch hazards conditionally independent before closure?
+
+You’ve assumed something like four competing branches with hazards proportional to branch intensities.
+
+But you have not asked:
+
+> **Before the first click, are the branch nucleation processes independent conditional on the shared state, or are there pre-click correlations?**
+
+That is crucial.
+
+If there are hidden pre-click couplings, you may distort the winner law without noticing.
+
+---
+
+## 6. What does the model predict that is *not* just quantum Born-by-construction?
+
+This is a huge one.
+
+Right now the reduced model can reproduce the desired weights if you assume the right hazard law.
+
+But you have not asked:
+
+> **What new, distinctive, testable prediction does this framework make beyond “if I encode the Born weights, I get Born statistics”?**
+
+That is the strongest scientific question missing.
+
+Without that, the risk is:
+
+* elegant analog,
+* good architecture,
+* but no differentiating prediction.
+
+---
+
+## 7. Is the detector assumption circular?
+
+Relatedly, you have not asked hard enough:
+
+> **Am I just moving Born’s rule from the state layer into the detector hazard law?**
+
+Because
+[
+\lambda_i \propto |c_i|^2
+]
+already contains the square law.
+
+That may still be physically meaningful, but it is not the same as deriving Born from lower-level hardware.
+
+This is probably the sharpest philosophical gap still open.
+
+---
+
+## 8. What does “zero-sequence closure” physically mean in the shared 4-mode build?
+
+You’ve assigned zero-sequence/common-mode a post-click role, which is good.
+
+But you haven’t yet asked:
+
+> **What concrete circuit variable is the zero-sequence closure variable in the shared 4-mode hardware?**
+
+Is it:
+
+* a literal common node voltage?
+* a common return current?
+* a saturating transformer core state?
+* a shared bias rail collapse?
+* a global latch line?
+
+Until that is specified, zero-sequence closure is still a good concept, but not yet a circuit object.
+
+---
+
+## 9. What must be measured to falsify the detector model?
+
+You have performance targets, but not yet a falsification plan.
+
+The missing question is:
+
+> **What observation would prove this detector-layer story wrong?**
+
+For example:
+
+* measured (\lambda(P)) is strongly nonlinear
+* branch matching cannot be held stable enough
+* closure backaction distorts weights before click
+* click-time statistics disagree with first-event race
+* winner probabilities depend on history or total stored energy in the wrong way
+
+That question sharpens engineering fast.
+
+---
+
+## 10. What is the minimal subsystem you can physically prototype first?
+
+You’re thinking ahead to the full shared-core build, but maybe not asking:
+
+> **What is the smallest hardware experiment that directly tests the detector thesis before full entanglement analog?**
+
+Probably:
+
+* one prepared 2-mode branch-weight generator
+* two matched detector cells
+* one common closure latch
+
+That would test the hardest part first:
+[
+\lambda_i \propto P_i,\qquad \text{first click wins}.
+]
+
+That may be a better near-term milestone than the whole 4-mode apparatus.
+
+---
+
+## 11. How robust is the result to mismatch?
+
+You’ve asked for tolerances, but maybe not the deeper version:
+
+> **Is the model structurally robust, or does it require fine-tuning?**
+
+That matters more than nominal matching.
+
+You want to know whether the Born-like law is:
+
+* stable under 1–5% parameter drift,
+* or only present in a narrow tuned window.
+
+That is the difference between “interesting mechanism” and “fragile construction.”
+
+---
+
+## 12. Is this actually local, nonlocal, or just globally constrained?
+
+This is probably the biggest conceptual one you’re not pressing right now.
+
+You’ve moved toward a shared global measurement closure.
+
+But the missing question is:
+
+> **What kind of object is this physically: local with shared past, globally constrained at measurement, effectively nonlocal, or just a centralized shared system?**
+
+You need that answer before interpreting results against Bell.
+
+Because a single shared resonant object with joint branch competition is not the same thing as two independent local systems.
+
+---
+
+# The shortest answer
+
+The biggest things you are not asking are:
+
+* **what physical detector variable nucleates**
+* **why hazard should be linear in absorbed power**
+* **whether that assumption is just Born restated**
+* **what experimental signature would falsify the detector model**
+* **what genuinely new prediction this framework makes**
+
+That’s where I’d push next.
+
+The single best next question is probably:
+
+> **What detector physics gives (\lambda(P)\approx \alpha P) over a usable range without smuggling Born in by hand?**
