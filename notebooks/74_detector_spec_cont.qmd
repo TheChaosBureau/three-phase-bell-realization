@@ -1,0 +1,180 @@
+The best candidates are devices where a **rare initiation event** is driven by a **local dissipation rate**.
+
+That means you want something whose click mechanism is:
+
+* quiet most of the time
+* triggered by microscopic absorption events
+* irreversible once triggered
+* approximately linear in absorbed power over some operating range
+
+The strongest engineering candidates are these.
+
+## 1. Avalanche device biased near breakdown
+
+Examples:
+
+* avalanche diode
+* APD-like branch
+* gas discharge / spark-gap style element
+* transistor latch near instability
+
+Why it fits:
+
+* one microscopic carrier or fluctuation can start a runaway event
+* once triggered, it is naturally discrete
+* if biased correctly, initiation rate can scale with absorbed excitation rate
+
+Why it may work:
+If absorbed branch power produces carriers or heating events at rate proportional to power, and each event has small independent probability of launching avalanche, then
+[
+\lambda \propto p_{\text{abs}}
+]
+over the low-rate regime.
+
+Best interpretation:
+
+* absorbed power creates candidate trigger quanta
+* avalanche converts the first successful one into a macroscopic click
+
+This is probably the cleanest detector class conceptually.
+
+## 2. Shot-noise absorber plus metastable latch
+
+Examples:
+
+* photodiode-like absorber feeding a comparator/latch
+* resistive absorber feeding a tunnel/FET latch
+* current pulse counter on a matched branch
+
+Why it fits:
+
+* absorption is naturally discrete at the microscopic level
+* arrival rate of microscopic excitations is proportional to intensity/power
+* a metastable latch turns the first successful excitation into a discrete event
+
+This is basically the abstract detector model you already found works:
+
+* branch intensity sets event rate
+* first event wins
+* latch completes the readout
+
+If I had to pick the most general “theory-to-hardware” answer, this is it.
+
+## 3. Tunnel or escape device biased near threshold
+
+Examples:
+
+* Josephson-like escape picture
+* tunnel diode / negative-resistance device
+* noise-assisted escape from metastability
+
+Why it fits:
+
+* branch power perturbs the escape rate
+* one escape event is discrete and irreversible at the trial level
+
+Caution:
+Escape rates are often **exponential** in the control variable, not linear. So to get
+[
+\lambda \approx \alpha p
+]
+you need to operate in a narrow regime where the exponential law linearizes.
+
+So this is possible, but more delicate.
+
+## 4. Thermal nucleation device near instability
+
+Examples:
+
+* microbridge near thermal runaway
+* bolometric absorber near switching threshold
+* thermal relay near snap point
+
+Why it fits:
+
+* absorbed power is literally what drives it
+* switching is discrete
+
+Caution:
+Thermal devices usually integrate over time and can drift toward the “wrong” accumulator regime you already ruled out. To work, they must be in a regime of **rare stochastic nucleation**, not slow deterministic heating-to-threshold.
+
+So this is less attractive unless the thermal dynamics are very fast and metastable.
+
+## 5. Phase-slip / superconducting hotspot style device
+
+Examples:
+
+* superconducting nanowire detector logic, abstractly
+* hotspot-triggered current redistribution
+
+Why it fits:
+
+* local absorption event creates a rare nucleation
+* then runaway/latch follows
+* microscopic absorption rate tracks intensity
+
+This is a very natural physical example of “first absorbed event causes macroscopic click,” though implementing it in your LC analog may be impractical.
+
+# What probably does **not** give the right behavior
+
+These are weaker candidates for your purpose:
+
+### Plain resistor + integrator + comparator
+
+Too much accumulation. You already saw that this distorts Born badly.
+
+### Smooth analog thresholders
+
+Same problem. The stronger branch wins almost deterministically.
+
+### Pure Kuramoto/entrainment device
+
+Good for competition and winner formation, bad for cleanly getting the rate law.
+
+# The engineering principle you want
+
+The detector should satisfy:
+
+1. absorbed branch power creates **microscopic trigger opportunities** at rate proportional to (p_{\text{abs}})
+2. each opportunity has a small approximately constant success probability
+3. first successful trigger launches a macroscopic latch/avalanche
+4. common closure suppresses the rest
+
+Then
+[
+\lambda \approx \eta, p_{\text{abs}}
+]
+naturally.
+
+That is the exact bridge you need.
+
+# So what physical device would I choose first?
+
+For a practical engineering spec, I would choose:
+
+> **a metastable avalanche/latch detector cell driven by a branch absorber, operated in the rare-event regime where trigger rate is approximately proportional to absorbed branch power.**
+
+That is the clearest target.
+
+In more concrete terms:
+
+* branch output feeds a matched absorber
+* absorber perturbs a near-threshold avalanche or latch element
+* first successful microscopic trigger fires the branch
+* shared zero-sequence/common-mode closure then drains the remaining energy through the winner
+
+# If you want the shortest answer
+
+The best candidate is:
+
+> **a near-breakdown avalanche or metastable latch device whose trigger opportunities are generated by absorbed branch power, so that first-trigger rate is approximately linear in branch power over the operating range.**
+
+That is the detector class I would spec first.
+
+The next useful step is to write the detector-cell contract around that assumption:
+
+* operating point
+* rate-vs-power calibration
+* dark counts
+* matching tolerance
+* latch output interface
