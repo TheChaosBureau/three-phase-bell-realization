@@ -10,8 +10,13 @@ GIT_COMMIT_HASH ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknow
 ALLURE_REPORT_FILE ?= index_$(GIT_COMMIT_HASH).html
 ALLURE_MD_FILE ?= report_$(GIT_COMMIT_HASH).md
 ALLURE_PDF_FILE ?= report_$(GIT_COMMIT_HASH).pdf
+DETECTOR_MODEL ?= shot_trigger
+DETECTOR_SAMPLES ?= 20
+DETECTOR_OUTDIR ?= artifacts/detector_search/$(DETECTOR_MODEL)
+DETECTOR_JSONL ?= $(DETECTOR_OUTDIR)/results.jsonl
+DETECTOR_CSV ?= $(DETECTOR_OUTDIR)/results.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf 
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -65,3 +70,11 @@ test-pdf: test
 	quarto render "$(ALLURE_REPORT_DIR)/$(ALLURE_MD_FILE)" \
 		--to pdf \
 		--pdf-engine=tectonic
+
+detector-search:
+	mkdir -p "$(DETECTOR_OUTDIR)"
+	poetry run $(PYTHON) -m detector_search.experiments.run_global_search "$(DETECTOR_MODEL)" \
+		--samples "$(DETECTOR_SAMPLES)" \
+		--jsonl "$(DETECTOR_JSONL)" \
+		--csv "$(DETECTOR_CSV)" \
+		--outdir "$(DETECTOR_OUTDIR)"
