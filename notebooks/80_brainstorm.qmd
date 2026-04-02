@@ -3,9 +3,9 @@ A few big ones.
 ## 1. What physical variable actually nucleates?
 
 You’ve asked for a detector cell with
-[
+$$
 \lambda \approx \alpha P_{\text{abs}},
-]
+$$
 but not yet:
 
 > **What microscopic state variable is being pushed over instability?**
@@ -33,13 +33,13 @@ But the deeper question is:
 That is probably the single most important missing question.
 
 Because if the real device gives
-[
+$$
 \lambda(P)\propto P^\nu
-]
+$$
 with (\nu\neq 1), or
-[
+$$
 \lambda(P)\propto e^{\beta P},
-]
+$$
 your Born-like statistics distort.
 
 ---
@@ -57,9 +57,9 @@ But you have not yet asked:
 > **What timescale separation is required so that latch/closure does not contaminate the pre-click selection law?**
 
 You need something like:
-[
+$$
 \tau_{\text{nucleation}} \ll \tau_{\text{closure-feedback-on-selection}}
-]
+$$
 or at least clear inequalities among:
 
 * pre-click linear settling
@@ -133,9 +133,9 @@ Relatedly, you have not asked hard enough:
 > **Am I just moving Born’s rule from the state layer into the detector hazard law?**
 
 Because
-[
+$$
 \lambda_i \propto |c_i|^2
-]
+$$
 already contains the square law.
 
 That may still be physically meaningful, but it is not the same as deriving Born from lower-level hardware.
@@ -197,9 +197,9 @@ Probably:
 * one common closure latch
 
 That would test the hardest part first:
-[
+$$
 \lambda_i \propto P_i,\qquad \text{first click wins}.
-]
+$$
 
 That may be a better near-term milestone than the whole 4-mode apparatus.
 

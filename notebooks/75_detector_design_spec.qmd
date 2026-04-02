@@ -6,9 +6,9 @@ Here’s a detector-cell contract you can hand to a coder or hardware designer.
 
 Implement one branch detector cell that converts branch absorbed power into a **rare discrete nucleation event**, with:
 
-[
+$$
 \lambda \approx \alpha,P_{\text{abs}}
-]
+$$
 
 over the calibrated operating range, followed by a latch-compatible output.
 
@@ -71,9 +71,9 @@ Choose a bias point (B_0) such that:
 ### Engineering acceptance
 
 For calibrated input powers (P\in[P_{\min},P_{\max}]),
-[
+$$
 \lambda(P)\approx \lambda_0+\alpha P
-]
+$$
 with small residual nonlinearity over the intended range.
 
 ---
@@ -85,9 +85,9 @@ This is the most important requirement.
 ### Target law
 
 For one detector branch:
-[
+$$
 \lambda(P_{\text{abs}})=\lambda_{\text{dark}}+\alpha P_{\text{abs}} + \varepsilon(P)
-]
+$$
 where:
 
 * (\lambda_{\text{dark}}) is dark-count rate
@@ -97,9 +97,9 @@ where:
 ### Required linearity
 
 Over the operating range:
-[
+$$
 \frac{|\varepsilon(P)|}{\lambda_{\text{dark}}+\alpha P} < \delta_{\text{lin}}
-]
+$$
 
 Recommended first target:
 
@@ -135,9 +135,9 @@ Dark counts are unavoidable and must be characterized.
 
 ### Definition
 
-[
+$$
 \lambda_{\text{dark}} = \lambda(P_{\text{abs}}=0)
-]
+$$
 
 ### Requirement
 
@@ -150,14 +150,14 @@ Dark counts must be:
 ### Acceptance target
 
 For nominal branch power (P_{\text{nom}}),
-[
+$$
 \lambda_{\text{dark}} \ll \alpha P_{\text{nom}}
-]
+$$
 
 Recommended first target:
-[
+$$
 \lambda_{\text{dark}} \le 0.01, \alpha P_{\text{nom}}
-]
+$$
 
 ### Measurement
 
@@ -185,13 +185,13 @@ Across all four joint branches:
 ### Required matching
 
 For cells (i,j),
-[
+$$
 \left|\frac{\alpha_i-\alpha_j}{\bar\alpha}\right| < \delta_\alpha
-]
+$$
 and
-[
+$$
 \left|\frac{\lambda_{\text{dark},i}-\lambda_{\text{dark},j}}{\bar\lambda_{\text{dark}}+\lambda_*}\right| < \delta_d
-]
+$$
 
 where (\lambda_*) is a stabilizing reference scale to avoid meaningless blow-up when dark rates are tiny.
 
@@ -204,9 +204,9 @@ Recommended first targets:
 ### Why this matters
 
 If branch gains differ, outcome probabilities become
-[
+$$
 P_i \propto \alpha_i w_i
-]
+$$
 instead of pure (w_i).
 
 So gain matching is a physics requirement, not just an engineering nicety.
@@ -236,9 +236,9 @@ Each cell outputs a binary pulse:
 Let (t_{\text{nuc}}) be the nucleation time and (t_{\text{out}}) the digital edge time.
 
 Define detector latency:
-[
+$$
 \tau_{\text{lat}} = t_{\text{out}}-t_{\text{nuc}}
-]
+$$
 
 Requirement:
 
@@ -314,20 +314,20 @@ Once connected to the branch-weight generator:
 ### Integration target
 
 If branch absorbed powers satisfy
-[
+$$
 P_i(t)=\Gamma(t)w_i
-]
+$$
 with common envelope (\Gamma(t)), then measured hazard rates should satisfy
-[
+$$
 \lambda_i(t)\approx \lambda_{\text{dark}}+\alpha \Gamma(t) w_i
-]
+$$
 
 ### Desired competition law
 
 Ignoring dark counts and mismatch,
-[
+$$
 P(\text{branch }i\text{ wins}) \approx w_i
-]
+$$
 
 ### What to monitor
 
@@ -342,9 +342,9 @@ P(\text{branch }i\text{ wins}) \approx w_i
 
 For branch (i), the detector cell should approximate:
 
-[
+$$
 \lambda_i(t)=\lambda_{\text{dark},i}+\alpha_i P_i(t)
-]
+$$
 
 with:
 

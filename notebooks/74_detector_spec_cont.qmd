@@ -26,9 +26,9 @@ Why it fits:
 
 Why it may work:
 If absorbed branch power produces carriers or heating events at rate proportional to power, and each event has small independent probability of launching avalanche, then
-[
+$$
 \lambda \propto p_{\text{abs}}
-]
+$$
 over the low-rate regime.
 
 Best interpretation:
@@ -75,9 +75,9 @@ Why it fits:
 
 Caution:
 Escape rates are often **exponential** in the control variable, not linear. So to get
-[
+$$
 \lambda \approx \alpha p
-]
+$$
 you need to operate in a narrow regime where the exponential law linearizes.
 
 So this is possible, but more delicate.
@@ -141,9 +141,9 @@ The detector should satisfy:
 4. common closure suppresses the rest
 
 Then
-[
+$$
 \lambda \approx \eta, p_{\text{abs}}
-]
+$$
 naturally.
 
 That is the exact bridge you need.

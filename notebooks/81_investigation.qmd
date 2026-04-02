@@ -10,24 +10,24 @@ Suppose absorbed power (P) is not treated as a smooth fluid, but as a stream of 
 
 If each microscopic absorption event carries characteristic energy (\varepsilon), then the arrival rate of such events is
 
-[
+$$
 r(P) \approx \frac{P}{\varepsilon}.
-]
+$$
 
 Now assume each event has a small, approximately power-independent probability (p_{\text{trig}}) of launching the irreversible detector nucleation.
 
 Then the nucleation rate is just the thinned Poisson rate:
 
-[
+$$
 \lambda(P) \approx p_{\text{trig}},r(P)
 = \frac{p_{\text{trig}}}{\varepsilon},P.
-]
+$$
 
 So
 
-[
+$$
 \boxed{\lambda(P)\approx \alpha P,\qquad \alpha=\frac{p_{\text{trig}}}{\varepsilon}.}
-]
+$$
 
 That is the least circular route I see.
 
@@ -38,32 +38,32 @@ Because the square law is **not** coming from the detector.
 It comes earlier:
 
 1. **Linear analyzer projection**
-   [
+   $$
    c_i = u_i^\dagger a
-   ]
+   $$
 
 2. **Absorbed branch power is quadratic in amplitude**
-   [
+   $$
    P_i \propto |c_i|^2
-   ]
+   $$
 
 3. **Detector rate is linear in absorbed power**
-   [
+   $$
    \lambda_i \propto P_i
-   ]
+   $$
 
 Therefore
 
-[
+$$
 \lambda_i \propto |c_i|^2.
-]
+$$
 
 So the detector is only contributing the **linear-in-power** step. The square already came from ordinary linear-wave + quadratic-energy physics.
 
 That is much better than just postulating
-[
+$$
 \lambda_i \propto |c_i|^2
-]
+$$
 directly.
 
 ## What physical detector class does this correspond to?
@@ -84,18 +84,18 @@ That is the regime.
 Each absorbed carrier or hot carrier has small chance to seed avalanche.
 
 If carrier creation rate is proportional to absorbed power, and avalanche probability per carrier is roughly constant, then
-[
+$$
 \lambda \propto P.
-]
+$$
 
 This is probably the best engineering candidate.
 
 ### 2. Metastable latch with rare trigger quanta
 
 Absorbed power creates random microscopic excitations at rate (P/\varepsilon). Each excitation perturbs a near-threshold latch. If the latch is biased so each excitation has small fixed success probability, again:
-[
+$$
 \lambda \propto P.
-]
+$$
 
 ### 3. Shot-noise absorber
 
@@ -114,9 +114,9 @@ The absorption opportunities should look approximately Poissonian.
 ### B. Rare-trigger regime
 
 Each event should have
-[
+$$
 p_{\text{trig}} \ll 1
-]
+$$
 so triggers are rare and independent.
 
 ### C. Constant per-event trigger probability
@@ -148,9 +148,9 @@ Same problem.
 ### Strongly exponential escape
 
 For example,
-[
+$$
 \lambda(P)\sim e^{\beta P}
-]
+$$
 unless you operate in a tiny linearized regime.
 
 ### Thermal integration detectors
@@ -165,9 +165,9 @@ The detector physics you want is:
 
 Then
 
-[
+$$
 \lambda(P)\approx \alpha P
-]
+$$
 
 falls out naturally.
 
@@ -175,9 +175,9 @@ falls out naturally.
 
 Because it gives you an actual mechanism chain:
 
-[
+$$
 P \rightarrow \text{micro-event rate} \rightarrow \text{rare successful trigger} \rightarrow \lambda
-]
+$$
 
 instead of just assuming the answer.
 
@@ -193,12 +193,12 @@ That is the key hardware question now.
 
 ## The one-line version
 
-[
+$$
 \boxed{\text{Use a rare-event avalanche/latch detector where microscopic absorption events arrive at rate }P/\varepsilon\text{ and each has small fixed success probability.}}
-]
+$$
 
 That is the cleanest known route to
-[
+$$
 \lambda(P)\approx \alpha P
-]
+$$
 without just inserting Born by hand.
