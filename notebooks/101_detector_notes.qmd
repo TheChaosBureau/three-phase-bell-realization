@@ -1,0 +1,158 @@
+No — the last one was necessary.
+
+You probably **could not** have skipped straight to this with confidence.
+
+## What the last step actually did
+
+It answered a very specific question:
+
+> **What detector mechanism family is even compatible with Born-like winner statistics?**
+
+Before that search, we had multiple live possibilities:
+
+* drift-diffusion threshold
+* many-packet accumulation
+* shot-trigger / rare-event thinning
+* metastable escape
+* plain Poisson benchmark
+
+Those are **not** equivalent.
+
+The search told you something important and nontrivial:
+
+* **accumulation-type detectors fail**
+* **rare first-event detectors work**
+* **shot-trigger is the best physical candidate**
+* **metastable escape is weaker / more fragile**
+* the useful KPI is **race-law fidelity**, not just single-branch linearity
+
+That is a real narrowing of the mechanism space.
+
+## Why you could not just skip to this
+
+Because this current integration spec assumes the detector behaves approximately like
+
+[
+\lambda_k(t)\approx \lambda_{\text{dark}}+\alpha,\Gamma(t),w_k.
+]
+
+That assumption is the whole game.
+
+The previous search was what justified taking that seriously.
+
+Without that step, this new spec would have been mostly wishful thinking:
+
+* maybe the detector is an accumulator
+* maybe linearity is enough
+* maybe metastable escape works
+* maybe not
+
+Now you know much more specifically what you are designing **for**.
+
+## What the previous step bought you
+
+It bought you four concrete things.
+
+### 1. It identified the right detector class
+
+You now have a preferred mechanism:
+
+* **shot-trigger / rare-event nucleation**
+  rather than
+* generic threshold accumulation
+
+That is huge.
+
+### 2. It identified the right metric
+
+You learned that the main metric is not just
+[
+\lambda(P)
+]
+linearity, but
+[
+P(\text{winner}) \approx \frac{P_1}{P_1+P_2}.
+]
+
+So the search changed what “good detector” even means.
+
+### 3. It ruled out tempting bad models
+
+That matters because otherwise you might waste a lot of time implementing a beautiful but wrong detector.
+
+### 4. It gave you a realistic integration target
+
+Now the integration spec is not abstract. It is anchored to the actual winning model family.
+
+## So what is this current step doing that the last one didn’t?
+
+The last step was **model selection**.
+
+This step is **system integration**.
+
+That is the difference.
+
+### Last step
+
+Ask:
+
+* which detector hypothesis is viable?
+
+### This step
+
+Ask:
+
+* can the viable detector hypothesis be driven by the real branch weights from the front-end and still produce the right outcome statistics?
+
+So they are sequential, not redundant.
+
+## Short version
+
+You needed the last one to answer:
+
+> **what kind of detector are we even trying to integrate?**
+
+Now you are answering:
+
+> **does that detector still work when fed by the actual linear branch-weight generator?**
+
+Those are different questions.
+
+## Blunt answer
+
+Could you have skipped it?
+
+* **Technically yes**, in the sense that you could have written the integration code earlier.
+* **Practically no**, because you would have been integrating the wrong detector class or optimizing the wrong metric.
+
+So the last step was not wasted. It was the filter that made this step meaningful.
+
+## Best framing
+
+Think of the sequence like this:
+
+1. **Linear front-end**
+   gives exact branch weights
+
+2. **Detector search**
+   identifies which detector physics can preserve those weights as winner probabilities
+
+3. **Integration**
+   tests the actual composed chain:
+   [
+   \text{state} \to \text{branch weights} \to \text{detector race} \to \text{winner}
+   ]
+
+That is the right order.
+
+## The real payoff
+
+Because of the last step, you are no longer asking vaguely:
+
+> can some detector maybe work?
+
+You are now asking sharply:
+
+> can a shot-trigger rare-event detector, calibrated in its linear hazard window, preserve the front-end branch weights under full two-branch and four-branch integration?
+
+That is much stronger.
