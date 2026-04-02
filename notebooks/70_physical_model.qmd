@@ -3,41 +3,41 @@
 ### 1. Keep one delta as the local 2-mode primitive
 
 For one unloaded delta ring, the balanced internal state is
-[
+$$
 a=
 \begin{bmatrix}
-a_+\
+a_+ \\
 a_-
 \end{bmatrix},
 \qquad |a_+|^2+|a_-|^2=1,
-]
-with (+) and (-) the two rotating sequence modes. That is your local Bloch layer. Resistive analyzer extraction implements
-[
+$$
+with $+$ and $-$ the two rotating sequence modes. That is your local Bloch layer. Resistive analyzer extraction implements
+$$
 E_i = W_0 |u_i^\dagger a|^2,
-]
+$$
 which is the exact intensity-weight result you already established.  
 
 ### 2. Physical entanglement analog needs one shared 4-mode core
 
 Do **not** try to couple two independent deltas only at readout. Instead, build one shared resonant object whose reduced state is
-[
+$$
 \Psi=
 \begin{bmatrix}
-\psi_{++}\
-\psi_{+-}\
-\psi_{-+}\
+\psi_{++} \\
+\psi_{+-} \\
+\psi_{-+} \\
 \psi_{--}
 \end{bmatrix}\in\mathbb C^4.
-]
+$$
 
 The cleanest physical interpretation is:
 
 * two local 2-mode factors, A and B
 * but one **shared preparation network**
 * with four near-degenerate normal modes spanning the joint basis
-  [
+  $$
   |++\rangle,\ |+-\rangle,\ |-+\rangle,\ |--\rangle.
-  ]
+  $$
 
 ### 3. Minimum physical topology
 
@@ -45,80 +45,83 @@ I would start with **four delta tanks**, not two.
 
 Use four identical 3-LC delta modules:
 
-* Tank 1 represents (++)
-* Tank 2 represents (+-)
-* Tank 3 represents (-+)
-* Tank 4 represents (--)
+* Tank 1 represents $++$
+* Tank 2 represents $+-$
+* Tank 3 represents $-+$
+* Tank 4 represents $--$
 
-Then couple them with a symmetric inter-tank network so the reduced modal dynamics live in (\mathbb C^4).
+Then couple them with a symmetric inter-tank network so the reduced modal dynamics live in $\mathbb C^4$.
 
 This is the easiest hardware picture because each tank is already a known resonant energy-storage object.
 
 ## Concrete reduced physical model
 
 Let the complex tank amplitudes be
-[
+$$
 q=
 \begin{bmatrix}
-q_{++}\
-q_{+-}\
-q_{-+}\
+q_{++} \\
+q_{+-} \\
+q_{-+} \\
 q_{--}
 \end{bmatrix}.
-]
+$$
 
 Use first-order resonant-envelope dynamics
-[
+$$
 \dot q = -i H q - \Gamma q + Bu_{\text{prep}},
-]
+$$
 where:
 
-* (H) is the 4×4 Hermitian coupling matrix
-* (\Gamma) is weak damping
-* (u_{\text{prep}}) is the preparation drive
+* $H$ is the 4×4 Hermitian coupling matrix
+* $\Gamma$ is weak damping
+* $u_{\text{prep}}$ is the preparation drive
 
 For the first build, choose
-[
+$$
 H = \omega_0 I_4 + \Delta |\psi_s\rangle\langle\psi_s|,
-]
+$$
 with
-[
+$$
 |\psi_s\rangle=\frac{1}{\sqrt2}
 \begin{bmatrix}
-0\1\-1\0
+0 \\
+1 \\
+-1 \\
+0
 \end{bmatrix}.
-]
+$$
 
 That means:
 
-* all four uncoupled tanks sit near (\omega_0)
+* all four uncoupled tanks sit near $\omega_0$
 * one special collective normal mode is the singlet-like mode
 * preparation should selectively excite that eigenvector
 
-## How to realize (H) physically
+## How to realize $H$ physically
 
 You do not need to realize the projector matrix literally. You only need a coupling graph with the same eigenvectors.
 
 A practical first pattern is:
 
 * equal self resonance in all four tanks
-* strong antisymmetric coupling only between the (+-) and (-+) tanks
+* strong antisymmetric coupling only between the $(+-)$ and $(-+)$ tanks
 * weak symmetric couplings to keep the full 4-mode manifold controlled
 
 So the simplest matrix to realize first is
-[
+$$
 H=
 \begin{bmatrix}
-\omega_0 & 0 & 0 & 0\
-0 & \omega_0+\kappa & -\kappa & 0\
-0 & -\kappa & \omega_0+\kappa & 0\
+\omega_0 & 0 & 0 & 0 \\
+0 & \omega_0+\kappa & -\kappa & 0 \\
+0 & -\kappa & \omega_0+\kappa & 0 \\
 0 & 0 & 0 & \omega_0
 \end{bmatrix},
-]
+$$
 which has
-[
+$$
 \frac{1}{\sqrt2}(0,1,-1,0)^T
-]
+$$
 as an eigenmode.
 
 That is physically plausible with mutual inductive or transformer-like couplings between the middle two tanks.
@@ -126,9 +129,9 @@ That is physically plausible with mutual inductive or transformer-like couplings
 ## Local analyzer realization
 
 At the reduced level, analyzers act as
-[
+$$
 U(a,b)=R(a)\otimes R(b).
-]
+$$
 
 Physically, I would not try to rotate the shared core itself. Instead, implement analyzers as **readout couplers** on the two local factors.
 
@@ -141,7 +144,7 @@ Then the four readout branches are formed after those local couplers.
 
 So the physical chain becomes:
 
-[
+$$
 \text{shared 4-tank core}
 \rightarrow
 \text{Alice local coupler }R(a)
@@ -149,7 +152,7 @@ So the physical chain becomes:
 \text{Bob local coupler }R(b)
 \rightarrow
 4 \text{ joint output branches}
-]
+$$
 
 Each output branch is then resistively terminated.
 
@@ -192,12 +195,12 @@ A good first physical target is:
 The first experiment should be:
 
 1. prepare the singlet-like normal mode
-2. choose analyzer settings (a,b)
+2. choose analyzer settings $(a,b)$
 3. dump into four resistive branches
 4. verify absorbed energy fractions
-   [
+   $$
    E_{xy}^{(\infty)} \propto w_{xy}(a,b)
-   ]
+   $$
    before worrying about single-click nucleation
 
 That is the exact physical analog of your reduced-state simulator.
@@ -210,9 +213,9 @@ You should be able to show:
 * local analyzer couplers implement the right 2×2 rotations
 * the four branch energies match the predicted weights
 * for the singlet-like mode,
-  [
+  $$
   E(a,b)= -\cos 2(a-b)
-  ]
+  $$
   from energy fractions alone
 
 Only after that would I add the nucleation+latch detector layer.
