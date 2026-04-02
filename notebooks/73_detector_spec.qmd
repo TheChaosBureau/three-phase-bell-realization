@@ -16,14 +16,14 @@ Its job is:
 * guarantee branch absorbed-power envelopes proportional to the target weights
 
 Single-particle version:
-[
+$$
 p_i(t)\propto w_i
-]
+$$
 
 Joint version:
-[
+$$
 p_{xy}(t)\propto w_{xy}(a,b)
-]
+$$
 
 This block is basically:
 
@@ -43,13 +43,13 @@ Its job is:
 * have initiation hazard approximately proportional to branch absorbed intensity
 
 Target behavior:
-[
+$$
 \lambda_i(t)\approx \kappa,p_i(t)
-]
+$$
 or after normalization
-[
+$$
 \lambda_i(t)=\gamma(t),w_i
-]
+$$
 
 This is the hardest block.
 
@@ -83,28 +83,28 @@ I would write **one engineering spec with three subcircuits**.
 ### Outputs
 
 * branch voltages/currents for
-  [
+  $$
   ++,\ +-,\ -+,\ --
-  ]
+  $$
 
 ### Requirement
 
 Before any detector nonlinearity,
-[
+$$
 p_k(t)=v_k(t)i_k(t)
-]
+$$
 must satisfy
-[
+$$
 p_k(t)=\Gamma(t),w_k(a,b)
-]
+$$
 to within tolerance, with a common envelope (\Gamma(t)).
 
 ### Acceptance metric
 
 Normalized absorbed energies with linear resistive loads:
-[
+$$
 f_k=\frac{E_k}{\sum_j E_j}
-]
+$$
 must match (w_k).
 
 So this block proves the front-end computes the right weights.
@@ -130,9 +130,9 @@ One copy per branch.
 * hazard should be approximately linear in absorbed branch power over operating range
 
 Engineering target:
-[
+$$
 \lambda_k \approx \alpha,p_k
-]
+$$
 
 ### Candidate implementations
 
@@ -153,9 +153,9 @@ Engineering target:
 ### Acceptance metric
 
 Across calibrated operating range,
-[
+$$
 \lambda_k / p_k
-]
+$$
 should be approximately constant and matched across branches.
 
 This is the most important spec.
@@ -222,16 +222,16 @@ Define:
 
 ### Front-end
 
-[
+$$
 p_k(t)=\Gamma(t)w_k + \text{error}
-]
+$$
 with branch-weight error tolerance.
 
 ### Detector cell
 
-[
+$$
 \lambda_k \approx \alpha p_k
-]
+$$
 with linearity tolerance and matching tolerance.
 
 ### Latch

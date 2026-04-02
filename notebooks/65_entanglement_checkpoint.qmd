@@ -5,23 +5,23 @@ What you have now is:
 ## Minimal model
 
 A shared 4-mode state
-[
+$$
 \Psi_0\in\mathbb C^4
-]
+$$
 with:
 
 * local analyzer rotations
-  [
+  $$
   U(a,b)=R(a)\otimes R(b)
-  ]
+  $$
 * four joint branch amplitudes
-  [
+  $$
   c_{xy}(a,b)
-  ]
+  $$
 * four joint weights
-  [
+  $$
   w_{xy}(a,b)=|c_{xy}(a,b)|^2
-  ]
+  $$
 * first-nucleation readout with hazards proportional to those weights
 * post-click latch / closure conceptually separated from selection
 
@@ -29,9 +29,9 @@ That is enough to reproduce:
 
 * normalized joint weights
 * the singlet-like joint correlator
-  [
+  $$
   E(a,b)=-\cos 2(a-b)
-  ]
+  $$
 * CHSH magnitude (2\sqrt2)
 * exact Born-like joint outcome statistics at the reduced level
 

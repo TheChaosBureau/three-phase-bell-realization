@@ -49,9 +49,9 @@ Model:
 * four resistive output branches
 
 Then measure:
-[
+$$
 E_{xy}^{(\infty)}=\int_0^\infty v_{xy}(t)i_{xy}(t),dt
-]
+$$
 
 This is exactly what SPICE is good at.
 
@@ -77,9 +77,9 @@ For a first SPICE port, controlled sources are fine. After that, replace them wi
 ### 4. Post-process energies
 
 SPICE itself can give branch voltages/currents; then compute absorbed energies numerically:
-[
+$$
 E=\int v(t)i(t),dt
-]
+$$
 
 That can be done either:
 
@@ -148,9 +148,9 @@ Yes — and I think the right answer is:
 **we covered the single-particle Born-like intensity rule earlier, but not the full detector problem.**
 
 Your delta notes already say exactly that: in the unloaded 3-delta-LC analog, ideal orthogonal resistive extraction gives deterministic absorbed-energy fractions
-[
+$$
 E_i = W_0 |u_i^\dagger a|^2,
-]
+$$
 so the square law is real and clean at the **energy-partition** level. But that still does **not** explain why a single trial yields one click rather than simultaneous partial absorption in multiple branches.
 
 So the missing step is not “derive the square again.”
@@ -167,14 +167,14 @@ From the delta files:
 * **state** = unloaded ring mode content ((a_+,a_-)) in the balanced (+)/(-) subspace, not a measurement outcome.
 
 * **measurement** = resistive extraction and absorbed energy
-  [
+  $$
   E_m^{(\infty)}=\int_0^\infty p_m(t),dt.
-  ]
+  $$
 
 * **Born-like rule** = ideal linear analyzer + quadratic absorption gives
-  [
+  $$
   \frac{E_i}{W_0}=|u_i^\dagger a|^2.
-  ]
+  $$
 
 That part is done.
 
@@ -214,13 +214,13 @@ This is where your zero-sequence/common-mode closure idea is useful: **not** to 
 This is the crucial Born assumption.
 
 If branch (i) has projected intensity
-[
+$$
 w_i = |u_i^\dagger a|^2,
-]
+$$
 then the detector must satisfy something like
-[
+$$
 \lambda_i(t) = \gamma(t), w_i,
-]
+$$
 or approximately that.
 
 If this holds, first-event race gives Born exactly.
@@ -251,9 +251,9 @@ That splits the work cleanly:
 ### Pre-click
 
 Linear network computes branch intensities:
-[
+$$
 w_i \quad \text{or} \quad w_{xy}.
-]
+$$
 
 ### Click
 
@@ -295,9 +295,9 @@ Given branch intensities (w_i),
 
 ### Then
 
-[
+$$
 P(i)=w_i
-]
+$$
 exactly.
 
 That is already true mathematically. The remaining physical question is:
@@ -344,23 +344,23 @@ Here’s a compact detector-layer note.
 The linear resonant network already gives the **state geometry** and the **exact energy-partition law**.
 
 For the single-delta case, the unloaded ring has a normalized two-mode state
-[
+$$
 a=
 \begin{bmatrix}
 a_+\
 a_-
 \end{bmatrix},
 \qquad |a_+|^2+|a_-|^2=1,
-]
+$$
 and an ideal orthogonal analyzer with extracted modes (u_i) yields
-[
+$$
 E_i^{(\infty)} = W_0,|u_i^\dagger a|^2.
-]
+$$
 
 So the fraction of initial stored energy absorbed in branch (i) is
-[
+$$
 f_i=\frac{E_i^{(\infty)}}{W_0}=|u_i^\dagger a|^2.
-]
+$$
 
 That is an exact squared-projection law at the level of **absorbed energy fractions**. It follows from:
 
@@ -368,11 +368,11 @@ That is an exact squared-projection law at the level of **absorbed energy fracti
 * quadratic energy absorption in the resistive loads.
 
 For the shared 4-mode core, the same logic lifts to the joint basis:
-[
+$$
 w_{xy}(a,b)=|c_{xy}(a,b)|^2,
 \qquad
 \sum_{x,y} w_{xy}(a,b)=1,
-]
+$$
 so the linear shared-core computes the four joint branch intensities directly, rather than by post-hoc multiplication.
 
 What this proves is:
@@ -388,13 +388,13 @@ It does **not** yet prove one-click outcome statistics.
 Energy fraction is not the same thing as a discrete trial outcome.
 
 In the linear model, multiple branches can absorb energy in the same run. The result is a deterministic split:
-[
+$$
 E_1^{(\infty)},E_2^{(\infty)},\dots
-]
+$$
 or in the joint case
-[
+$$
 E_{++}^{(\infty)},E_{+-}^{(\infty)},E_{-+}^{(\infty)},E_{--}^{(\infty)}.
-]
+$$
 
 Nothing in the linear resonant dynamics forces:
 
@@ -438,31 +438,31 @@ This event is the true click precursor.
 ### B. Hazard proportional to absorbed branch intensity
 
 If branch (i) has pre-click intensity weight
-[
+$$
 w_i=|u_i^\dagger a|^2
-]
+$$
 in the single-particle case, or
-[
+$$
 w_{xy}(a,b)=|c_{xy}(a,b)|^2
-]
+$$
 in the shared 4-mode case, then the branch nucleation hazard must satisfy
-[
+$$
 \lambda_i(t)=\gamma(t),w_i
-]
+$$
 or
-[
+$$
 \lambda_{xy}(t)=\gamma(t),w_{xy}(a,b),
-]
+$$
 with a common envelope (\gamma(t)).
 
 If this holds, then first-event race gives
-[
+$$
 P(i)=w_i
-]
+$$
 or
-[
+$$
 P(x,y\mid a,b)=w_{xy}(a,b)
-]
+$$
 exactly.
 
 This is the detector-level Born assumption.
@@ -500,4 +500,3 @@ To get those, the minimal detector layer is:
 That is the cleanest current formulation of the missing detector step.
 
 ---
-
