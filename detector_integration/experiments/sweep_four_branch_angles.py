@@ -71,12 +71,15 @@ def run_four_branch_angle_sweep(
     outdir: str | Path,
     *,
     detector_family: str = "shot_trigger",
+    detector_spec: dict[str, Any] | None = None,
+    envelope_params: dict[str, Any] | None = None,
     n_trials: int = 4_000,
     seed: int = 20260402,
 ) -> dict[str, Any]:
     output_dir = Path(outdir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    detector_spec = default_detector_spec(detector_family)
+    resolved_detector_spec = default_detector_spec(detector_family) if detector_spec is None else detector_spec
+    resolved_envelope = DEFAULT_ENVELOPE if envelope_params is None else envelope_params
     state4 = singlet_state()
 
     rows: list[dict[str, Any]] = []
@@ -86,10 +89,10 @@ def run_four_branch_angle_sweep(
             state4,
             a_deg=a_deg,
             b_deg=b_deg,
-            detector_params=detector_spec,
+            detector_params=resolved_detector_spec,
             n_trials=n_trials,
             seed=seed + 101 * index,
-            envelope_params=DEFAULT_ENVELOPE,
+            envelope_params=resolved_envelope,
         )
         full_results.append({"label": label, **result})
         rows.append(
@@ -110,23 +113,23 @@ def run_four_branch_angle_sweep(
 
     chsh_result = run_chsh_trials(
         state4,
-        detector_params=detector_spec,
+        detector_params=resolved_detector_spec,
         n_trials=n_trials,
         seed=seed + 9_000,
-        envelope_params=DEFAULT_ENVELOPE,
+        envelope_params=resolved_envelope,
         settings=DEFAULT_CHSH_SETTINGS,
     )
 
     mismatch_rows: list[dict[str, Any]] = []
     for kind in ("gain", "dark_count", "dead_time"):
         for level in (0.0, 0.01, 0.02, 0.05):
-            specs = _branch_mismatch_specs(detector_spec, level=level, kind=kind, n_branches=4)
+            specs = _branch_mismatch_specs(resolved_detector_spec, level=level, kind=kind, n_branches=4)
             mismatch_chsh = run_chsh_trials(
                 state4,
                 detector_params=specs,
                 n_trials=max(1_500, n_trials // 2),
                 seed=seed + 17_000 + int(level * 10_000),
-                envelope_params=DEFAULT_ENVELOPE,
+                envelope_params=resolved_envelope,
                 settings=DEFAULT_CHSH_SETTINGS,
             )
             mean_rms_error = float(np.mean([row["rms_error"] for row in mismatch_chsh["rows"]]))
@@ -179,6 +182,11 @@ def run_four_branch_angle_sweep(
         "correlator_plot": str(correlator_plot),
         "chsh_plot": str(chsh_plot),
         "mismatch_plot": str(mismatch_plot),
+        "rows": rows,
+        "chsh": chsh_result,
+        "mismatch_rows": mismatch_rows,
+        "detector_spec": resolved_detector_spec,
+        "envelope_params": resolved_envelope,
     }
 
 

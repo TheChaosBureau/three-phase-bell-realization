@@ -7,6 +7,7 @@ import numpy as np
 
 from detector_integration.detectors.closure_latch import first_event_latch
 from detector_integration.experiments.compare_with_exact import build_detector_integration_comparison
+from detector_integration.experiments.run_summary_report import build_detector_integration_summary_report
 from detector_integration.frontends.four_branch import four_branch_weights
 from detector_integration.frontends.two_branch import two_branch_weights
 from detector_integration.sim.run_four_branch_integration import run_chsh_trials, run_four_branch_trials
@@ -86,3 +87,31 @@ def test_compare_with_exact_smoke_writes_artifacts(tmp_path: Path) -> None:
     )
     assert Path(outputs["comparison_csv"]).exists()
     assert Path(outputs["comparison_json"]).exists()
+
+
+def test_summary_report_smoke_uses_top_shot_trigger_and_writes_report(tmp_path: Path) -> None:
+    detector_next_summary = tmp_path / "detector_next_summary.csv"
+    detector_next_summary.write_text(
+        "\n".join(
+            [
+                "model,rank,score,linearity_rms_rel,dark_count_rate,race_rms_error,mismatch_penalty,branch_asymmetry_amplification,waiting_time_penalty,params_json",
+                'shot_trigger,1,0.1,0.01,0.0,0.01,0.02,0.03,0.04,"{""dead_time"": 0.0, ""eps_event"": 0.5, ""lambda_dark"": 1e-06, ""p_trig"": 0.8}"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    outputs = build_detector_integration_summary_report(
+        tmp_path / "summary",
+        detector_next_summary_csv=detector_next_summary,
+        n_two_branch_trials=250,
+        n_four_branch_trials=400,
+    )
+
+    assert Path(outputs["summary_md"]).exists()
+    assert Path(outputs["summary_json"]).exists()
+    assert Path(outputs["summary_csv"]).exists()
+    report_text = Path(outputs["summary_md"]).read_text(encoding="utf-8")
+    assert "Two-branch RMS winner-law error" in report_text
+    assert "Top Shot Trigger Parameter Set" in report_text

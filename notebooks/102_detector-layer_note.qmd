@@ -1,0 +1,258 @@
+# Detector-Layer Note
+## From Linear Energy Weights to Discrete Click Statistics
+
+Analysis of output from:  
+```
+make detector-integration-report
+```
+
+### Scope
+This note states, in formal terms, what the current linear delta/shared-core model already proves, what it does **not** yet prove, and the minimal detector assumptions required to recover Born-like one-click statistics from physically computed branch intensities. The underlying state/measurement split in the delta-tank analog is already established in the uploaded notes: unloaded delta = state, resistive extraction = measurement, and the exact squared-projection law holds at the level of absorbed-energy fractions. 
+
+---
+
+## 1. Definitions
+
+### Definition 1.1 (Prepared two-mode delta state)
+Let the unloaded balanced 3-delta-LC ring be described, in reduced form, by the normalized two-mode state
+\[
+a=
+\begin{bmatrix}
+a_+\\
+a_-
+\end{bmatrix}\in\mathbb C^2,
+\qquad
+|a_+|^2+|a_-|^2=1.
+\]
+Here \(a_+\) and \(a_-\) are the positive- and negative-sequence modal amplitudes. This is a state descriptor, not a measurement outcome. 
+
+### Definition 1.2 (Ideal orthogonal analyzer)
+Let \(\{u_1,u_2\}\subset\mathbb C^2\) be an orthonormal analyzer basis,
+\[
+u_i^\dagger u_j=\delta_{ij}.
+\]
+Define analyzer amplitudes
+\[
+c_i=u_i^\dagger a.
+\]
+
+### Definition 1.3 (Absorbed-energy measurement)
+Let each analyzer branch be terminated in an ideal resistive extraction channel, and let
+\[
+E_i^{(\infty)}=\int_0^\infty p_i(t)\,dt
+\]
+denote the total energy absorbed in branch \(i\).
+
+---
+
+## 2. What the linear front-end already proves
+
+### Theorem 2.1 (Exact squared-projection energy law)
+Under the assumptions of Definition 1, if extraction is ideal and complete, then
+\[
+E_i^{(\infty)} = W_0 |c_i|^2 = W_0 |u_i^\dagger a|^2,
+\]
+where \(W_0\) is the total initial stored energy in the unloaded delta ring.
+
+#### Proof
+Because \(\{u_1,u_2\}\) is orthonormal,
+\[
+a=c_1u_1+c_2u_2,
+\qquad
+|c_1|^2+|c_2|^2=1.
+\]
+In the ideal extraction model, each analyzer branch couples only its own channel into its matched resistor. Complete extraction implies
+\[
+E_1+E_2=W_0.
+\]
+Since absorbed energy in a linear resistor is quadratic in branch amplitude, one has
+\[
+E_i^{(\infty)}\propto |c_i|^2.
+\]
+Normalization by \(E_1+E_2=W_0\) yields
+\[
+E_i^{(\infty)}=W_0|c_i|^2=W_0|u_i^\dagger a|^2.
+\]
+QED. 
+
+### Corollary 2.2 (Born-like energy fractions)
+Defining
+\[
+f_i=\frac{E_i^{(\infty)}}{W_0},
+\]
+one obtains
+\[
+f_i=|u_i^\dagger a|^2.
+\]
+
+### Remark 2.3
+This is an exact **energy-partition** law. It is formally Born-like, but only at the level of absorbed-energy fractions. It does not yet constitute a theory of discrete one-click outcomes. :contentReference[oaicite:3]{index=3}
+
+---
+
+## 3. Why deterministic energy fractions are not yet single-click probabilities
+
+### Proposition 3.1
+The linear resonant dynamics plus ideal resistive extraction do **not** by themselves imply that exactly one branch fires in a single trial.
+
+#### Reason
+The linear front-end computes branch intensities or long-time absorbed energies, but does not contain:
+1. an irreversible nucleation event,
+2. a first-click exclusivity rule,
+3. a latch/closure mechanism suppressing rival branches.
+
+Thus multiple branches may absorb energy in the same run, and the result remains a deterministic split rather than a discrete one-shot outcome. 
+
+### Remark 3.2
+This is also the point at which the analogy to quantum measurement stops being automatic: finite-dimensional Hilbert-space geometry and projection are shared structures, but Born-rule collapse and exclusive single-trial outcomes require additional detector assumptions. :contentReference[oaicite:5]{index=5}
+
+---
+
+## 4. Minimal detector-layer hypothesis
+
+### Assumption 4.1 (Branch intensity generation)
+The linear front-end generates branch absorbed-power envelopes of the form
+\[
+P_i(t)=\Gamma(t)\,w_i,
+\]
+with
+\[
+w_i=|u_i^\dagger a|^2
+\]
+in the two-branch case, or \(w_{xy}(a,b)\) in the shared 4-mode case.
+
+### Assumption 4.2 (Rare irreversible nucleation)
+Each branch supports a rare irreversible nucleation event with hazard
+\[
+\lambda_i(t)=\gamma(t)\,w_i,
+\]
+or equivalently
+\[
+\lambda_i(t)\approx \lambda_{\text{dark}}+\alpha\,P_i(t)
+\]
+over a calibrated operating range.
+
+### Assumption 4.3 (First-click exclusivity)
+The first branch to nucleate is declared the winner, and that event terminates the competition.
+
+### Assumption 4.4 (Common-mode / zero-sequence closure)
+After the first nucleation event, a shared closure variable suppresses rival branches and drains the remaining stored energy through the winner only.
+
+---
+
+## 5. Exact detector-layer consequence
+
+### Theorem 5.1 (Born-exact first-click race)
+Under Assumptions 4.1–4.4, the winner probability is exactly
+\[
+\Pr(i)=w_i
+\]
+in the two-branch case, and
+\[
+\Pr(x,y\mid a,b)=w_{xy}(a,b)
+\]
+in the four-branch joint case.
+
+#### Proof
+For branch hazards
+\[
+\lambda_i(t)=\gamma(t)\,w_i,
+\qquad
+\sum_i w_i=1,
+\]
+the first-event probability for branch \(i\) is
+\[
+\Pr(i)=\int_0^\infty \lambda_i(t)\,
+\exp\!\left(-\int_0^t\sum_j \lambda_j(\tau)\,d\tau\right)\,dt.
+\]
+Since
+\[
+\sum_j \lambda_j(t)=\gamma(t)\sum_j w_j=\gamma(t),
+\]
+we get
+\[
+\Pr(i)=
+w_i\int_0^\infty \gamma(t)\exp\!\left(-\int_0^t\gamma(\tau)\,d\tau\right)\,dt
+=w_i.
+\]
+The four-branch case is identical with \(i\mapsto(x,y)\). QED.
+
+---
+
+## 6. Detector-layer thesis
+
+### Thesis 6.1
+A physically meaningful route from linear branch weights to discrete one-click outcomes is:
+
+1. **linear branch intensities from the prepared state**,  
+2. **stochastic first nucleation with hazard proportional to those intensities**,  
+3. **zero-sequence/common-mode latch that makes the winner exclusive**.
+
+This is the current minimal working architecture.
+
+---
+
+## 7. What has now been shown numerically
+
+### Proposition 7.1 (Reduced-model closure)
+The integrated reduced model now demonstrates, numerically, that a rare-event shot-trigger detector family can preserve the branch weights as one-click winner frequencies with high accuracy.
+
+Representative integration results:
+- two-branch RMS winner-law error: \(0.004106\),
+- four-branch RMS weight error: \(0.006140\),
+- correlator RMS error versus \(-\cos 2(a-b)\): \(0.006679\),
+- CHSH absolute error: \(0.006760\).
+
+### Interpretation
+These numbers show that the composed chain
+\[
+\text{linear front-end weights}
+\;\to\;
+\text{rare-event detector race}
+\;\to\;
+\text{discrete outcome statistics}
+\]
+is internally consistent at the reduced-model level.
+
+---
+
+## 8. What remains open
+
+### Open Problem 8.1 (Physical detector realization)
+Identify or build a detector cell whose measured click rate satisfies
+\[
+\lambda(P_{\text{abs}})\approx \lambda_{\text{dark}}+\alpha P_{\text{abs}}
+\]
+over a usable rare-event regime.
+
+### Open Problem 8.2 (Microscopic origin of the rate law)
+Explain why the detector hazard is linear in absorbed power without simply restating the desired outcome law at the detector level.
+
+### Open Problem 8.3 (Concrete zero-sequence/common-mode closure)
+Realize the closure variable as an actual circuit object in the hardware chain.
+
+### Open Problem 8.4 (Shared 4-mode physical realization)
+Realize the reduced 4-mode shared-state front-end as an actual resonant multi-tank / coupler network whose linear readout computes the joint weights physically.
+
+---
+
+## 9. Safe claim
+
+### Theorem-like summary
+The current work supports the following safe statement:
+
+> A linear resonant front-end can compute the correct projective branch weights exactly at the absorbed-energy level, and a rare-event shot-trigger detector model can convert those weights into discrete one-click outcome statistics while preserving the target correlator and CHSH structure to high accuracy.
+
+What is **not** yet shown is a full hardware realization or a derivation of the detector hazard law from a specific physical device.
+
+---
+
+## 10. Recommended next step
+
+The next step should focus on **physical detector realization**, not further reduced-state math.
+
+Concretely:
+1. choose a detector-cell candidate,
+2. measure \(\lambda(P)\), dark counts, dead time, and matching,
+3. validate two-branch first-click race behavior experimentally,
+4. only then port the integrated linear front-end + detector chain to SPICE/hardware.

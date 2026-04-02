@@ -42,12 +42,15 @@ def run_two_branch_state_sweep(
     outdir: str | Path,
     *,
     detector_family: str = "shot_trigger",
+    detector_spec: dict[str, Any] | None = None,
+    envelope_params: dict[str, Any] | None = None,
     n_trials: int = 2_000,
     seed: int = 20260402,
 ) -> dict[str, Any]:
     output_dir = Path(outdir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    detector_spec = default_detector_spec(detector_family)
+    resolved_detector_spec = default_detector_spec(detector_family) if detector_spec is None else detector_spec
+    resolved_envelope = DEFAULT_ENVELOPE if envelope_params is None else envelope_params
     rows: list[dict[str, Any]] = []
     full_results: list[dict[str, Any]] = []
 
@@ -55,10 +58,10 @@ def run_two_branch_state_sweep(
         result = run_two_branch_trials(
             case["state"],
             case["analyzer"],
-            detector_spec,
+            resolved_detector_spec,
             n_trials=n_trials,
             seed=seed + 97 * index,
-            envelope_params=DEFAULT_ENVELOPE,
+            envelope_params=resolved_envelope,
         )
         full_results.append({"case": case["case"], **result})
         rows.append(
@@ -90,6 +93,9 @@ def run_two_branch_state_sweep(
         "csv": str(csv_path),
         "json": str(json_path),
         "plot": str(plot_path),
+        "rows": rows,
+        "detector_spec": resolved_detector_spec,
+        "envelope_params": resolved_envelope,
     }
 
 

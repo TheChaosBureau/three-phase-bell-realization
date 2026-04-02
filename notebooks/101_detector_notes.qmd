@@ -32,9 +32,9 @@ That is a real narrowing of the mechanism space.
 
 Because this current integration spec assumes the detector behaves approximately like
 
-[
+$$
 \lambda_k(t)\approx \lambda_{\text{dark}}+\alpha,\Gamma(t),w_k.
-]
+$$
 
 That assumption is the whole game.
 
@@ -66,13 +66,13 @@ That is huge.
 ### 2. It identified the right metric
 
 You learned that the main metric is not just
-[
+$$
 \lambda(P)
-]
+$$
 linearity, but
-[
+$$
 P(\text{winner}) \approx \frac{P_1}{P_1+P_2}.
-]
+$$
 
 So the search changed what “good detector” even means.
 
@@ -139,9 +139,9 @@ Think of the sequence like this:
 
 3. **Integration**
    tests the actual composed chain:
-   [
+   $$
    \text{state} \to \text{branch weights} \to \text{detector race} \to \text{winner}
-   ]
+   $$
 
 That is the right order.
 

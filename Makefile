@@ -19,8 +19,12 @@ DETECTOR_NEXT_OUTDIR ?= artifacts/detector_next
 DETECTOR_NEXT_SAMPLES ?= 8
 DETECTOR_NEXT_TOP_K ?= 5
 DETECTOR_NEXT_GRID ?= 9
+DETECTOR_INTEGRATION_REPORT_OUTDIR ?= artifacts/detector_integration/summary_report
+DETECTOR_INTEGRATION_TWO_TRIALS ?= 4000
+DETECTOR_INTEGRATION_FOUR_TRIALS ?= 6000
+DETECTOR_INTEGRATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -90,3 +94,11 @@ detector-next-report:
 		--samples-per-model "$(DETECTOR_NEXT_SAMPLES)" \
 		--top-k "$(DETECTOR_NEXT_TOP_K)" \
 		--grid-size "$(DETECTOR_NEXT_GRID)"
+
+detector-integration-report:
+	mkdir -p "$(DETECTOR_INTEGRATION_REPORT_OUTDIR)"
+	poetry run $(PYTHON) -m detector_integration.experiments.run_summary_report \
+		--outdir "$(DETECTOR_INTEGRATION_REPORT_OUTDIR)" \
+		--detector-next-summary "$(DETECTOR_INTEGRATION_NEXT_SUMMARY)" \
+		--two-branch-trials "$(DETECTOR_INTEGRATION_TWO_TRIALS)" \
+		--four-branch-trials "$(DETECTOR_INTEGRATION_FOUR_TRIALS)"
