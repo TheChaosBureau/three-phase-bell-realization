@@ -39,8 +39,11 @@ PHYSICAL_FRONT_END_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 PHYSICAL_FRONT_END_HANDOFF_OUTDIR ?= artifacts/physical_front_end_handoff
 PHYSICAL_FRONT_END_HANDOFF_TRIALS ?= 240
 PHYSICAL_FRONT_END_HANDOFF_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_FRONT_END_BOUNDARY_DIAG_OUTDIR ?= artifacts/physical_front_end_boundary_diagnosis
+PHYSICAL_FRONT_END_BOUNDARY_DIAG_TRIALS ?= 120
+PHYSICAL_FRONT_END_BOUNDARY_DIAG_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -154,3 +157,10 @@ physical-front-end-handoff-report:
 		--outdir "$(PHYSICAL_FRONT_END_HANDOFF_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_HANDOFF_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_HANDOFF_TRIALS)"
+
+physical-front-end-boundary-diagnosis-report:
+	mkdir -p "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_boundary_diagnosis_report \
+		--outdir "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_TRIALS)"

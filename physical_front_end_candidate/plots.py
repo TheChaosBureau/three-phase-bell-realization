@@ -130,3 +130,82 @@ def plot_mode_case_residuals(rows: list[dict]) -> Figure:
     figure.suptitle("Export-mode residual summary")
     figure.tight_layout()
     return figure
+
+
+def plot_gain_sweep(rows: list[dict], *, metric_key: str, title: str, ylabel: str) -> Figure:
+    figure = Figure(figsize=(6.8, 4.4), dpi=120)
+    axis = figure.subplots()
+    for case in list(dict.fromkeys(row["case"] for row in rows)):
+        case_rows = sorted((row for row in rows if row["case"] == case), key=lambda row: float(row["gain"]))
+        axis.plot([row["gain"] for row in case_rows], [row[metric_key] for row in case_rows], marker="o", label=case)
+    axis.set_xscale("log", base=2)
+    axis.set_xlabel("Power-scale gain")
+    axis.set_ylabel(ylabel)
+    axis.set_title(title)
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_exposure_sweep(rows: list[dict], *, metric_key: str, title: str, ylabel: str) -> Figure:
+    figure = Figure(figsize=(6.8, 4.4), dpi=120)
+    axis = figure.subplots()
+    for case in list(dict.fromkeys(row["case"] for row in rows)):
+        case_rows = sorted((row for row in rows if row["case"] == case), key=lambda row: float(row["exposure_s"]))
+        axis.plot([row["exposure_s"] for row in case_rows], [row[metric_key] for row in case_rows], marker="o", label=case)
+    axis.set_xlabel("Exposure window (s)")
+    axis.set_ylabel(ylabel)
+    axis.set_title(title)
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_expected_click_summary(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.2, 4.5), dpi=120)
+    axes = figure.subplots(1, 2)
+    sorted_rows = sorted(rows, key=lambda row: float(row["gain"]))
+    axes[0].plot([row["gain"] for row in sorted_rows], [row["mean_mu"] for row in sorted_rows], marker="o", color="#4c78a8")
+    axes[0].set_xscale("log", base=2)
+    axes[0].set_title("Mean expected click count")
+    axes[0].set_xlabel("Power-scale gain")
+    axes[0].set_ylabel("Mean mu")
+    decisive_key = "decisive_fraction" if "decisive_fraction" in rows[0] else "mean_decisive_fraction"
+    axes[1].scatter([row["mean_mu"] for row in rows], [row[decisive_key] for row in rows], color="#54a24b")
+    axes[1].set_title("Decisive fraction vs mean mu")
+    axes[1].set_xlabel("Mean mu")
+    axes[1].set_ylabel("Decisive fraction")
+    figure.tight_layout()
+    return figure
+
+
+def plot_synthetic_vs_physical(rows: list[dict], *, metric_key: str, title: str, ylabel: str) -> Figure:
+    figure = Figure(figsize=(6.8, 4.4), dpi=120)
+    axis = figure.subplots()
+    for family in ["physical_export", "synthetic_common_envelope"]:
+        family_rows = sorted((row for row in rows if row["trace_kind"] == family), key=lambda row: float(row["gain"]))
+        axis.plot(
+            [row["gain"] for row in family_rows],
+            [row[metric_key] for row in family_rows],
+            marker="o",
+            label=family.replace("_", " "),
+        )
+    axis.set_xscale("log", base=2)
+    axis.set_xlabel("Power-scale gain")
+    axis.set_ylabel(ylabel)
+    axis.set_title(title)
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_diagnosis_summary(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.0, 4.5), dpi=120)
+    axes = figure.subplots(1, 2)
+    labels = [row["label"] for row in rows]
+    axes[0].bar(labels, [row["winner_rms_error"] for row in rows], color="#4c78a8")
+    axes[0].set_title("Winner-law RMS error")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, [row["decisive_fraction"] for row in rows], color="#54a24b")
+    axes[1].set_title("Decisive fraction")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.suptitle("Boundary diagnosis summary")
+    figure.tight_layout()
+    return figure
