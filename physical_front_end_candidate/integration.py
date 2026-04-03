@@ -122,18 +122,14 @@ def _materialize_candidate_trace(
     return trace
 
 
-def run_four_branch_physical_handoff(
-    state4: np.ndarray | None,
-    *,
-    a_deg: float,
-    b_deg: float,
+def run_four_branch_candidate_handoff(
+    candidate: Mapping[str, Any],
     detector_spec: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    *,
     n_trials: int,
     seed: int,
-    envelope_config: Mapping[str, Any] | None = None,
     boundary_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    candidate = simulate_four_branch_physical_candidate(state4, a_deg=a_deg, b_deg=b_deg, envelope_config=envelope_config)
     trace = _materialize_candidate_trace(candidate, boundary_config=boundary_config)
     detector_envelopes = trace_to_detector_envelopes(trace)
     exact_weights = np.array([candidate["exact_weight"][label] for label in candidate["branch_labels"]], dtype=float)
@@ -173,6 +169,21 @@ def run_four_branch_physical_handoff(
         "metrics": metrics,
         "event_times": np.asarray(event_time_rows, dtype=float),
     }
+
+
+def run_four_branch_physical_handoff(
+    state4: np.ndarray | None,
+    *,
+    a_deg: float,
+    b_deg: float,
+    detector_spec: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    n_trials: int,
+    seed: int,
+    envelope_config: Mapping[str, Any] | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    candidate = simulate_four_branch_physical_candidate(state4, a_deg=a_deg, b_deg=b_deg, envelope_config=envelope_config)
+    return run_four_branch_candidate_handoff(candidate, detector_spec, n_trials=n_trials, seed=seed, boundary_config=boundary_config)
 
 
 def run_four_branch_physical_chsh(

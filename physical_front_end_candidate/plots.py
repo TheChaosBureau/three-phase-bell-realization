@@ -379,3 +379,33 @@ def plot_four_branch_residual_summary(front_rows: list[dict], integration_rows: 
     axes[2].set_title("Integrated residuals")
     figure.tight_layout()
     return figure
+
+
+def plot_shared_core_diagnostics(row: dict) -> Figure:
+    figure = Figure(figsize=(9.0, 4.8), dpi=120)
+    axes = figure.subplots(1, 2)
+    state_labels = row["state_labels"]
+    state_magnitude = np.asarray(row["prepared_state_magnitude"], dtype=float)
+    mode_energies = np.asarray(row["modal_energies"], dtype=float)
+    axes[0].bar(state_labels, state_magnitude, color="#4c78a8")
+    axes[0].set_title("Prepared internal state magnitude")
+    axes[0].set_ylabel("|x_k|")
+    axes[1].bar([f"mode_{index}" for index in range(len(mode_energies))], mode_energies, color="#54a24b")
+    axes[1].set_title("Shared-core modal energies")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.tight_layout()
+    return figure
+
+
+def plot_candidate_metric_comparison(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(9.0, 4.8), dpi=120)
+    axes = figure.subplots(1, 3)
+    labels = [row["candidate"] for row in rows]
+    axes[0].bar(labels, [row["front_end_rms_error"] for row in rows], color=["#bbbbbb", "#4c78a8"])
+    axes[0].set_title("Front-end RMS error")
+    axes[1].bar(labels, [row["winner_rms_error"] for row in rows], color=["#bbbbbb", "#54a24b"])
+    axes[1].set_title("Winner-law RMS error")
+    axes[2].bar(labels, [row["correlator_rms_error"] for row in rows], color=["#bbbbbb", "#f58518"])
+    axes[2].set_title("Correlator RMS error")
+    figure.tight_layout()
+    return figure

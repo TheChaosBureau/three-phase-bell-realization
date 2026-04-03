@@ -54,8 +54,11 @@ PHYSICAL_FRONT_END_BOUNDARY_REPRO_NEXT_SUMMARY ?= artifacts/detector_next/result
 PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR ?= artifacts/physical_front_end_four_branch_candidate
 PHYSICAL_FRONT_END_FOUR_BRANCH_TRIALS ?= 4000
 PHYSICAL_FRONT_END_FOUR_BRANCH_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_OUTDIR ?= artifacts/physical_front_end_four_branch_refined
+PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_TRIALS ?= 4000
+PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -200,3 +203,10 @@ physical-front-end-four-branch-candidate-report:
 		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_TRIALS)"
+
+physical-front-end-four-branch-refined-report:
+	mkdir -p "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_four_branch_refined_report \
+		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_TRIALS)"
