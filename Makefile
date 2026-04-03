@@ -23,8 +23,9 @@ DETECTOR_INTEGRATION_REPORT_OUTDIR ?= artifacts/detector_integration/summary_rep
 DETECTOR_INTEGRATION_TWO_TRIALS ?= 4000
 DETECTOR_INTEGRATION_FOUR_TRIALS ?= 6000
 DETECTOR_INTEGRATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+LATCH_RIG_OUTDIR ?= artifacts/latch_rig
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -102,3 +103,8 @@ detector-integration-report:
 		--detector-next-summary "$(DETECTOR_INTEGRATION_NEXT_SUMMARY)" \
 		--two-branch-trials "$(DETECTOR_INTEGRATION_TWO_TRIALS)" \
 		--four-branch-trials "$(DETECTOR_INTEGRATION_FOUR_TRIALS)"
+
+latch-rig-report:
+	mkdir -p "$(LATCH_RIG_OUTDIR)"
+	poetry run $(PYTHON) -m detector_rig.latch_report \
+		--outdir "$(LATCH_RIG_OUTDIR)"

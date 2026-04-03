@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from pathlib import Path
@@ -289,3 +290,14 @@ def build_latch_rig_report(
         **hardware_paths,
         **artifact_paths,
     }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Build the winner latch characterization rig report.")
+    parser.add_argument("--outdir", default="artifacts/latch_rig", help="Output directory for latch rig artifacts.")
+    args = parser.parse_args()
+    build_latch_rig_report(args.outdir)
+
+
+if __name__ == "__main__":
+    main()
