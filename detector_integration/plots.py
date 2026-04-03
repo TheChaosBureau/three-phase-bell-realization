@@ -74,3 +74,21 @@ def plot_mismatch_sensitivity(rows: list[dict]) -> Figure:
     axis.set_title("Mismatch sensitivity")
     axis.legend()
     return figure
+
+
+def plot_latch_enabled_mismatch_sensitivity(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.5, 4.8), dpi=120)
+    axis = figure.subplots()
+    kinds = sorted({row["kind"] for row in rows})
+    for kind in kinds:
+        kind_rows = [row for row in rows if row["kind"] == kind]
+        levels = [100.0 * row["level"] for row in kind_rows]
+        two_branch = [row["two_branch_mean_rms_error"] for row in kind_rows]
+        four_branch = [row["four_branch_mean_rms_error"] for row in kind_rows]
+        axis.plot(levels, two_branch, "o--", label=f"{kind} two-branch")
+        axis.plot(levels, four_branch, "o-", label=f"{kind} four-branch")
+    axis.set_xlabel("Mismatch (%)")
+    axis.set_ylabel("Integrated RMS error")
+    axis.set_title("Latch-enabled integrated mismatch sensitivity")
+    axis.legend(ncol=2, fontsize=8)
+    return figure

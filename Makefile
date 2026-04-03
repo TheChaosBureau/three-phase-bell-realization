@@ -24,8 +24,13 @@ DETECTOR_INTEGRATION_TWO_TRIALS ?= 4000
 DETECTOR_INTEGRATION_FOUR_TRIALS ?= 6000
 DETECTOR_INTEGRATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 LATCH_RIG_OUTDIR ?= artifacts/latch_rig
+FRONT_END_INTEGRATION_OUTDIR ?= artifacts/front_end_integration
+FRONT_END_INTEGRATION_TWO_TRIALS ?= 4000
+FRONT_END_INTEGRATION_FOUR_TRIALS ?= 6000
+FRONT_END_INTEGRATION_MISMATCH_TRIALS ?= 2000
+FRONT_END_INTEGRATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -108,3 +113,12 @@ latch-rig-report:
 	mkdir -p "$(LATCH_RIG_OUTDIR)"
 	poetry run $(PYTHON) -m detector_rig.latch_report \
 		--outdir "$(LATCH_RIG_OUTDIR)"
+
+front-end-integration-report:
+	mkdir -p "$(FRONT_END_INTEGRATION_OUTDIR)"
+	poetry run $(PYTHON) -m detector_integration.experiments.run_latch_enabled_summary_report \
+		--outdir "$(FRONT_END_INTEGRATION_OUTDIR)" \
+		--detector-next-summary "$(FRONT_END_INTEGRATION_NEXT_SUMMARY)" \
+		--two-branch-trials "$(FRONT_END_INTEGRATION_TWO_TRIALS)" \
+		--four-branch-trials "$(FRONT_END_INTEGRATION_FOUR_TRIALS)" \
+		--mismatch-trials "$(FRONT_END_INTEGRATION_MISMATCH_TRIALS)"
