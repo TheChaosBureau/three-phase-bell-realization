@@ -9,6 +9,7 @@ from .four_branch_candidate import FourBranchPhysicalFrontEndConfig, benchmark_f
 from .integration import run_four_branch_candidate_handoff, run_four_branch_physical_chsh, run_four_branch_physical_handoff, run_two_branch_physical_handoff
 from .metrics import aggregate_case_error, common_envelope_fidelity_metrics, correlator_rms_error, energy_preservation_metrics, finite_export_metrics, fraction_error_metrics
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
+from .resonant_four_branch_candidate import ResonantSharedModeFrontEndConfig, benchmark_resonant_four_branch_cases, simulate_resonant_four_branch_candidate
 from .two_branch_candidate import PhysicalFrontEndConfig, simulate_two_branch_physical_candidate
 
 
@@ -54,23 +55,32 @@ def build_physical_front_end_four_branch_refined_report(*args: Any, **kwargs: An
     return _build(*args, **kwargs)
 
 
+def build_physical_front_end_four_branch_resonant_report(*args: Any, **kwargs: Any):
+    from .experiments.build_four_branch_resonant_report import build_physical_front_end_four_branch_resonant_report as _build
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
     "FourBranchPhysicalFrontEndConfig",
     "PhysicalFrontEndConfig",
     "RefinedSharedCoreFrontEndConfig",
+    "ResonantSharedModeFrontEndConfig",
     "build_physical_front_end_boundary_calibration_report",
     "build_physical_front_end_boundary_repro_check_report",
     "build_physical_front_end_boundary_diagnosis_report",
     "build_physical_front_end_candidate_report",
     "build_physical_front_end_four_branch_candidate_report",
     "build_physical_front_end_four_branch_refined_report",
+    "build_physical_front_end_four_branch_resonant_report",
     "build_physical_front_end_handoff_report",
     "PRIOR_DIAGNOSIS_REFERENCE",
     "ReproCheckConfig",
     "aggregate_case_error",
     "benchmark_four_branch_physical_cases",
     "benchmark_refined_four_branch_cases",
+    "benchmark_resonant_four_branch_cases",
     "classify_boundary_outcome",
     "classify_reproducibility",
     "common_envelope_fidelity_metrics",
@@ -87,6 +97,7 @@ __all__ = [
     "resolved_repro_check_config",
     "selected_handoff_export_config",
     "simulate_refined_four_branch_candidate",
+    "simulate_resonant_four_branch_candidate",
     "simulate_four_branch_physical_candidate",
     "simulate_two_branch_physical_candidate",
 ]

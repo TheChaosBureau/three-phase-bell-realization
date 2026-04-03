@@ -409,3 +409,20 @@ def plot_candidate_metric_comparison(rows: list[dict]) -> Figure:
     axes[2].set_title("Correlator RMS error")
     figure.tight_layout()
     return figure
+
+
+def plot_resonant_mode_diagnostics(row: dict) -> Figure:
+    figure = Figure(figsize=(10.0, 4.8), dpi=120)
+    axes = figure.subplots(1, 3)
+    labels = [f"mode_{index}" for index in range(len(row["modal_response_magnitude"]))]
+    axes[0].bar(labels, row["modal_response_magnitude"], color="#4c78a8")
+    axes[0].set_title("Modal response magnitude")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, row["modal_decay_rates"], color="#54a24b")
+    axes[1].set_title("Modal decay rates")
+    axes[1].tick_params(axis="x", rotation=20)
+    axes[2].bar(labels, row["mode_overlap_profile"], color="#f58518")
+    axes[2].set_title("Singlet overlap by mode")
+    axes[2].tick_params(axis="x", rotation=20)
+    figure.tight_layout()
+    return figure
