@@ -209,3 +209,18 @@ def plot_diagnosis_summary(rows: list[dict]) -> Figure:
     figure.suptitle("Boundary diagnosis summary")
     figure.tight_layout()
     return figure
+
+
+def plot_calibrated_frequency(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(6.0, 5.0), dpi=120)
+    axis = figure.subplots()
+    exact = [row["exact_p1"] for row in rows]
+    empirical = [row["empirical_p1"] for row in rows]
+    axis.plot([0.0, 1.0], [0.0, 1.0], "--", color="#bbbbbb")
+    axis.plot(exact, empirical, "o", color="#4c78a8")
+    for row in rows:
+        axis.annotate(row["case"], (row["exact_p1"], row["empirical_p1"]), fontsize=8, xytext=(4, 4), textcoords="offset points")
+    axis.set_xlabel("Exact branch 1 weight")
+    axis.set_ylabel("Calibrated empirical winner frequency")
+    axis.set_title("Calibrated exact vs empirical winner law")
+    return figure
