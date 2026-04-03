@@ -331,9 +331,22 @@ def run_four_branch_candidate_with_physical_closure(
     frequency_summary = race["frequency_summary"]
     event_times = np.asarray(race["event_times"], dtype=float)
     latch_results = list(race["latch_results"])
-    physical_rows: list[dict[str, Any]] = []
-    reduced_rows: list[dict[str, Any]] = []
     example_trial: dict[str, Any] | None = None
+    total_initial_remaining = 0.0
+    total_winner_drain = 0.0
+    total_loser_energy = 0.0
+    total_winner_fraction = 0.0
+    total_loser_fraction = 0.0
+    total_completion_count = 0
+    total_completion_time = 0.0
+    total_reduced_completion_count = 0
+    total_reduced_completion_time = 0.0
+    all_monotonic = True
+    total_terminal_loser_suppression = 0.0
+    terminal_loser_suppression_count = 0
+    total_winner_drain_path_count = 0.0
+    total_reduced_winner_fraction = 0.0
+    total_reduced_loser_fraction = 0.0
 
     for trial_index, latch_result in enumerate(latch_results):
         physical = simulate_physical_closure_drain(
@@ -354,8 +367,30 @@ def run_four_branch_candidate_with_physical_closure(
             capture_time_s=float(latch_result["settled_at_s"]),
             interpretation=reduced,
         )
-        physical_rows.append(physical)
-        reduced_rows.append(reduced_row)
+        initial_remaining = float(physical["initial_remaining_energy_j"])
+        winner_drain = float(physical["winner_drain_total_energy_j"])
+        loser_energy = float(sum(physical["loser_post_click_energy_j"].values()))
+        reduced_winner = float(reduced_row["winner_drain_total_energy_j"])
+        reduced_loser = float(sum(reduced_row["loser_post_click_energy_j"].values()))
+        denom = max(initial_remaining, 1e-18)
+        total_initial_remaining += initial_remaining
+        total_winner_drain += winner_drain
+        total_loser_energy += loser_energy
+        total_winner_fraction += winner_drain / denom
+        total_loser_fraction += loser_energy / denom
+        total_reduced_winner_fraction += reduced_winner / denom
+        total_reduced_loser_fraction += reduced_loser / denom
+        total_winner_drain_path_count += float(physical["winner_drain_path_count"])
+        all_monotonic = all_monotonic and bool(physical["monotonic_remaining_energy"])
+        if physical["loser_suppression"]:
+            total_terminal_loser_suppression += float(np.mean([values[-1] for values in physical["loser_suppression"].values()]))
+            terminal_loser_suppression_count += 1
+        if bool(physical["trial_complete"]):
+            total_completion_count += 1
+            total_completion_time += float(physical["trial_complete_time_s"])
+        if bool(reduced_row["trial_complete"]):
+            total_reduced_completion_count += 1
+            total_reduced_completion_time += float(reduced_row["trial_complete_time_s"])
         if example_trial is None and physical["closure_active"]:
             example_trial = {
                 "latch_result": dict(latch_result),
@@ -364,37 +399,29 @@ def run_four_branch_candidate_with_physical_closure(
                 "event_times": event_times[trial_index].tolist(),
             }
 
-    initial_remaining = np.asarray([row["initial_remaining_energy_j"] for row in physical_rows], dtype=float)
-    winner_drain = np.asarray([row["winner_drain_total_energy_j"] for row in physical_rows], dtype=float)
-    loser_energy = np.asarray([sum(row["loser_post_click_energy_j"].values()) for row in physical_rows], dtype=float)
-    complete_mask = np.asarray([bool(row["trial_complete"]) for row in physical_rows], dtype=bool)
-    completion_times = np.asarray([float(row["trial_complete_time_s"]) for row in physical_rows], dtype=float)
-    reduced_winner = np.asarray([row["winner_drain_total_energy_j"] for row in reduced_rows], dtype=float)
-    reduced_loser = np.asarray([sum(row["loser_post_click_energy_j"].values()) for row in reduced_rows], dtype=float)
-    reduced_complete_mask = np.asarray([bool(row["trial_complete"]) for row in reduced_rows], dtype=bool)
-    reduced_completion_times = np.asarray([float(row["trial_complete_time_s"]) for row in reduced_rows], dtype=float)
     transparency_shift = np.zeros_like(np.asarray(frequency_summary["frequencies"], dtype=float))
+    trial_count = max(len(latch_results), 1)
+    mean_winner_fraction = total_winner_fraction / trial_count
+    mean_loser_fraction = total_loser_fraction / trial_count
+    mean_reduced_winner_fraction = total_reduced_winner_fraction / trial_count
+    mean_reduced_loser_fraction = total_reduced_loser_fraction / trial_count
+    completion_rate = total_completion_count / trial_count
+    reduced_completion_rate = total_reduced_completion_count / trial_count
+    mean_completion_time = total_completion_time / total_completion_count if total_completion_count > 0 else float("inf")
+    mean_reduced_completion_time = (
+        total_reduced_completion_time / total_reduced_completion_count if total_reduced_completion_count > 0 else float("inf")
+    )
+
+    if np.isinf(mean_completion_time) and np.isinf(mean_reduced_completion_time):
+        completion_time_abs_diff = 0.0
+    else:
+        completion_time_abs_diff = float(abs(mean_completion_time - mean_reduced_completion_time))
 
     comparison_metrics = {
-        "winner_fraction_abs_diff": float(
-            abs(
-                np.mean(np.divide(winner_drain, np.maximum(initial_remaining, 1e-18)))
-                - np.mean(np.divide(reduced_winner, np.maximum(initial_remaining, 1e-18)))
-            )
-        ),
-        "loser_fraction_abs_diff": float(
-            abs(
-                np.mean(np.divide(loser_energy, np.maximum(initial_remaining, 1e-18)))
-                - np.mean(np.divide(reduced_loser, np.maximum(initial_remaining, 1e-18)))
-            )
-        ),
-        "completion_rate_abs_diff": float(abs(np.mean(complete_mask) - np.mean(reduced_complete_mask))),
-        "completion_time_abs_diff": float(
-            abs(
-                (float(np.mean(completion_times[complete_mask])) if np.any(complete_mask) else float("inf"))
-                - (float(np.mean(reduced_completion_times[reduced_complete_mask])) if np.any(reduced_complete_mask) else float("inf"))
-            )
-        ),
+        "winner_fraction_abs_diff": float(abs(mean_winner_fraction - mean_reduced_winner_fraction)),
+        "loser_fraction_abs_diff": float(abs(mean_loser_fraction - mean_reduced_loser_fraction)),
+        "completion_rate_abs_diff": float(abs(completion_rate - reduced_completion_rate)),
+        "completion_time_abs_diff": completion_time_abs_diff,
     }
     if example_trial is not None:
         physical = example_trial["physical"]
@@ -432,26 +459,23 @@ def run_four_branch_candidate_with_physical_closure(
         "decisive_fraction": frequency_summary["decisive_fraction"],
         "timeout_fraction": frequency_summary["timeout_fraction"],
         "metrics": dict(race["metrics"]),
-        "physical_rows": physical_rows,
-        "reduced_rows": reduced_rows,
         "comparison_metrics": comparison_metrics,
         "closure_metrics": {
             "pre_click_transparency_rms_shift": float(np.sqrt(np.mean(np.square(transparency_shift)))),
-            "mean_winner_drain_fraction": float(np.mean(np.divide(winner_drain, np.maximum(initial_remaining, 1e-18)))),
-            "mean_loser_fraction": float(np.mean(np.divide(loser_energy, np.maximum(initial_remaining, 1e-18)))),
-            "completion_rate": float(np.mean(complete_mask)),
-            "mean_completion_time_s": float(np.mean(completion_times[complete_mask])) if np.any(complete_mask) else float("inf"),
-            "monotonic_remaining_energy": bool(all(bool(row["monotonic_remaining_energy"]) for row in physical_rows)),
-            "mean_terminal_loser_suppression": float(
-                np.mean(
-                    [
-                        np.mean([values[-1] for values in row["loser_suppression"].values()])
-                        for row in physical_rows
-                        if row["loser_suppression"]
-                    ]
-                )
-            ) if any(row["loser_suppression"] for row in physical_rows) else 0.0,
-            "mean_winner_drain_path_count": float(np.mean([row["winner_drain_path_count"] for row in physical_rows])),
+            "mean_initial_remaining_energy_j": total_initial_remaining / trial_count,
+            "mean_winner_drain_energy_j": total_winner_drain / trial_count,
+            "mean_loser_post_click_energy_j": total_loser_energy / trial_count,
+            "mean_winner_drain_fraction": mean_winner_fraction,
+            "mean_loser_fraction": mean_loser_fraction,
+            "completion_rate": completion_rate,
+            "mean_completion_time_s": mean_completion_time,
+            "monotonic_remaining_energy": all_monotonic,
+            "mean_terminal_loser_suppression": (
+                total_terminal_loser_suppression / terminal_loser_suppression_count
+                if terminal_loser_suppression_count > 0
+                else 0.0
+            ),
+            "mean_winner_drain_path_count": total_winner_drain_path_count / trial_count,
         },
         "example_trial": example_trial,
     }
