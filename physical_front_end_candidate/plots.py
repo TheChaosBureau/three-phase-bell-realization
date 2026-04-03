@@ -268,3 +268,114 @@ def plot_prior_vs_rerun(rows: list[dict]) -> Figure:
     axes[1].tick_params(axis="x", rotation=20)
     figure.tight_layout()
     return figure
+
+
+def plot_four_branch_fraction_comparison(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(8.2, 5.0), dpi=120)
+    axis = figure.subplots()
+    branch_labels = rows[0]["branch_labels"]
+    positions = np.arange(len(rows), dtype=float)
+    width = 0.18
+    colors = ["#4c78a8", "#f58518", "#54a24b", "#e45756"]
+    for index, label in enumerate(branch_labels):
+        exact = [row["exact_weights"][index] for row in rows]
+        realized = [row["realized_fractions"][index] for row in rows]
+        offset = (index - 1.5) * width
+        axis.bar(positions + offset, exact, width=width, color=colors[index], alpha=0.35, label=f"{label} exact")
+        axis.plot(positions + offset, realized, "o", color=colors[index], label=f"{label} realized")
+    axis.set_xticks(positions, [row["case"] for row in rows], rotation=20)
+    axis.set_ylabel("Branch fraction")
+    axis.set_title("Exact vs realized four-branch energy fractions")
+    axis.legend(fontsize=7, ncol=2)
+    figure.tight_layout()
+    return figure
+
+
+def plot_four_branch_power_traces(row: dict) -> Figure:
+    figure = Figure(figsize=(8.0, 4.8), dpi=120)
+    axis = figure.subplots()
+    colors = {"++": "#4c78a8", "+-": "#f58518", "-+": "#54a24b", "--": "#e45756"}
+    for label in row["branch_labels"]:
+        axis.plot(row["time_s"], row["branch_power_w"][label], label=label, color=colors.get(label))
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Power (W)")
+    axis.set_title(f"Four-branch power traces: {row['case']}")
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_four_branch_export_envelopes(row: dict) -> Figure:
+    figure = Figure(figsize=(8.0, 4.8), dpi=120)
+    axis = figure.subplots()
+    colors = {"++": "#4c78a8", "+-": "#f58518", "-+": "#54a24b", "--": "#e45756"}
+    for label in row["branch_labels"]:
+        axis.plot(row["time_s"], row["branch_power_w"][label], color=colors.get(label), alpha=0.4)
+        axis.plot(row["export_time_s"], row["exported_branch_power"][label], "--", color=colors.get(label), label=label)
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Power (W)")
+    axis.set_title(f"Detector-facing exported envelopes: {row['case']}")
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_four_branch_winner_frequency(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(8.2, 5.0), dpi=120)
+    axis = figure.subplots()
+    branch_labels = rows[0]["branch_labels"]
+    positions = np.arange(len(rows), dtype=float)
+    width = 0.18
+    colors = ["#4c78a8", "#f58518", "#54a24b", "#e45756"]
+    for index, label in enumerate(branch_labels):
+        exact = [row["exact_weights"][index] for row in rows]
+        empirical = [row["empirical_frequencies"][index] for row in rows]
+        offset = (index - 1.5) * width
+        axis.bar(positions + offset, exact, width=width, color=colors[index], alpha=0.35, label=f"{label} exact")
+        axis.plot(positions + offset, empirical, "o", color=colors[index], label=f"{label} empirical")
+    axis.set_xticks(positions, [row["case"] for row in rows], rotation=20)
+    axis.set_ylabel("Winner frequency")
+    axis.set_title("Exact vs empirical four-branch winner frequencies")
+    axis.legend(fontsize=7, ncol=2)
+    figure.tight_layout()
+    return figure
+
+
+def plot_correlator_exact_vs_empirical(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(6.8, 4.6), dpi=120)
+    axis = figure.subplots()
+    exact = [row["correlator_exact"] for row in rows]
+    empirical = [row["correlator_empirical"] for row in rows]
+    axis.plot([-1.0, 1.0], [-1.0, 1.0], "--", color="#bbbbbb")
+    axis.plot(exact, empirical, "o", color="#4c78a8")
+    for row in rows:
+        axis.annotate(row["case"], (row["correlator_exact"], row["correlator_empirical"]), fontsize=8, xytext=(4, 4), textcoords="offset points")
+    axis.set_xlabel("Exact correlator")
+    axis.set_ylabel("Empirical correlator")
+    axis.set_title("Correlator exact vs empirical")
+    return figure
+
+
+def plot_chsh_exact_vs_empirical(chsh_result: dict) -> Figure:
+    figure = Figure(figsize=(5.8, 4.4), dpi=120)
+    axis = figure.subplots()
+    labels = ["Exact", "Empirical"]
+    values = [float(chsh_result["exact_s"]), float(chsh_result["empirical_s"])]
+    axis.bar(labels, values, color=["#4c78a8", "#54a24b"])
+    axis.set_ylabel("CHSH S")
+    axis.set_title("Exact vs empirical CHSH")
+    return figure
+
+
+def plot_four_branch_residual_summary(front_rows: list[dict], integration_rows: list[dict], chsh_result: dict) -> Figure:
+    figure = Figure(figsize=(9.2, 4.8), dpi=120)
+    axes = figure.subplots(1, 3)
+    labels = [row["case"] for row in front_rows]
+    axes[0].bar(labels, [row["rms_error"] for row in front_rows], color="#4c78a8")
+    axes[0].set_title("Front-end RMS error")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, [row["rms_error"] for row in integration_rows], color="#54a24b")
+    axes[1].set_title("Winner-law RMS error")
+    axes[1].tick_params(axis="x", rotation=20)
+    axes[2].bar(["Correlator RMS", "CHSH abs"], [float(np.sqrt(np.mean(np.square([row["correlator_error"] for row in integration_rows])))), float(chsh_result["abs_error"])], color=["#f58518", "#e45756"])
+    axes[2].set_title("Integrated residuals")
+    figure.tight_layout()
+    return figure

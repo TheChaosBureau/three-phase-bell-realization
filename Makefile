@@ -51,8 +51,11 @@ PHYSICAL_FRONT_END_BOUNDARY_REPRO_TARGET_DECISIVE ?= 100
 PHYSICAL_FRONT_END_BOUNDARY_REPRO_MAX_TRIALS ?= 20000
 PHYSICAL_FRONT_END_BOUNDARY_REPRO_BATCH_TRIALS ?= 500
 PHYSICAL_FRONT_END_BOUNDARY_REPRO_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR ?= artifacts/physical_front_end_four_branch_candidate
+PHYSICAL_FRONT_END_FOUR_BRANCH_TRIALS ?= 4000
+PHYSICAL_FRONT_END_FOUR_BRANCH_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -190,3 +193,10 @@ physical-front-end-boundary-repro-check-report:
 		--target-decisive-count "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_TARGET_DECISIVE)" \
 		--max-trials-per-case "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_MAX_TRIALS)" \
 		--batch-trials "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_BATCH_TRIALS)"
+
+physical-front-end-four-branch-candidate-report:
+	mkdir -p "$(PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_four_branch_candidate_report \
+		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_TRIALS)"

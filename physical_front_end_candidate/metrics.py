@@ -68,3 +68,21 @@ def energy_preservation_metrics(
         "abs_error": abs(error),
         "rel_error": abs(error) / max(abs(reference_energy), 1e-18),
     }
+
+
+def aggregate_case_error(rows: Sequence[Mapping[str, float]], *, rms_key: str = "rms_error", max_key: str = "max_abs_error") -> dict[str, float]:
+    if not rows:
+        return {"rms_error": 0.0, "max_abs_error": 0.0}
+    rms_values = np.asarray([float(row[rms_key]) for row in rows], dtype=float)
+    max_values = np.asarray([float(row[max_key]) for row in rows], dtype=float)
+    return {
+        "rms_error": float(np.sqrt(np.mean(rms_values**2))),
+        "max_abs_error": float(np.max(max_values)),
+    }
+
+
+def correlator_rms_error(rows: Sequence[Mapping[str, float]], *, key: str = "correlator_error") -> float:
+    if not rows:
+        return 0.0
+    values = np.asarray([float(row[key]) for row in rows], dtype=float)
+    return float(np.sqrt(np.mean(values**2)))
