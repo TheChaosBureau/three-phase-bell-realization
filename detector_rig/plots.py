@@ -123,3 +123,37 @@ def plot_race_summary(rows: list[dict]) -> Figure:
     axis.set_ylabel("Empirical P(cell 1 wins)")
     axis.set_title("Winner frequency vs target")
     return figure
+
+
+def plot_latch_race_comparison(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(6.8, 4.6), dpi=120)
+    axis = figure.subplots()
+    labels = [row["split_label"] for row in rows]
+    target = [row["target_p1"] for row in rows]
+    baseline = [row["baseline_p1"] for row in rows]
+    latch = [row["latch_p1"] for row in rows]
+    axis.plot(labels, target, "o--", color="#bbbbbb", label="target")
+    axis.plot(labels, baseline, "o-", color="#4c78a8", label="baseline")
+    axis.plot(labels, latch, "o-", color="#f58518", label="with latch")
+    axis.set_ylim(-0.02, 1.02)
+    axis.set_xlabel("Power split")
+    axis.set_ylabel("P(cell A wins)")
+    axis.set_title("Baseline vs latch race comparison")
+    axis.legend()
+    return figure
+
+
+def plot_reset_cycle_stability(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    cycle_index = [row["cycle_index"] for row in rows]
+    reset_cleared = [row["reset_cleared"] for row in rows]
+    early_probe_ignored = [row["early_probe_ignored"] for row in rows]
+    axis.plot(cycle_index, reset_cleared, "-", color="#54a24b", label="reset cleared")
+    axis.plot(cycle_index, early_probe_ignored, "-", color="#e45756", label="early probe ignored")
+    axis.set_xlabel("Reset cycle")
+    axis.set_ylabel("Pass fraction")
+    axis.set_ylim(-0.05, 1.05)
+    axis.set_title("Reset / re-arm stability")
+    axis.legend()
+    return figure

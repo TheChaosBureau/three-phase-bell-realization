@@ -28,4 +28,29 @@ class DetectorRigConfig:
     seed: int = 20260402
 
 
+@dataclass(frozen=True)
+class LatchRigConfig:
+    """Configuration for the common-mode / zero-sequence latch bench rig."""
+
+    input_threshold_v: float = 0.35
+    min_input_pulse_width_ns: float = 6.0
+    pickoff_delay_ns: float = 0.45
+    propagation_delay_ns: float = 0.65
+    inhibit_delay_ns: float = 0.20
+    settle_time_ns: float = 1.10
+    tie_window_ns: float = 0.25
+    reset_pulse_ns: float = 8.0
+    rearm_holdoff_us: float = 6.0
+    synthetic_offsets_ns: tuple[float, ...] = (-12.0, -6.0, -1.0, -0.2, 0.0, 0.2, 1.0, 6.0, 12.0)
+    synthetic_repeats: int = 256
+    exclusivity_repeats: int = 192
+    reset_cycles: int = 256
+    input_load_amplitude_loss_rel: float = 0.012
+    input_load_width_stretch_rel: float = 0.018
+    input_load_added_jitter_ns: float = 0.015
+    tie_break_priority: str = "A"
+    seed: int = 20260402
+
+
 DEFAULT_DETECTOR_RIG_CONFIG = DetectorRigConfig()
+DEFAULT_LATCH_RIG_CONFIG = LatchRigConfig()
