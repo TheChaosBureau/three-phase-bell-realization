@@ -29,8 +29,12 @@ FRONT_END_INTEGRATION_TWO_TRIALS ?= 4000
 FRONT_END_INTEGRATION_FOUR_TRIALS ?= 6000
 FRONT_END_INTEGRATION_MISMATCH_TRIALS ?= 2000
 FRONT_END_INTEGRATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+FRONT_END_SURROGATE_OUTDIR ?= artifacts/front_end_surrogate
+FRONT_END_SURROGATE_TWO_TRIALS ?= 1000
+FRONT_END_SURROGATE_FOUR_TRIALS ?= 1500
+FRONT_END_SURROGATE_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -122,3 +126,11 @@ front-end-integration-report:
 		--two-branch-trials "$(FRONT_END_INTEGRATION_TWO_TRIALS)" \
 		--four-branch-trials "$(FRONT_END_INTEGRATION_FOUR_TRIALS)" \
 		--mismatch-trials "$(FRONT_END_INTEGRATION_MISMATCH_TRIALS)"
+
+front-end-surrogate-report:
+	mkdir -p "$(FRONT_END_SURROGATE_OUTDIR)"
+	poetry run $(PYTHON) -m front_end_surrogate.experiments.build_summary_report \
+		--outdir "$(FRONT_END_SURROGATE_OUTDIR)" \
+		--detector-next-summary "$(FRONT_END_SURROGATE_NEXT_SUMMARY)" \
+		--two-branch-trials "$(FRONT_END_SURROGATE_TWO_TRIALS)" \
+		--four-branch-trials "$(FRONT_END_SURROGATE_FOUR_TRIALS)"

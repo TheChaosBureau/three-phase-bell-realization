@@ -69,6 +69,21 @@ def _simulate_time_varying_branch(
     dt = float(envelope_params["dt"])
     t_max = float(envelope_params["t_max"])
     state = configured.reset(rng)
+    if envelope_params["kind"] == "sampled":
+        time_s = np.asarray(envelope_params["time_s"], dtype=float)
+        power_w = np.asarray(envelope_params["power_w"], dtype=float)
+        if time_s.ndim != 1 or power_w.ndim != 1 or time_s.size != power_w.size:
+            raise ValueError("Sampled envelope requires matching 1D time_s and power_w arrays.")
+        if time_s.size < 2:
+            raise ValueError("Sampled envelope requires at least two sample points.")
+        step_durations = np.diff(time_s, append=float(time_s[-1]) + dt)
+        for step_index, (base_power, step_dt) in enumerate(zip(power_w, step_durations, strict=True)):
+            P_abs = max(float(weight), 0.0) * float(detector_params.get("gain_scale", 1.0)) * max(float(base_power), 0.0)
+            state, event = configured.step(state, P_abs=P_abs, dt=max(float(step_dt), 1e-12), rng=rng)
+            if event:
+                return float(time_s[step_index] + max(float(step_dt), 1e-12))
+        return None
+
     n_steps = int(np.ceil(t_max / dt))
     for step_index in range(n_steps):
         time = step_index * dt
