@@ -84,7 +84,7 @@ def run_two_branch_physical_handoff(
     }
 
 
-def _materialize_candidate_trace(
+def materialize_candidate_trace(
     candidate: Mapping[str, Any],
     *,
     export_config: Mapping[str, Any] | None = None,
@@ -130,7 +130,7 @@ def run_four_branch_candidate_handoff(
     seed: int,
     boundary_config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    trace = _materialize_candidate_trace(candidate, boundary_config=boundary_config)
+    trace = materialize_candidate_trace(candidate, boundary_config=boundary_config)
     detector_envelopes = trace_to_detector_envelopes(trace)
     exact_weights = np.array([candidate["exact_weight"][label] for label in candidate["branch_labels"]], dtype=float)
     rng = np.random.default_rng(seed)

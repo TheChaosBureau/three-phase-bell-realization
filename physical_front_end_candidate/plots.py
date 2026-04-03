@@ -426,3 +426,59 @@ def plot_resonant_mode_diagnostics(row: dict) -> Figure:
     axes[2].tick_params(axis="x", rotation=20)
     figure.tight_layout()
     return figure
+
+
+def plot_closure_variable(row: dict, *, variable_name: str = "Z") -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    axis.plot(row["time_s"], row["closure_variable"], color="#4c78a8")
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel(variable_name)
+    axis.set_title(f"{variable_name}(t) after winner capture")
+    return figure
+
+
+def plot_remaining_shared_energy(row: dict) -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    axis.plot(row["time_s"], row["remaining_shared_energy_j"], color="#54a24b")
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Remaining shared energy (J)")
+    axis.set_title("Remaining shared energy vs time")
+    return figure
+
+
+def plot_winner_drain_accumulation(row: dict) -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    axis.plot(row["time_s"], row["winner_drain_energy_j"], color="#f58518")
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Winner drain energy (J)")
+    axis.set_title("Winner drain energy accumulation")
+    return figure
+
+
+def plot_loser_suppression(row: dict) -> Figure:
+    figure = Figure(figsize=(7.4, 4.4), dpi=120)
+    axis = figure.subplots()
+    for label, values in row["loser_suppression"].items():
+        axis.plot(row["time_s"], values, label=label)
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Suppression")
+    axis.set_title("Loser suppression traces")
+    axis.legend(fontsize=8)
+    return figure
+
+
+def plot_post_click_energy_partition(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(8.2, 4.6), dpi=120)
+    axes = figure.subplots(1, 2)
+    labels = [row["label"] for row in rows]
+    axes[0].bar(labels, [row["mean_winner_drain_fraction"] for row in rows], color="#4c78a8")
+    axes[0].set_title("Winner drain fraction")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, [row["mean_loser_fraction"] for row in rows], color="#e45756")
+    axes[1].set_title("Loser residual fraction")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.tight_layout()
+    return figure

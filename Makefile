@@ -60,8 +60,11 @@ PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_NEXT_SUMMARY ?= artifacts/detector_next/r
 PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_OUTDIR ?= artifacts/physical_front_end_four_branch_resonant
 PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_TRIALS ?= 4000
 PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+POST_CLICK_CLOSURE_OUTDIR ?= artifacts/post_click_closure_spec
+POST_CLICK_CLOSURE_TRIALS ?= 24
+POST_CLICK_CLOSURE_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -220,3 +223,10 @@ physical-front-end-four-branch-resonant-report:
 		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_TRIALS)"
+
+post-click-closure-spec-report:
+	mkdir -p "$(POST_CLICK_CLOSURE_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_post_click_closure_report \
+		--outdir "$(POST_CLICK_CLOSURE_OUTDIR)" \
+		--detector-next-summary "$(POST_CLICK_CLOSURE_NEXT_SUMMARY)" \
+		--trials "$(POST_CLICK_CLOSURE_TRIALS)"

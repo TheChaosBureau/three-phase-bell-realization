@@ -5,8 +5,15 @@ from typing import Any
 from .boundary_calibration import CalibratedBoundaryConfig, freeze_boundary_note_data, resolved_calibrated_boundary_config
 from .boundary_diagnosis import classify_boundary_outcome, selected_handoff_export_config
 from .boundary_repro_check import PRIOR_DIAGNOSIS_REFERENCE, ReproCheckConfig, classify_reproducibility, resolved_repro_check_config
+from .closure_path import (
+    ClosureInterpretationConfig,
+    closure_interpretations,
+    run_four_branch_candidate_with_closure,
+    simulate_four_branch_candidate_pre_click_race,
+    simulate_post_click_closure,
+)
 from .four_branch_candidate import FourBranchPhysicalFrontEndConfig, benchmark_four_branch_physical_cases, simulate_four_branch_physical_candidate
-from .integration import run_four_branch_candidate_handoff, run_four_branch_physical_chsh, run_four_branch_physical_handoff, run_two_branch_physical_handoff
+from .integration import materialize_candidate_trace, run_four_branch_candidate_handoff, run_four_branch_physical_chsh, run_four_branch_physical_handoff, run_two_branch_physical_handoff
 from .metrics import aggregate_case_error, common_envelope_fidelity_metrics, correlator_rms_error, energy_preservation_metrics, finite_export_metrics, fraction_error_metrics
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
 from .resonant_four_branch_candidate import ResonantSharedModeFrontEndConfig, benchmark_resonant_four_branch_cases, simulate_resonant_four_branch_candidate
@@ -61,8 +68,15 @@ def build_physical_front_end_four_branch_resonant_report(*args: Any, **kwargs: A
     return _build(*args, **kwargs)
 
 
+def build_post_click_closure_report(*args: Any, **kwargs: Any):
+    from .experiments.build_post_click_closure_report import build_post_click_closure_report as _build
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
+    "ClosureInterpretationConfig",
     "FourBranchPhysicalFrontEndConfig",
     "PhysicalFrontEndConfig",
     "RefinedSharedCoreFrontEndConfig",
@@ -75,6 +89,7 @@ __all__ = [
     "build_physical_front_end_four_branch_refined_report",
     "build_physical_front_end_four_branch_resonant_report",
     "build_physical_front_end_handoff_report",
+    "build_post_click_closure_report",
     "PRIOR_DIAGNOSIS_REFERENCE",
     "ReproCheckConfig",
     "aggregate_case_error",
@@ -83,21 +98,26 @@ __all__ = [
     "benchmark_resonant_four_branch_cases",
     "classify_boundary_outcome",
     "classify_reproducibility",
+    "closure_interpretations",
     "common_envelope_fidelity_metrics",
     "correlator_rms_error",
     "energy_preservation_metrics",
     "finite_export_metrics",
     "fraction_error_metrics",
     "freeze_boundary_note_data",
+    "materialize_candidate_trace",
     "run_four_branch_candidate_handoff",
+    "run_four_branch_candidate_with_closure",
     "run_four_branch_physical_chsh",
     "run_four_branch_physical_handoff",
     "run_two_branch_physical_handoff",
     "resolved_calibrated_boundary_config",
     "resolved_repro_check_config",
     "selected_handoff_export_config",
+    "simulate_four_branch_candidate_pre_click_race",
     "simulate_refined_four_branch_candidate",
     "simulate_resonant_four_branch_candidate",
+    "simulate_post_click_closure",
     "simulate_four_branch_physical_candidate",
     "simulate_two_branch_physical_candidate",
 ]
