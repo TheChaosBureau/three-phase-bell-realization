@@ -83,6 +83,30 @@ def _simulate_time_varying_branch(
             if event:
                 return float(time_s[step_index] + max(float(step_dt), 1e-12))
         return None
+    if envelope_params["kind"] == "sampled_linear":
+        time_s = np.asarray(envelope_params["time_s"], dtype=float)
+        power_w = np.asarray(envelope_params["power_w"], dtype=float)
+        if time_s.ndim != 1 or power_w.ndim != 1 or time_s.size != power_w.size:
+            raise ValueError("Sampled linear envelope requires matching 1D time_s and power_w arrays.")
+        if time_s.size < 2:
+            raise ValueError("Sampled linear envelope requires at least two sample points.")
+        target_dt = max(float(envelope_params.get("dt", dt)), 1e-12)
+        for step_index in range(time_s.size - 1):
+            start_t = float(time_s[step_index])
+            end_t = float(time_s[step_index + 1])
+            duration = max(end_t - start_t, 1e-12)
+            n_substeps = max(int(np.ceil(duration / target_dt)), 1)
+            sub_dt = duration / n_substeps
+            start_power = float(power_w[step_index])
+            end_power = float(power_w[step_index + 1])
+            for substep_index in range(n_substeps):
+                alpha = (substep_index + 0.5) / n_substeps
+                base_power = (1.0 - alpha) * start_power + alpha * end_power
+                P_abs = max(float(weight), 0.0) * float(detector_params.get("gain_scale", 1.0)) * max(base_power, 0.0)
+                state, event = configured.step(state, P_abs=P_abs, dt=sub_dt, rng=rng)
+                if event:
+                    return start_t + (substep_index + 1) * sub_dt
+        return None
 
     n_steps = int(np.ceil(t_max / dt))
     for step_index in range(n_steps):

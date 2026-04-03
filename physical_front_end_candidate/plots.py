@@ -76,3 +76,57 @@ def plot_error_summary(rows: list[dict]) -> Figure:
     figure.suptitle("Physical front-end residual summary")
     figure.tight_layout()
     return figure
+
+
+def plot_gamma_overlay(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.0, 4.5), dpi=120)
+    axis = figure.subplots()
+    for row in rows:
+        axis.plot(row["time_s"], row["gamma_branch_1"], label=f"{row['case']} / gamma_1")
+        axis.plot(row["time_s"], row["gamma_branch_2"], "--", label=f"{row['case']} / gamma_2")
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Gamma(t)")
+    axis.set_title("Common-envelope normalized branch power")
+    axis.legend(fontsize=7, ncol=2)
+    return figure
+
+
+def plot_mode_error_comparison(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.0, 4.5), dpi=120)
+    axes = figure.subplots(1, 2)
+    labels = [row["mode_label"] for row in rows]
+    rms = [row["winner_rms_error"] for row in rows]
+    max_err = [row["winner_max_error"] for row in rows]
+    axes[0].bar(labels, rms, color="#4c78a8")
+    axes[0].set_title("RMS winner-law error")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, max_err, color="#e45756")
+    axes[1].set_title("Max winner-law error")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.suptitle("Export-mode winner-law error")
+    figure.tight_layout()
+    return figure
+
+
+def plot_mode_case_residuals(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(8.0, 4.8), dpi=120)
+    axes = figure.subplots(1, 2)
+    cases = list(dict.fromkeys(row["case"] for row in rows))
+    mode_labels = sorted({row["mode_label"] for row in rows})
+    x = np.arange(len(cases), dtype=float)
+    width = 0.8 / max(len(mode_labels), 1)
+    for mode_index, mode_label in enumerate(mode_labels):
+        mode_row_map = {row["case"]: row for row in rows if row["mode_label"] == mode_label}
+        mode_rows = [mode_row_map[case] for case in cases if case in mode_row_map]
+        offsets = x + (mode_index - 0.5 * (len(mode_labels) - 1)) * width
+        axes[0].bar(offsets[: len(mode_rows)], [row["rms_error"] for row in mode_rows], width=width, label=mode_label)
+        axes[1].bar(offsets[: len(mode_rows)], [row["max_abs_error"] for row in mode_rows], width=width, label=mode_label)
+    for axis in axes:
+        axis.set_xticks(x)
+        axis.set_xticklabels(cases, rotation=20)
+    axes[0].set_title("Case RMS error")
+    axes[1].set_title("Case max abs error")
+    axes[0].legend(fontsize=8)
+    figure.suptitle("Export-mode residual summary")
+    figure.tight_layout()
+    return figure
