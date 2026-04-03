@@ -63,8 +63,11 @@ PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_NEXT_SUMMARY ?= artifacts/detector_next/
 POST_CLICK_CLOSURE_OUTDIR ?= artifacts/post_click_closure_spec
 POST_CLICK_CLOSURE_TRIALS ?= 200
 POST_CLICK_CLOSURE_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_CLOSURE_DRAIN_OUTDIR ?= artifacts/physical_closure_drain_candidate
+PHYSICAL_CLOSURE_DRAIN_TRIALS ?= 200
+PHYSICAL_CLOSURE_DRAIN_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -230,3 +233,10 @@ post-click-closure-spec-report:
 		--outdir "$(POST_CLICK_CLOSURE_OUTDIR)" \
 		--detector-next-summary "$(POST_CLICK_CLOSURE_NEXT_SUMMARY)" \
 		--trials "$(POST_CLICK_CLOSURE_TRIALS)"
+
+physical-closure-drain-candidate-report:
+	mkdir -p "$(PHYSICAL_CLOSURE_DRAIN_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_physical_closure_drain_candidate_report \
+		--outdir "$(PHYSICAL_CLOSURE_DRAIN_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_CLOSURE_DRAIN_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_CLOSURE_DRAIN_TRIALS)"

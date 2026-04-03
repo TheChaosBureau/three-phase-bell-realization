@@ -15,6 +15,14 @@ from .closure_path import (
 from .four_branch_candidate import FourBranchPhysicalFrontEndConfig, benchmark_four_branch_physical_cases, simulate_four_branch_physical_candidate
 from .integration import materialize_candidate_trace, run_four_branch_candidate_handoff, run_four_branch_physical_chsh, run_four_branch_physical_handoff, run_two_branch_physical_handoff
 from .metrics import aggregate_case_error, common_envelope_fidelity_metrics, correlator_rms_error, energy_preservation_metrics, finite_export_metrics, fraction_error_metrics
+from .physical_closure_drain_candidate import (
+    PhysicalClosureDrainConfig,
+    default_physical_closure_drain_config,
+    preferred_common_mode_interpretation,
+    reduced_to_physical_mapping_summary,
+    run_four_branch_candidate_with_physical_closure,
+    simulate_physical_closure_drain,
+)
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
 from .resonant_four_branch_candidate import ResonantSharedModeFrontEndConfig, benchmark_resonant_four_branch_cases, simulate_resonant_four_branch_candidate
 from .two_branch_candidate import PhysicalFrontEndConfig, simulate_two_branch_physical_candidate
@@ -74,13 +82,21 @@ def build_post_click_closure_report(*args: Any, **kwargs: Any):
     return _build(*args, **kwargs)
 
 
+def build_physical_closure_drain_candidate_report(*args: Any, **kwargs: Any):
+    from .experiments.build_physical_closure_drain_candidate_report import build_physical_closure_drain_candidate_report as _build
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
     "ClosureInterpretationConfig",
     "FourBranchPhysicalFrontEndConfig",
+    "PhysicalClosureDrainConfig",
     "PhysicalFrontEndConfig",
     "RefinedSharedCoreFrontEndConfig",
     "ResonantSharedModeFrontEndConfig",
+    "build_physical_closure_drain_candidate_report",
     "build_physical_front_end_boundary_calibration_report",
     "build_physical_front_end_boundary_repro_check_report",
     "build_physical_front_end_boundary_diagnosis_report",
@@ -101,13 +117,17 @@ __all__ = [
     "closure_interpretations",
     "common_envelope_fidelity_metrics",
     "correlator_rms_error",
+    "default_physical_closure_drain_config",
     "energy_preservation_metrics",
     "finite_export_metrics",
     "fraction_error_metrics",
     "freeze_boundary_note_data",
     "materialize_candidate_trace",
+    "preferred_common_mode_interpretation",
+    "reduced_to_physical_mapping_summary",
     "run_four_branch_candidate_handoff",
     "run_four_branch_candidate_with_closure",
+    "run_four_branch_candidate_with_physical_closure",
     "run_four_branch_physical_chsh",
     "run_four_branch_physical_handoff",
     "run_two_branch_physical_handoff",
@@ -115,6 +135,7 @@ __all__ = [
     "resolved_repro_check_config",
     "selected_handoff_export_config",
     "simulate_four_branch_candidate_pre_click_race",
+    "simulate_physical_closure_drain",
     "simulate_refined_four_branch_candidate",
     "simulate_resonant_four_branch_candidate",
     "simulate_post_click_closure",

@@ -482,3 +482,32 @@ def plot_post_click_energy_partition(rows: list[dict]) -> Figure:
     axes[1].tick_params(axis="x", rotation=20)
     figure.tight_layout()
     return figure
+
+
+def plot_winner_drain_power(row: dict) -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    axis.plot(row["time_s"], row["winner_drain_power_w"], color="#f58518")
+    axis.set_xlabel("Time (s)")
+    axis.set_ylabel("Winner drain power (W)")
+    axis.set_title("Winner drain power vs time")
+    return figure
+
+
+def plot_closure_semantics_comparison(physical_row: dict, reduced_row: dict, *, variable_name: str = "Z") -> Figure:
+    figure = Figure(figsize=(8.8, 4.4), dpi=120)
+    axes = figure.subplots(1, 2)
+    axes[0].plot(reduced_row["time_s"], reduced_row["closure_variable"], color="#bbbbbb", label="reduced")
+    axes[0].plot(physical_row["time_s"], physical_row["closure_variable"], color="#4c78a8", label="physical")
+    axes[0].set_xlabel("Time (s)")
+    axes[0].set_ylabel(variable_name)
+    axes[0].set_title(f"{variable_name}(t) comparison")
+    axes[0].legend(fontsize=8)
+    axes[1].plot(reduced_row["time_s"], reduced_row["remaining_shared_energy_j"], color="#bbbbbb", label="reduced")
+    axes[1].plot(physical_row["time_s"], physical_row["remaining_shared_energy_j"], color="#54a24b", label="physical")
+    axes[1].set_xlabel("Time (s)")
+    axes[1].set_ylabel("Remaining shared energy (J)")
+    axes[1].set_title("Shared-energy decay comparison")
+    axes[1].legend(fontsize=8)
+    figure.tight_layout()
+    return figure
