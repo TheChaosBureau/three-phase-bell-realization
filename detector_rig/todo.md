@@ -1,1 +1,0 @@
-implement stuff from 110_two_detector_cell.md
