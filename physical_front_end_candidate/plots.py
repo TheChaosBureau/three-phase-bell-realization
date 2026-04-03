@@ -224,3 +224,47 @@ def plot_calibrated_frequency(rows: list[dict]) -> Figure:
     axis.set_ylabel("Calibrated empirical winner frequency")
     axis.set_title("Calibrated exact vs empirical winner law")
     return figure
+
+
+def plot_calibrated_frequency_with_ci(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(6.2, 5.0), dpi=120)
+    axis = figure.subplots()
+    exact = np.asarray([row["exact_p1"] for row in rows], dtype=float)
+    empirical = np.asarray([row["empirical_p1"] for row in rows], dtype=float)
+    ci95 = np.asarray([row["empirical_p1_ci95"] for row in rows], dtype=float)
+    axis.plot([0.0, 1.0], [0.0, 1.0], "--", color="#bbbbbb")
+    axis.errorbar(exact, empirical, yerr=ci95, fmt="o", color="#4c78a8", ecolor="#9ecae9", capsize=3)
+    for row in rows:
+        axis.annotate(row["case"], (row["exact_p1"], row["empirical_p1"]), fontsize=8, xytext=(4, 4), textcoords="offset points")
+    axis.set_xlabel("Exact branch 1 weight")
+    axis.set_ylabel("Empirical winner frequency")
+    axis.set_title("High-stat calibrated winner law")
+    return figure
+
+
+def plot_decisive_counts(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.2, 4.6), dpi=120)
+    axes = figure.subplots(1, 2)
+    labels = [row["case"] for row in rows]
+    axes[0].bar(labels, [row["decisive_count"] for row in rows], color="#4c78a8")
+    axes[0].set_title("Decisive event count")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, [row["decisive_fraction"] for row in rows], color="#54a24b")
+    axes[1].set_title("Decisive fraction")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.tight_layout()
+    return figure
+
+
+def plot_prior_vs_rerun(rows: list[dict]) -> Figure:
+    figure = Figure(figsize=(7.2, 4.8), dpi=120)
+    axes = figure.subplots(1, 2)
+    labels = [row["label"] for row in rows]
+    axes[0].bar(labels, [row["winner_rms_error"] for row in rows], color="#4c78a8")
+    axes[0].set_title("Winner-law RMS error")
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[1].bar(labels, [row["decisive_fraction"] for row in rows], color="#54a24b")
+    axes[1].set_title("Decisive fraction")
+    axes[1].tick_params(axis="x", rotation=20)
+    figure.tight_layout()
+    return figure
