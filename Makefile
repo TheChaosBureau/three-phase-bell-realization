@@ -33,8 +33,11 @@ FRONT_END_SURROGATE_OUTDIR ?= artifacts/front_end_surrogate
 FRONT_END_SURROGATE_TWO_TRIALS ?= 1000
 FRONT_END_SURROGATE_FOUR_TRIALS ?= 1500
 FRONT_END_SURROGATE_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_FRONT_END_OUTDIR ?= artifacts/physical_front_end_candidate
+PHYSICAL_FRONT_END_TRIALS ?= 1000
+PHYSICAL_FRONT_END_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -134,3 +137,10 @@ front-end-surrogate-report:
 		--detector-next-summary "$(FRONT_END_SURROGATE_NEXT_SUMMARY)" \
 		--two-branch-trials "$(FRONT_END_SURROGATE_TWO_TRIALS)" \
 		--four-branch-trials "$(FRONT_END_SURROGATE_FOUR_TRIALS)"
+
+physical-front-end-candidate-report:
+	mkdir -p "$(PHYSICAL_FRONT_END_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_summary_report \
+		--outdir "$(PHYSICAL_FRONT_END_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_FRONT_END_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_FRONT_END_TRIALS)"
