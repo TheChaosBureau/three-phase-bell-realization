@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 import numpy as np
@@ -24,10 +24,16 @@ class PhysicalClosureDrainConfig:
     supply_v: float = 1.8
     shared_capacitance_f: float = 1.0
     control_tau_s: float = 0.1
+    inhibit_onset_delay_s: float = 0.0
+    inhibit_saturation_fraction: float = 1.0
     branch_coupling_scale_s: float = 0.24
     winner_branch_boost: float = 1.2
     loser_attenuation_beta: float = 8.5
+    loser_residual_floor_fraction: float = 0.002
+    clamp_coupling_strength: float = 0.8
     winner_drain_g_on_s: float = 2.0
+    winner_drain_tau_s: float = 0.08
+    winner_drain_saturation_fraction: float = 1.0
     shared_leak_g_s: float = 0.08
     clamp_reference_g_on_s: float = 0.7
     completion_threshold_frac: float = 0.02
@@ -48,6 +54,7 @@ def default_physical_closure_drain_config() -> PhysicalClosureDrainConfig:
         winner_branch_boost=reduced.winner_branch_gain,
         loser_attenuation_beta=reduced.loser_beta,
         winner_drain_g_on_s=2.0,
+        winner_drain_tau_s=1.0 / max(reduced.alpha_z_s * 1.25, 1e-9),
         completion_threshold_frac=reduced.completion_threshold_frac,
     )
 
@@ -68,10 +75,17 @@ def reduced_to_physical_mapping_summary(
         "trial_complete_name": resolved.trial_complete_name,
         "reduced_closure_variable": reduced.closure_variable_name,
         "control_tau_s": float(resolved.control_tau_s),
+        "inhibit_onset_delay_s": float(resolved.inhibit_onset_delay_s),
+        "inhibit_saturation_fraction": float(resolved.inhibit_saturation_fraction),
         "reduced_alpha_z_s": float(reduced.alpha_z_s),
         "winner_drain_g_on_s": float(resolved.winner_drain_g_on_s),
+        "winner_drain_tau_s": float(resolved.winner_drain_tau_s),
+        "winner_drain_saturation_fraction": float(resolved.winner_drain_saturation_fraction),
         "reduced_winner_drain_rate_s": float(reduced.winner_drain_rate_s),
         "loser_attenuation_beta": float(resolved.loser_attenuation_beta),
+        "loser_residual_floor_fraction": float(resolved.loser_residual_floor_fraction),
+        "clamp_coupling_strength": float(resolved.clamp_coupling_strength),
+        "clamp_reference_g_on_s": float(resolved.clamp_reference_g_on_s),
         "reduced_loser_beta": float(reduced.loser_beta),
         "winner_branch_boost": float(resolved.winner_branch_boost),
         "reduced_winner_branch_gain": float(reduced.winner_branch_gain),
@@ -217,11 +231,18 @@ def simulate_physical_closure_drain(
             continue
 
         dt_step = max(float(dt[index]), 0.0)
-        z_norm = 1.0 - np.exp(-(float(time_value) - float(capture_time_s)) / max(resolved.control_tau_s, 1e-12))
+        effective_delay = max(float(time_value) - float(capture_time_s) - float(resolved.inhibit_onset_delay_s), 0.0)
+        z_norm = resolved.inhibit_saturation_fraction * (
+            1.0 - np.exp(-effective_delay / max(resolved.control_tau_s, 1e-12))
+        )
         z_norm = float(np.clip(z_norm, 0.0, 1.0))
+        drain_gate = resolved.winner_drain_saturation_fraction * (
+            1.0 - np.exp(-effective_delay / max(resolved.winner_drain_tau_s, 1e-12))
+        )
+        drain_gate = float(np.clip(drain_gate, 0.0, 1.5))
         closure_variable[index] = z_norm
         common_inhibit_v[index] = resolved.supply_v * z_norm
-        winner_enable[winner_label][index] = z_norm
+        winner_enable[winner_label][index] = drain_gate
 
         branch_conductance: dict[str, float] = {}
         for label in labels:
@@ -229,11 +250,17 @@ def simulate_physical_closure_drain(
             if label == winner_label:
                 branch_conductance[label] = base_g * (1.0 + resolved.winner_branch_boost * z_norm)
             else:
-                branch_conductance[label] = base_g * np.exp(-resolved.loser_attenuation_beta * z_norm)
+                loser_decay = np.exp(
+                    -(resolved.loser_attenuation_beta + resolved.clamp_coupling_strength * resolved.clamp_reference_g_on_s) * z_norm
+                )
+                branch_conductance[label] = base_g * (
+                    resolved.loser_residual_floor_fraction
+                    + (1.0 - resolved.loser_residual_floor_fraction) * loser_decay
+                )
                 loser_suppression[label][index] = 1.0 - branch_conductance[label] / max(base_g, 1e-18)
                 loser_clamp_conductance[label][index] = resolved.clamp_reference_g_on_s * z_norm
 
-        g_winner_drain = resolved.winner_drain_g_on_s * z_norm
+        g_winner_drain = resolved.winner_drain_g_on_s * drain_gate
         g_total = max(sum(branch_conductance.values()) + g_winner_drain + resolved.shared_leak_g_s, 1e-18)
         shared_voltage = np.sqrt(max(2.0 * current_energy / max(resolved.shared_capacitance_f, 1e-18), 0.0))
         shared_node_voltage_v[index] = shared_voltage
@@ -479,3 +506,7 @@ def run_four_branch_candidate_with_physical_closure(
         },
         "example_trial": example_trial,
     }
+
+
+def tuned_physical_closure_drain_config(**updates: float) -> PhysicalClosureDrainConfig:
+    return replace(default_physical_closure_drain_config(), **updates)

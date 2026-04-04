@@ -511,3 +511,45 @@ def plot_closure_semantics_comparison(physical_row: dict, reduced_row: dict, *, 
     axes[1].legend(fontsize=8)
     figure.tight_layout()
     return figure
+
+
+def plot_parameter_response(
+    rows: list[dict],
+    *,
+    param_key: str,
+    metric_key: str,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+) -> Figure:
+    figure = Figure(figsize=(6.8, 4.2), dpi=120)
+    axis = figure.subplots()
+    sorted_rows = sorted(rows, key=lambda row: float(row[param_key]))
+    axis.plot([row[param_key] for row in sorted_rows], [row[metric_key] for row in sorted_rows], marker="o", color="#4c78a8")
+    axis.set_xlabel(xlabel)
+    axis.set_ylabel(ylabel)
+    axis.set_title(title)
+    return figure
+
+
+def plot_parameter_metric_panels(
+    panel_rows: list[dict[str, object]],
+    *,
+    metric_key: str,
+    title: str,
+    ylabel: str,
+) -> Figure:
+    figure = Figure(figsize=(11.0, 4.0), dpi=120)
+    axes = figure.subplots(1, len(panel_rows))
+    if not isinstance(axes, np.ndarray):
+        axes = np.asarray([axes], dtype=object)
+    for axis, panel in zip(axes, panel_rows, strict=True):
+        rows = sorted(panel["rows"], key=lambda row: float(row[panel["param_key"]]))  # type: ignore[index]
+        param_key = panel["param_key"]  # type: ignore[index]
+        axis.plot([row[param_key] for row in rows], [row[metric_key] for row in rows], marker="o", color="#4c78a8")
+        axis.set_xlabel(panel["xlabel"])  # type: ignore[index]
+        axis.set_title(panel["label"])  # type: ignore[index]
+    axes[0].set_ylabel(ylabel)
+    figure.suptitle(title)
+    figure.tight_layout()
+    return figure

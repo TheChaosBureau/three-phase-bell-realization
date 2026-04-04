@@ -66,14 +66,19 @@ POST_CLICK_CLOSURE_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 PHYSICAL_CLOSURE_DRAIN_OUTDIR ?= artifacts/physical_closure_drain_candidate
 PHYSICAL_CLOSURE_DRAIN_TRIALS ?= 200
 PHYSICAL_CLOSURE_DRAIN_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PHYSICAL_CLOSURE_DRAIN_TUNING_OUTDIR ?= artifacts/physical_closure_drain_tuning
+PHYSICAL_CLOSURE_DRAIN_TUNING_TRIALS ?= 200
+PHYSICAL_CLOSURE_DRAIN_TUNING_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
+	@printf '\a'
 
 ipynb:
 	quarto convert notebooks/20_clarke-surface.qmd
+	@printf '\a'
 
 pdf:
 	QUARTO_PYTHON=.venv/bin/python quarto render notebooks/$(PAPER).qmd \
@@ -85,6 +90,7 @@ pdf:
 		--metadata date="$(DATE)"
 	mkdir -p artifacts/paper
 	mv notebooks/$(PAPER).pdf artifacts/paper/$(PAPER).pdf
+	@printf '\a'
 
 pdf-all:
 	@mkdir -p artifacts/paper
@@ -101,6 +107,7 @@ pdf-all:
 		pdf="$${f%.*}.pdf"; \
 		mv "$$pdf" "artifacts/paper/$$(basename "$$pdf")"; \
 	done
+	@printf '\a'
 
 test:
 	@set +e; \
@@ -112,6 +119,7 @@ test:
 	if [ $$report_exit -eq 0 ] && [ -f "$(ALLURE_REPORT_DIR)/index.html" ]; then mv "$(ALLURE_REPORT_DIR)/index.html" "$(ALLURE_REPORT_DIR)/$(ALLURE_REPORT_FILE)"; fi; \
 	if [ $$test_exit -ne 0 ]; then exit $$test_exit; fi; \
 	exit $$report_exit
+	@printf '\a'
 
 test-pdf: test
 	mkdir -p "$(ALLURE_REPORT_DIR)"
@@ -121,6 +129,7 @@ test-pdf: test
 	quarto render "$(ALLURE_REPORT_DIR)/$(ALLURE_MD_FILE)" \
 		--to pdf \
 		--pdf-engine=tectonic
+	@printf '\a'
 
 detector-search:
 	mkdir -p "$(DETECTOR_OUTDIR)"
@@ -129,6 +138,7 @@ detector-search:
 		--jsonl "$(DETECTOR_JSONL)" \
 		--csv "$(DETECTOR_CSV)" \
 		--outdir "$(DETECTOR_OUTDIR)"
+	@printf '\a'
 
 detector-next-report:
 	mkdir -p "$(DETECTOR_NEXT_OUTDIR)"
@@ -137,6 +147,7 @@ detector-next-report:
 		--samples-per-model "$(DETECTOR_NEXT_SAMPLES)" \
 		--top-k "$(DETECTOR_NEXT_TOP_K)" \
 		--grid-size "$(DETECTOR_NEXT_GRID)"
+	@printf '\a'
 
 detector-integration-report:
 	mkdir -p "$(DETECTOR_INTEGRATION_REPORT_OUTDIR)"
@@ -145,11 +156,13 @@ detector-integration-report:
 		--detector-next-summary "$(DETECTOR_INTEGRATION_NEXT_SUMMARY)" \
 		--two-branch-trials "$(DETECTOR_INTEGRATION_TWO_TRIALS)" \
 		--four-branch-trials "$(DETECTOR_INTEGRATION_FOUR_TRIALS)"
+	@printf '\a'
 
 latch-rig-report:
 	mkdir -p "$(LATCH_RIG_OUTDIR)"
 	poetry run $(PYTHON) -m detector_rig.latch_report \
 		--outdir "$(LATCH_RIG_OUTDIR)"
+	@printf '\a'
 
 front-end-integration-report:
 	mkdir -p "$(FRONT_END_INTEGRATION_OUTDIR)"
@@ -159,6 +172,7 @@ front-end-integration-report:
 		--two-branch-trials "$(FRONT_END_INTEGRATION_TWO_TRIALS)" \
 		--four-branch-trials "$(FRONT_END_INTEGRATION_FOUR_TRIALS)" \
 		--mismatch-trials "$(FRONT_END_INTEGRATION_MISMATCH_TRIALS)"
+	@printf '\a'
 
 front-end-surrogate-report:
 	mkdir -p "$(FRONT_END_SURROGATE_OUTDIR)"
@@ -167,6 +181,7 @@ front-end-surrogate-report:
 		--detector-next-summary "$(FRONT_END_SURROGATE_NEXT_SUMMARY)" \
 		--two-branch-trials "$(FRONT_END_SURROGATE_TWO_TRIALS)" \
 		--four-branch-trials "$(FRONT_END_SURROGATE_FOUR_TRIALS)"
+	@printf '\a'
 
 physical-front-end-candidate-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_OUTDIR)"
@@ -174,6 +189,7 @@ physical-front-end-candidate-report:
 		--outdir "$(PHYSICAL_FRONT_END_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_TRIALS)"
+	@printf '\a'
 
 physical-front-end-handoff-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_HANDOFF_OUTDIR)"
@@ -181,6 +197,7 @@ physical-front-end-handoff-report:
 		--outdir "$(PHYSICAL_FRONT_END_HANDOFF_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_HANDOFF_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_HANDOFF_TRIALS)"
+	@printf '\a'
 
 physical-front-end-boundary-diagnosis-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_OUTDIR)"
@@ -188,6 +205,7 @@ physical-front-end-boundary-diagnosis-report:
 		--outdir "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_BOUNDARY_DIAG_TRIALS)"
+	@printf '\a'
 
 physical-front-end-boundary-calibration-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_BOUNDARY_CAL_OUTDIR)"
@@ -195,6 +213,7 @@ physical-front-end-boundary-calibration-report:
 		--outdir "$(PHYSICAL_FRONT_END_BOUNDARY_CAL_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_BOUNDARY_CAL_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_BOUNDARY_CAL_TRIALS)"
+	@printf '\a'
 
 physical-front-end-boundary-repro-check-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_OUTDIR)"
@@ -205,6 +224,7 @@ physical-front-end-boundary-repro-check-report:
 		--target-decisive-count "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_TARGET_DECISIVE)" \
 		--max-trials-per-case "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_MAX_TRIALS)" \
 		--batch-trials "$(PHYSICAL_FRONT_END_BOUNDARY_REPRO_BATCH_TRIALS)"
+	@printf '\a'
 
 physical-front-end-four-branch-candidate-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR)"
@@ -212,6 +232,7 @@ physical-front-end-four-branch-candidate-report:
 		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_TRIALS)"
+	@printf '\a'
 
 physical-front-end-four-branch-refined-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_OUTDIR)"
@@ -219,6 +240,7 @@ physical-front-end-four-branch-refined-report:
 		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_REFINED_TRIALS)"
+	@printf '\a'
 
 physical-front-end-four-branch-resonant-report:
 	mkdir -p "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_OUTDIR)"
@@ -226,6 +248,7 @@ physical-front-end-four-branch-resonant-report:
 		--outdir "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_FRONT_END_FOUR_BRANCH_RESONANT_TRIALS)"
+	@printf '\a'
 
 post-click-closure-spec-report:
 	mkdir -p "$(POST_CLICK_CLOSURE_OUTDIR)"
@@ -233,6 +256,7 @@ post-click-closure-spec-report:
 		--outdir "$(POST_CLICK_CLOSURE_OUTDIR)" \
 		--detector-next-summary "$(POST_CLICK_CLOSURE_NEXT_SUMMARY)" \
 		--trials "$(POST_CLICK_CLOSURE_TRIALS)"
+	@printf '\a'
 
 physical-closure-drain-candidate-report:
 	mkdir -p "$(PHYSICAL_CLOSURE_DRAIN_OUTDIR)"
@@ -240,3 +264,12 @@ physical-closure-drain-candidate-report:
 		--outdir "$(PHYSICAL_CLOSURE_DRAIN_OUTDIR)" \
 		--detector-next-summary "$(PHYSICAL_CLOSURE_DRAIN_NEXT_SUMMARY)" \
 		--trials "$(PHYSICAL_CLOSURE_DRAIN_TRIALS)"
+	@printf '\a'
+
+physical-closure-drain-tuning-report:
+	mkdir -p "$(PHYSICAL_CLOSURE_DRAIN_TUNING_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_common_inhibit_tuning_report \
+		--outdir "$(PHYSICAL_CLOSURE_DRAIN_TUNING_OUTDIR)" \
+		--detector-next-summary "$(PHYSICAL_CLOSURE_DRAIN_TUNING_NEXT_SUMMARY)" \
+		--trials "$(PHYSICAL_CLOSURE_DRAIN_TUNING_TRIALS)"
+	@printf '\a'

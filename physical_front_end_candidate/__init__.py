@@ -12,6 +12,12 @@ from .closure_path import (
     simulate_four_branch_candidate_pre_click_race,
     simulate_post_click_closure,
 )
+from .common_inhibit_tuning import (
+    CommonInhibitTuningSweepConfig,
+    default_common_inhibit_tuning_sweep_config,
+    evaluate_tuned_closure_config,
+    run_common_inhibit_parameter_sweeps,
+)
 from .four_branch_candidate import FourBranchPhysicalFrontEndConfig, benchmark_four_branch_physical_cases, simulate_four_branch_physical_candidate
 from .integration import materialize_candidate_trace, run_four_branch_candidate_handoff, run_four_branch_physical_chsh, run_four_branch_physical_handoff, run_two_branch_physical_handoff
 from .metrics import aggregate_case_error, common_envelope_fidelity_metrics, correlator_rms_error, energy_preservation_metrics, finite_export_metrics, fraction_error_metrics
@@ -22,6 +28,7 @@ from .physical_closure_drain_candidate import (
     reduced_to_physical_mapping_summary,
     run_four_branch_candidate_with_physical_closure,
     simulate_physical_closure_drain,
+    tuned_physical_closure_drain_config,
 )
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
 from .resonant_four_branch_candidate import ResonantSharedModeFrontEndConfig, benchmark_resonant_four_branch_cases, simulate_resonant_four_branch_candidate
@@ -88,14 +95,22 @@ def build_physical_closure_drain_candidate_report(*args: Any, **kwargs: Any):
     return _build(*args, **kwargs)
 
 
+def build_common_inhibit_tuning_report(*args: Any, **kwargs: Any):
+    from .experiments.build_common_inhibit_tuning_report import build_common_inhibit_tuning_report as _build
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
+    "CommonInhibitTuningSweepConfig",
     "ClosureInterpretationConfig",
     "FourBranchPhysicalFrontEndConfig",
     "PhysicalClosureDrainConfig",
     "PhysicalFrontEndConfig",
     "RefinedSharedCoreFrontEndConfig",
     "ResonantSharedModeFrontEndConfig",
+    "build_common_inhibit_tuning_report",
     "build_physical_closure_drain_candidate_report",
     "build_physical_front_end_boundary_calibration_report",
     "build_physical_front_end_boundary_repro_check_report",
@@ -117,14 +132,17 @@ __all__ = [
     "closure_interpretations",
     "common_envelope_fidelity_metrics",
     "correlator_rms_error",
+    "default_common_inhibit_tuning_sweep_config",
     "default_physical_closure_drain_config",
     "energy_preservation_metrics",
+    "evaluate_tuned_closure_config",
     "finite_export_metrics",
     "fraction_error_metrics",
     "freeze_boundary_note_data",
     "materialize_candidate_trace",
     "preferred_common_mode_interpretation",
     "reduced_to_physical_mapping_summary",
+    "run_common_inhibit_parameter_sweeps",
     "run_four_branch_candidate_handoff",
     "run_four_branch_candidate_with_closure",
     "run_four_branch_candidate_with_physical_closure",
@@ -139,6 +157,7 @@ __all__ = [
     "simulate_refined_four_branch_candidate",
     "simulate_resonant_four_branch_candidate",
     "simulate_post_click_closure",
+    "tuned_physical_closure_drain_config",
     "simulate_four_branch_physical_candidate",
     "simulate_two_branch_physical_candidate",
 ]
