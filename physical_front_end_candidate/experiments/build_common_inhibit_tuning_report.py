@@ -100,10 +100,12 @@ def build_common_inhibit_tuning_report(
     n_trials: int = 24,
     seed: int = 20260404,
     case_names: Sequence[str] | None = None,
+    verbose_progress: bool = True,
 ) -> dict[str, Any]:
     output_dir = Path(outdir)
     sweeps_dir = output_dir / "parameter_sweeps"
     best_dir = output_dir / "best_candidate"
+    progress_json = output_dir / "progress.json"
     for directory in (sweeps_dir, best_dir):
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -118,6 +120,8 @@ def build_common_inhibit_tuning_report(
         n_trials=n_trials,
         seed=seed,
         case_names=case_names,
+        verbose_progress=verbose_progress,
+        progress_path=progress_json,
     )
     baseline = tuning["baseline"]
     tuned = tuning["best_tuned"]
@@ -302,6 +306,7 @@ def build_common_inhibit_tuning_report(
         "parameter_sweeps_dir": str(sweeps_dir),
         "best_candidate_dir": str(best_dir),
         "design_md": str(design_md),
+        "progress_json": str(progress_json),
     }
     summary_json = output_dir / "summary_metrics.json"
     summary_json.write_text(
@@ -332,6 +337,7 @@ def build_common_inhibit_tuning_report(
         "design_md": str(design_md),
         "parameter_sweeps_dir": str(sweeps_dir),
         "best_candidate_dir": str(best_dir),
+        "progress_json": str(progress_json),
     }
 
 
@@ -340,11 +346,13 @@ def main() -> None:
     parser.add_argument("--outdir", default="artifacts/physical_closure_drain_tuning")
     parser.add_argument("--detector-next-summary", default="artifacts/detector_next/results_summary.csv")
     parser.add_argument("--trials", type=int, default=24)
+    parser.add_argument("--quiet-progress", action="store_true")
     args = parser.parse_args()
     build_common_inhibit_tuning_report(
         args.outdir,
         detector_next_summary_csv=args.detector_next_summary,
         n_trials=args.trials,
+        verbose_progress=not args.quiet_progress,
     )
 
 

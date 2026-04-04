@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import sys
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -20,6 +24,55 @@ class CommonInhibitTuningSweepConfig:
     inhibit_tau_values_s: tuple[float, ...] = (0.05, 0.08, 0.10, 0.14, 0.20)
     clamp_strength_values_s: tuple[float, ...] = (0.4, 0.7, 1.0, 1.4, 2.0)
     drain_strength_values_s: tuple[float, ...] = (1.6, 2.0, 2.6, 3.2, 4.0)
+
+
+@dataclass
+class _ProgressReporter:
+    total_steps: int
+    enabled: bool = False
+    path: Path | None = None
+    completed_steps: int = 0
+    start_time_s: float = 0.0
+
+    def __post_init__(self) -> None:
+        self.start_time_s = time.monotonic()
+        if self.enabled:
+            self._emit("starting", initial=True)
+
+    def advance(self, phase: str, *, case_name: str | None = None) -> None:
+        self.completed_steps += 1
+        self._emit(phase, case_name=case_name)
+
+    def _emit(self, phase: str, *, case_name: str | None = None, initial: bool = False) -> None:
+        elapsed_s = max(time.monotonic() - self.start_time_s, 0.0)
+        completed = self.completed_steps
+        rate = completed / elapsed_s if elapsed_s > 0.0 else 0.0
+        remaining = max(self.total_steps - completed, 0)
+        eta_s = remaining / rate if rate > 0.0 else None
+        percent = 100.0 * completed / max(self.total_steps, 1)
+        payload = {
+            "phase": phase,
+            "case_name": case_name,
+            "completed_steps": completed,
+            "total_steps": self.total_steps,
+            "percent": percent,
+            "elapsed_s": elapsed_s,
+            "eta_s": eta_s,
+        }
+        if self.path is not None:
+            self.path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        if not self.enabled:
+            return
+        if initial:
+            message = f"[common-inhibit-tuning] 0/{self.total_steps} steps, elapsed 0.0s, ETA unknown, phase=starting"
+        else:
+            eta_text = "unknown" if eta_s is None else f"{eta_s:.1f}s"
+            case_text = "" if case_name is None else f", case={case_name}"
+            message = (
+                f"[common-inhibit-tuning] {completed}/{self.total_steps} steps "
+                f"({percent:.1f}%), elapsed {elapsed_s:.1f}s, ETA {eta_text}, phase={phase}{case_text}"
+            )
+        print(message, file=sys.stderr, flush=True)
 
 
 def default_common_inhibit_tuning_sweep_config() -> CommonInhibitTuningSweepConfig:
@@ -43,6 +96,7 @@ def benchmark_tuning_case_runs(
     n_trials: int,
     seed: int,
     case_names: Sequence[str] | None = None,
+    progress: _ProgressReporter | None = None,
 ) -> list[dict[str, Any]]:
     from .closure_path import simulate_four_branch_candidate_pre_click_race
 
@@ -63,6 +117,8 @@ def benchmark_tuning_case_runs(
                 "race": race,
             }
         )
+        if progress is not None:
+            progress.advance("precompute-race", case_name=str(case["case"]))
     return runs
 
 
@@ -173,6 +229,8 @@ def evaluate_tuned_closure_config(
     config: PhysicalClosureDrainConfig,
     seed: int = 20260403,
     baseline_summary: Mapping[str, float] | None = None,
+    progress: _ProgressReporter | None = None,
+    progress_phase: str = "evaluate",
 ) -> dict[str, Any]:
     reduced = preferred_common_mode_interpretation()
     case_results: list[dict[str, Any]] = []
@@ -203,6 +261,8 @@ def evaluate_tuned_closure_config(
                 "case": case_run["case"]["case"],
                 **result["example_trial"],
             }
+        if progress is not None:
+            progress.advance(progress_phase, case_name=str(case_run["case"]["case"]))
     aggregate = _aggregate_case_results(case_results, config=config, baseline_summary=baseline_summary)
     return {
         "config": asdict(config),
@@ -222,11 +282,38 @@ def run_common_inhibit_parameter_sweeps(
     seed: int = 20260403,
     case_names: Sequence[str] | None = None,
     sweep_config: CommonInhibitTuningSweepConfig | None = None,
+    verbose_progress: bool = False,
+    progress_path: str | Path | None = None,
 ) -> dict[str, Any]:
     base_config = default_physical_closure_drain_config()
     sweeps = default_common_inhibit_tuning_sweep_config() if sweep_config is None else sweep_config
-    case_runs = benchmark_tuning_case_runs(detector_spec, n_trials=n_trials, seed=seed, case_names=case_names)
-    baseline = evaluate_tuned_closure_config(case_runs, detector_spec, config=base_config, seed=seed)
+    selected_case_names = None if case_names is None else set(case_names)
+    case_count = sum(
+        1
+        for case in benchmark_resonant_four_branch_cases()
+        if selected_case_names is None or case["case"] in selected_case_names
+    )
+    total_eval_count = 1 + len(sweeps.drain_strength_values_s) + len(sweeps.clamp_strength_values_s) + len(sweeps.inhibit_tau_values_s) + 1
+    progress = _ProgressReporter(
+        total_steps=case_count * (1 + total_eval_count),
+        enabled=verbose_progress,
+        path=None if progress_path is None else Path(progress_path),
+    )
+    case_runs = benchmark_tuning_case_runs(
+        detector_spec,
+        n_trials=n_trials,
+        seed=seed,
+        case_names=case_names,
+        progress=progress,
+    )
+    baseline = evaluate_tuned_closure_config(
+        case_runs,
+        detector_spec,
+        config=base_config,
+        seed=seed,
+        progress=progress,
+        progress_phase="baseline",
+    )
 
     sweep_rows: dict[str, list[dict[str, Any]]] = {
         "winner_drain_g_on_s": [],
@@ -241,13 +328,29 @@ def run_common_inhibit_parameter_sweeps(
 
     for value in sweeps.drain_strength_values_s:
         config = replace(base_config, winner_drain_g_on_s=float(value))
-        evaluation = evaluate_tuned_closure_config(case_runs, detector_spec, config=config, seed=seed, baseline_summary=baseline["summary_metrics"])
+        evaluation = evaluate_tuned_closure_config(
+            case_runs,
+            detector_spec,
+            config=config,
+            seed=seed,
+            baseline_summary=baseline["summary_metrics"],
+            progress=progress,
+            progress_phase=f"drain-strength={float(value):.6g}",
+        )
         row = {"winner_drain_g_on_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["winner_drain_g_on_s"].append(row)
 
     for value in sweeps.clamp_strength_values_s:
         config = replace(base_config, clamp_reference_g_on_s=float(value))
-        evaluation = evaluate_tuned_closure_config(case_runs, detector_spec, config=config, seed=seed, baseline_summary=baseline["summary_metrics"])
+        evaluation = evaluate_tuned_closure_config(
+            case_runs,
+            detector_spec,
+            config=config,
+            seed=seed,
+            baseline_summary=baseline["summary_metrics"],
+            progress=progress,
+            progress_phase=f"clamp-strength={float(value):.6g}",
+        )
         row = {"clamp_reference_g_on_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["clamp_reference_g_on_s"].append(row)
 
@@ -257,7 +360,15 @@ def run_common_inhibit_parameter_sweeps(
             control_tau_s=float(value),
             winner_drain_tau_s=min(base_config.winner_drain_tau_s, float(value)),
         )
-        evaluation = evaluate_tuned_closure_config(case_runs, detector_spec, config=config, seed=seed, baseline_summary=baseline["summary_metrics"])
+        evaluation = evaluate_tuned_closure_config(
+            case_runs,
+            detector_spec,
+            config=config,
+            seed=seed,
+            baseline_summary=baseline["summary_metrics"],
+            progress=progress,
+            progress_phase=f"inhibit-tau={float(value):.6g}",
+        )
         row = {"control_tau_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["control_tau_s"].append(row)
 
@@ -271,7 +382,15 @@ def run_common_inhibit_parameter_sweeps(
         control_tau_s=float(best_values["control_tau_s"]),
         winner_drain_tau_s=min(base_config.winner_drain_tau_s, float(best_values["control_tau_s"])),
     )
-    tuned = evaluate_tuned_closure_config(case_runs, detector_spec, config=tuned_config, seed=seed, baseline_summary=baseline["summary_metrics"])
+    tuned = evaluate_tuned_closure_config(
+        case_runs,
+        detector_spec,
+        config=tuned_config,
+        seed=seed,
+        baseline_summary=baseline["summary_metrics"],
+        progress=progress,
+        progress_phase="best-tuned",
+    )
     return {
         "base_config": asdict(base_config),
         "baseline": baseline,
