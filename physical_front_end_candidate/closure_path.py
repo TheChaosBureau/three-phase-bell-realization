@@ -13,6 +13,68 @@ from .boundary_diagnosis import trace_to_detector_envelopes
 from .integration import materialize_candidate_trace
 
 
+def build_post_click_candidate_cache(
+    *,
+    time_s: Sequence[float],
+    branch_power_w: Mapping[str, Sequence[float]],
+    branch_labels: Sequence[str],
+) -> dict[str, Any]:
+    values_t = np.asarray(time_s, dtype=float).reshape(-1)
+    labels = list(branch_labels)
+    branch_power = {label: np.asarray(branch_power_w[label], dtype=float).reshape(-1) for label in labels}
+    dt = np.diff(values_t, append=float(values_t[-1]))
+    dt[-1] = dt[-2] if dt.size > 1 else 0.0
+    cumulative_energy: dict[str, np.ndarray] = {}
+    total_energy: dict[str, float] = {}
+    intervals = np.diff(values_t)
+    for label in labels:
+        power = branch_power[label]
+        cumulative = np.zeros_like(values_t)
+        if values_t.size > 1:
+            cumulative[1:] = np.cumsum(0.5 * (power[:-1] + power[1:]) * intervals)
+        cumulative_energy[label] = cumulative
+        total_energy[label] = float(cumulative[-1])
+    return {
+        "time_s": values_t,
+        "branch_labels": labels,
+        "branch_power_w": branch_power,
+        "dt": dt,
+        "cumulative_energy_j": cumulative_energy,
+        "total_energy_j": total_energy,
+    }
+
+
+def future_branch_energy_from_cache(
+    cache: Mapping[str, Any],
+    *,
+    capture_time_s: float,
+) -> dict[str, float]:
+    values_t = np.asarray(cache["time_s"], dtype=float)
+    labels = list(cache["branch_labels"])
+    if capture_time_s <= float(values_t[0]):
+        return {label: float(cache["total_energy_j"][label]) for label in labels}
+    if capture_time_s >= float(values_t[-1]):
+        return {label: 0.0 for label in labels}
+
+    index = int(np.searchsorted(values_t, float(capture_time_s), side="right") - 1)
+    index = min(max(index, 0), values_t.size - 2)
+    t0 = float(values_t[index])
+    t1 = float(values_t[index + 1])
+    span = max(t1 - t0, 1e-18)
+    alpha = (float(capture_time_s) - t0) / span
+
+    energies: dict[str, float] = {}
+    for label in labels:
+        power = np.asarray(cache["branch_power_w"][label], dtype=float)
+        p0 = float(power[index])
+        p1 = float(power[index + 1])
+        p_capture = (1.0 - alpha) * p0 + alpha * p1
+        partial_before_capture = 0.5 * (p0 + p_capture) * (float(capture_time_s) - t0)
+        energy_before_capture = float(cache["cumulative_energy_j"][label][index]) + partial_before_capture
+        energies[label] = max(float(cache["total_energy_j"][label]) - energy_before_capture, 0.0)
+    return energies
+
+
 @dataclass(frozen=True)
 class ClosureInterpretationConfig:
     name: str
@@ -105,18 +167,8 @@ def _future_branch_energy(
     branch_labels: Sequence[str],
     capture_time_s: float,
 ) -> dict[str, float]:
-    if capture_time_s >= float(time_s[-1]):
-        return {label: 0.0 for label in branch_labels}
-    mask = time_s >= capture_time_s
-    sampled_time = time_s[mask]
-    if sampled_time.size == 0 or sampled_time[0] > capture_time_s:
-        sampled_time = np.insert(sampled_time, 0, capture_time_s)
-    energies: dict[str, float] = {}
-    for label in branch_labels:
-        power = np.asarray(branch_power_w[label], dtype=float)
-        sampled_power = np.interp(sampled_time, time_s, power)
-        energies[label] = float(np.trapezoid(sampled_power, x=sampled_time))
-    return energies
+    cache = build_post_click_candidate_cache(time_s=time_s, branch_power_w=branch_power_w, branch_labels=branch_labels)
+    return future_branch_energy_from_cache(cache, capture_time_s=capture_time_s)
 
 
 def simulate_post_click_closure(
@@ -128,6 +180,7 @@ def simulate_post_click_closure(
     winner_valid: bool,
     capture_time_s: float,
     interpretation: ClosureInterpretationConfig,
+    candidate_cache: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     values_t = np.asarray(time_s, dtype=float).reshape(-1)
     labels = list(branch_labels)
@@ -154,7 +207,12 @@ def simulate_post_click_closure(
         }
 
     winner_label = labels[winner_index]
-    future_energies = _future_branch_energy(values_t, branch_power_w, branch_labels=labels, capture_time_s=float(capture_time_s))
+    cache = (
+        build_post_click_candidate_cache(time_s=values_t, branch_power_w=branch_power_w, branch_labels=labels)
+        if candidate_cache is None
+        else dict(candidate_cache)
+    )
+    future_energies = future_branch_energy_from_cache(cache, capture_time_s=float(capture_time_s))
     initial_remaining_energy = float(sum(future_energies.values()))
     if initial_remaining_energy <= 1e-18:
         return {
@@ -178,62 +236,58 @@ def simulate_post_click_closure(
         }
 
     base_shares = {label: future_energies[label] / initial_remaining_energy for label in labels}
-    dt = np.diff(values_t, append=float(values_t[-1]))
-    dt[-1] = dt[-2] if dt.size > 1 else 0.0
+    dt = np.asarray(cache["dt"], dtype=float)
 
     z_trace = np.zeros_like(values_t)
-    remaining_energy = np.zeros_like(values_t)
+    remaining_energy = np.full_like(values_t, initial_remaining_energy)
     winner_drain_power = np.zeros_like(values_t)
     winner_drain_energy = np.zeros_like(values_t)
     loser_suppression = {label: np.zeros_like(values_t) for label in labels if label != winner_label}
     loser_energy = {label: 0.0 for label in labels if label != winner_label}
     winner_branch_energy = 0.0
-    current_z = 0.0
-    current_w = initial_remaining_energy
+    active_indices = np.where(values_t >= float(capture_time_s))[0]
     completed_time = float(values_t[-1])
     completed = False
+    if active_indices.size:
+        dt_active = np.maximum(dt[active_indices], 0.0)
+        z_active = 1.0 - np.exp(-interpretation.alpha_z_s * np.cumsum(dt_active))
+        z_trace[active_indices] = z_active
+        release_rate = interpretation.idle_drain_rate_s + interpretation.winner_drain_rate_s * z_active
+        decay_factor = np.exp(-release_rate * dt_active)
+        energy_before = initial_remaining_energy * np.concatenate(([1.0], np.cumprod(decay_factor[:-1])))
+        energy_after = energy_before * decay_factor
+        energy_released = energy_before - energy_after
 
-    for index, time_value in enumerate(values_t):
-        remaining_energy[index] = current_w
-        if time_value < capture_time_s:
-            continue
-        dt_step = max(float(dt[index]), 0.0)
-        current_z = 1.0 - (1.0 - current_z) * np.exp(-interpretation.alpha_z_s * dt_step)
-        z_trace[index] = current_z
-
-        release_rate = interpretation.idle_drain_rate_s + interpretation.winner_drain_rate_s * current_z
-        energy_released = current_w * (1.0 - np.exp(-release_rate * dt_step)) if dt_step > 0.0 else 0.0
-
-        loser_strengths = {
-            label: base_shares[label] * np.exp(-interpretation.loser_beta * current_z)
+        winner_branch_strength = base_shares[winner_label] * (1.0 + interpretation.winner_branch_gain * z_active)
+        winner_drain_strength = interpretation.winner_drain_gain * z_active
+        loser_strength_arrays = {
+            label: base_shares[label] * np.exp(-interpretation.loser_beta * z_active)
             for label in labels
             if label != winner_label
         }
-        winner_branch_strength = base_shares[winner_label] * (1.0 + interpretation.winner_branch_gain * current_z)
-        winner_drain_strength = interpretation.winner_drain_gain * current_z
-        total_strength = winner_branch_strength + winner_drain_strength + sum(loser_strengths.values())
-        total_strength = max(total_strength, 1e-18)
+        total_strength = winner_branch_strength + winner_drain_strength
+        for strength in loser_strength_arrays.values():
+            total_strength = total_strength + strength
+        total_strength = np.maximum(total_strength, 1e-18)
 
         winner_branch_share = winner_branch_strength / total_strength
         winner_drain_share = winner_drain_strength / total_strength
-        winner_branch_energy += energy_released * winner_branch_share
+        winner_branch_energy = float(np.sum(energy_released * winner_branch_share))
         drain_increment = energy_released * winner_drain_share
-        winner_drain_power[index] = drain_increment / max(dt_step, 1e-18) if dt_step > 0.0 else 0.0
-        winner_drain_energy[index] = (winner_drain_energy[index - 1] if index > 0 else 0.0) + drain_increment
+        winner_drain_power[active_indices] = np.divide(drain_increment, np.maximum(dt_active, 1e-18))
+        winner_drain_energy[active_indices] = np.cumsum(drain_increment)
+        remaining_energy[active_indices] = energy_after
 
-        for label, strength in loser_strengths.items():
-            loser_suppression[label][index] = 1.0 - strength / max(base_shares[label], 1e-18)
-            loser_energy[label] += energy_released * strength / total_strength
-            if index > 0 and loser_suppression[label][index] <= 0.0:
-                loser_suppression[label][index] = loser_suppression[label][index - 1]
+        for label, strength in loser_strength_arrays.items():
+            loser_suppression[label][active_indices] = 1.0 - strength / max(base_shares[label], 1e-18)
+            loser_energy[label] = float(np.sum(energy_released * strength / total_strength))
 
-        current_w = max(current_w - energy_released, 0.0)
-        remaining_energy[index] = current_w
-        if not completed and current_w <= interpretation.completion_threshold_frac * initial_remaining_energy:
+        completion_hits = np.where(energy_after <= interpretation.completion_threshold_frac * initial_remaining_energy)[0]
+        if completion_hits.size:
             completed = True
-            completed_time = float(time_value)
+            completed_time = float(values_t[active_indices[completion_hits[0]]])
 
-    monotonic = bool(np.all(np.diff(remaining_energy[np.where(values_t >= capture_time_s)[0]]) <= 1e-12)) if np.any(values_t >= capture_time_s) else True
+    monotonic = bool(np.all(np.diff(remaining_energy[active_indices]) <= 1e-12)) if active_indices.size else True
     return {
         "time_s": values_t.tolist(),
         "activation_count": 1,

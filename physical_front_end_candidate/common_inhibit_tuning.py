@@ -12,6 +12,7 @@ import numpy as np
 
 from .physical_closure_drain_candidate import (
     PhysicalClosureDrainConfig,
+    build_physical_closure_candidate_cache,
     default_physical_closure_drain_config,
     preferred_common_mode_interpretation,
     run_four_branch_candidate_with_physical_closure,
@@ -114,6 +115,7 @@ def benchmark_tuning_case_runs(
             {
                 "case": case,
                 "candidate": candidate,
+                "candidate_cache": build_physical_closure_candidate_cache(candidate),
                 "race": race,
             }
         )
@@ -244,6 +246,7 @@ def evaluate_tuned_closure_config(
             config=config,
             reduced_interpretation=reduced,
             race_result=case_run["race"],
+            candidate_cache=case_run.get("candidate_cache"),
         )
         case_results.append(
             {
