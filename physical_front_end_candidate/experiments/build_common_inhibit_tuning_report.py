@@ -61,14 +61,20 @@ def _summary_markdown(
             "",
             "- Topology kept fixed: `common inhibit rail + winner-gated shunt drain`.",
             "- Tuning focus: inhibit rise, loser clamp strength, winner drain strength, winner drain turn-on speed.",
+            "- Dominance is evaluated on activated trials only; path activation reliability is tracked separately.",
             "",
             "## Baseline vs Tuned",
             "",
-            f"- Baseline winner drain fraction: {float(baseline_metrics['mean_winner_drain_fraction']):.6f}",
-            f"- Tuned winner drain fraction: {float(tuned_metrics['mean_winner_drain_fraction']):.6f}",
+            f"- Baseline winner drain fraction (all trials): {float(baseline_metrics['mean_winner_drain_fraction']):.6f}",
+            f"- Tuned winner drain fraction (all trials): {float(tuned_metrics['mean_winner_drain_fraction']):.6f}",
+            f"- Baseline winner drain fraction (activated trials): {float(baseline_metrics['mean_activated_winner_drain_fraction']):.6f}",
+            f"- Tuned winner drain fraction (activated trials): {float(tuned_metrics['mean_activated_winner_drain_fraction']):.6f}",
             f"- Baseline loser residual fraction: {float(baseline_metrics['mean_loser_fraction']):.6f}",
             f"- Tuned loser residual fraction: {float(tuned_metrics['mean_loser_fraction']):.6f}",
+            f"- Baseline winner path activation rate: {float(baseline_metrics['winner_path_activation_rate']):.6f}",
+            f"- Tuned winner path activation rate: {float(tuned_metrics['winner_path_activation_rate']):.6f}",
             f"- Winner fraction improvement: {float(comparison_row['winner_drain_fraction_delta']):.6f}",
+            f"- Activated-trial winner fraction improvement: {float(comparison_row['activated_winner_drain_fraction_delta']):.6f}",
             f"- Terminal loser suppression delta: {float(comparison_row['terminal_loser_suppression_delta']):.6f}",
             "",
             "## Tuned Parameters",
@@ -82,6 +88,8 @@ def _summary_markdown(
             "",
             f"- Pre-click transparency pass: {bool(tuned_metrics['pre_click_transparency_pass'])}",
             f"- Winner drain dominance pass: {bool(tuned_metrics['winner_dominance_pass'])}",
+            f"- Winner path activation rate: {float(tuned_metrics['winner_path_activation_rate']):.6f}",
+            f"- Winner path activation pass: {bool(tuned_metrics['winner_path_activation_pass'])}",
             f"- Completion pass: {bool(tuned_metrics['completion_pass'])}",
             f"- Reduced consistency pass: {bool(tuned_metrics['reduced_consistency_pass'])}",
             f"- Proceed to next phase: {bool(tuned_metrics['proceed_to_next_phase'])}",
@@ -90,7 +98,12 @@ def _summary_markdown(
             "",
             f"- Ranked top-10 table: `{outputs['top_candidates_csv']}`",
             f"- Best candidate source: `{tuned.get('source', 'unknown')}`",
-            f"- Highest ranked winner drain fraction: {float(top_candidates[0]['mean_winner_drain_fraction']):.6f}" if top_candidates else "- No ranked candidates recorded.",
+            (
+                f"- Highest ranked activated-trial winner drain fraction: "
+                f"{float(top_candidates[0]['mean_activated_winner_drain_fraction']):.6f}"
+            )
+            if top_candidates
+            else "- No ranked candidates recorded.",
             "",
             "## Artifacts",
             "",
@@ -262,10 +275,14 @@ def build_common_inhibit_tuning_report(
     comparison_row = {
         "winner_drain_fraction_delta": float(tuned["summary_metrics"]["mean_winner_drain_fraction"])
         - float(baseline["summary_metrics"]["mean_winner_drain_fraction"]),
+        "activated_winner_drain_fraction_delta": float(tuned["summary_metrics"]["mean_activated_winner_drain_fraction"])
+        - float(baseline["summary_metrics"]["mean_activated_winner_drain_fraction"]),
         "loser_fraction_delta": float(tuned["summary_metrics"]["mean_loser_fraction"])
         - float(baseline["summary_metrics"]["mean_loser_fraction"]),
         "terminal_loser_suppression_delta": float(tuned["summary_metrics"]["mean_terminal_loser_suppression"])
         - float(baseline["summary_metrics"]["mean_terminal_loser_suppression"]),
+        "winner_path_activation_rate_delta": float(tuned["summary_metrics"]["winner_path_activation_rate"])
+        - float(baseline["summary_metrics"]["winner_path_activation_rate"]),
         "completion_rate_delta": float(tuned["summary_metrics"]["completion_rate"])
         - float(baseline["summary_metrics"]["completion_rate"]),
         "mean_completion_time_delta_s": float(tuned["summary_metrics"]["mean_completion_time_s"])
@@ -278,12 +295,18 @@ def build_common_inhibit_tuning_report(
     summary_metrics = {
         **tuned["summary_metrics"],
         "baseline_mean_winner_drain_fraction": float(baseline["summary_metrics"]["mean_winner_drain_fraction"]),
+        "baseline_mean_activated_winner_drain_fraction": float(
+            baseline["summary_metrics"]["mean_activated_winner_drain_fraction"]
+        ),
         "baseline_mean_loser_fraction": float(baseline["summary_metrics"]["mean_loser_fraction"]),
         "baseline_mean_terminal_loser_suppression": float(baseline["summary_metrics"]["mean_terminal_loser_suppression"]),
+        "baseline_winner_path_activation_rate": float(baseline["summary_metrics"]["winner_path_activation_rate"]),
         "baseline_completion_rate": float(baseline["summary_metrics"]["completion_rate"]),
         "winner_drain_fraction_delta": comparison_row["winner_drain_fraction_delta"],
+        "activated_winner_drain_fraction_delta": comparison_row["activated_winner_drain_fraction_delta"],
         "loser_fraction_delta": comparison_row["loser_fraction_delta"],
         "terminal_loser_suppression_delta": comparison_row["terminal_loser_suppression_delta"],
+        "winner_path_activation_rate_delta": comparison_row["winner_path_activation_rate_delta"],
         "completion_rate_delta": comparison_row["completion_rate_delta"],
         "best_tuned_source": tuning.get("best_tuned_source", "unknown"),
     }
@@ -303,10 +326,14 @@ def build_common_inhibit_tuning_report(
                 "",
                 "## What Changed Relative To First Candidate",
                 "",
-                f"- Baseline winner drain fraction: {float(baseline['summary_metrics']['mean_winner_drain_fraction']):.6f}",
-                f"- Tuned winner drain fraction: {float(tuned['summary_metrics']['mean_winner_drain_fraction']):.6f}",
+                f"- Baseline winner drain fraction (all trials): {float(baseline['summary_metrics']['mean_winner_drain_fraction']):.6f}",
+                f"- Tuned winner drain fraction (all trials): {float(tuned['summary_metrics']['mean_winner_drain_fraction']):.6f}",
+                f"- Baseline winner drain fraction (activated trials): {float(baseline['summary_metrics']['mean_activated_winner_drain_fraction']):.6f}",
+                f"- Tuned winner drain fraction (activated trials): {float(tuned['summary_metrics']['mean_activated_winner_drain_fraction']):.6f}",
                 f"- Baseline loser residual fraction: {float(baseline['summary_metrics']['mean_loser_fraction']):.6f}",
                 f"- Tuned loser residual fraction: {float(tuned['summary_metrics']['mean_loser_fraction']):.6f}",
+                f"- Baseline winner path activation rate: {float(baseline['summary_metrics']['winner_path_activation_rate']):.6f}",
+                f"- Tuned winner path activation rate: {float(tuned['summary_metrics']['winner_path_activation_rate']):.6f}",
                 "",
                 "## Best Tuned Configuration",
                 "",

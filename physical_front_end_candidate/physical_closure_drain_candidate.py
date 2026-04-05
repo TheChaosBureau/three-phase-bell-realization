@@ -418,6 +418,10 @@ def run_four_branch_candidate_with_physical_closure(
     total_winner_drain_path_count = 0.0
     total_reduced_winner_fraction = 0.0
     total_reduced_loser_fraction = 0.0
+    activated_trial_count = 0
+    total_activated_winner_fraction = 0.0
+    total_activated_loser_fraction = 0.0
+    total_activated_terminal_loser_suppression = 0.0
 
     for trial_index, latch_result in enumerate(latch_results):
         physical = simulate_physical_closure_drain(
@@ -458,7 +462,11 @@ def run_four_branch_candidate_with_physical_closure(
         total_winner_drain_path_count += float(physical["winner_drain_path_count"])
         all_monotonic = all_monotonic and bool(physical["monotonic_remaining_energy"])
         if physical["winner_index"] >= 0 and physical["winner_label"] is not None:
+            activated_trial_count += 1
+            total_activated_winner_fraction += winner_drain / denom
+            total_activated_loser_fraction += loser_energy / denom
             total_terminal_loser_suppression += float(physical["terminal_loser_suppression_mean"])
+            total_activated_terminal_loser_suppression += float(physical["terminal_loser_suppression_mean"])
             terminal_loser_suppression_count += 1
         if bool(physical["trial_complete"]):
             total_completion_count += 1
@@ -502,6 +510,12 @@ def run_four_branch_candidate_with_physical_closure(
     mean_loser_fraction = total_loser_fraction / trial_count
     mean_reduced_winner_fraction = total_reduced_winner_fraction / trial_count
     mean_reduced_loser_fraction = total_reduced_loser_fraction / trial_count
+    winner_path_activation_rate = activated_trial_count / trial_count
+    mean_activated_winner_fraction = total_activated_winner_fraction / activated_trial_count if activated_trial_count > 0 else 0.0
+    mean_activated_loser_fraction = total_activated_loser_fraction / activated_trial_count if activated_trial_count > 0 else 0.0
+    mean_activated_terminal_loser_suppression = (
+        total_activated_terminal_loser_suppression / activated_trial_count if activated_trial_count > 0 else 0.0
+    )
     completion_rate = total_completion_count / trial_count
     reduced_completion_rate = total_reduced_completion_count / trial_count
     mean_completion_time = total_completion_time / total_completion_count if total_completion_count > 0 else float("inf")
@@ -558,12 +572,18 @@ def run_four_branch_candidate_with_physical_closure(
         "metrics": dict(race["metrics"]),
         "comparison_metrics": comparison_metrics,
         "closure_metrics": {
+            "trial_count": trial_count,
             "pre_click_transparency_rms_shift": float(np.sqrt(np.mean(np.square(transparency_shift)))),
             "mean_initial_remaining_energy_j": total_initial_remaining / trial_count,
             "mean_winner_drain_energy_j": total_winner_drain / trial_count,
             "mean_loser_post_click_energy_j": total_loser_energy / trial_count,
             "mean_winner_drain_fraction": mean_winner_fraction,
             "mean_loser_fraction": mean_loser_fraction,
+            "winner_path_activation_rate": winner_path_activation_rate,
+            "activated_trial_count": activated_trial_count,
+            "mean_activated_winner_drain_fraction": mean_activated_winner_fraction,
+            "mean_activated_loser_fraction": mean_activated_loser_fraction,
+            "mean_activated_terminal_loser_suppression": mean_activated_terminal_loser_suppression,
             "completion_rate": completion_rate,
             "mean_completion_time_s": mean_completion_time,
             "monotonic_remaining_energy": all_monotonic,

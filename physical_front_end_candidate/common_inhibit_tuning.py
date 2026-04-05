@@ -160,10 +160,18 @@ def _aggregate_case_results(
             "pre_click_transparency_rms_shift": float(result["closure_metrics"]["pre_click_transparency_rms_shift"]),
             "winner_drain_fraction": float(result["closure_metrics"]["mean_winner_drain_fraction"]),
             "loser_fraction": float(result["closure_metrics"]["mean_loser_fraction"]),
+            "winner_path_activation_rate": float(result["closure_metrics"]["winner_path_activation_rate"]),
+            "activated_trial_count": int(result["closure_metrics"]["activated_trial_count"]),
+            "trial_count": int(result["closure_metrics"].get("trial_count", 0)),
+            "activated_winner_drain_fraction": float(result["closure_metrics"]["mean_activated_winner_drain_fraction"]),
+            "activated_loser_fraction": float(result["closure_metrics"]["mean_activated_loser_fraction"]),
             "completion_rate": float(result["closure_metrics"]["completion_rate"]),
             "mean_completion_time_s": float(result["closure_metrics"]["mean_completion_time_s"]),
             "monotonic_remaining_energy": bool(result["closure_metrics"]["monotonic_remaining_energy"]),
             "mean_terminal_loser_suppression": float(result["closure_metrics"]["mean_terminal_loser_suppression"]),
+            "activated_terminal_loser_suppression": float(
+                result["closure_metrics"]["mean_activated_terminal_loser_suppression"]
+            ),
             "winner_drain_path_count": float(result["closure_metrics"]["mean_winner_drain_path_count"]),
         }
         for result in case_results
@@ -186,10 +194,18 @@ def _aggregate_case_results(
         "pre_click_transparency_rms_shift": float(np.sqrt(np.mean(np.square([row["pre_click_transparency_rms_shift"] for row in integration_rows])))),
         "mean_winner_drain_fraction": float(np.mean([row["winner_drain_fraction"] for row in integration_rows])),
         "mean_loser_fraction": float(np.mean([row["loser_fraction"] for row in integration_rows])),
+        "winner_path_activation_rate": float(np.mean([row["winner_path_activation_rate"] for row in integration_rows])),
+        "mean_activated_winner_drain_fraction": float(
+            np.mean([row["activated_winner_drain_fraction"] for row in integration_rows])
+        ),
+        "mean_activated_loser_fraction": float(np.mean([row["activated_loser_fraction"] for row in integration_rows])),
         "completion_rate": float(np.mean([row["completion_rate"] for row in integration_rows])),
         "mean_completion_time_s": float(np.mean([row["mean_completion_time_s"] for row in integration_rows])),
         "monotonic_remaining_energy": bool(all(bool(row["monotonic_remaining_energy"]) for row in integration_rows)),
         "mean_terminal_loser_suppression": float(np.mean([row["mean_terminal_loser_suppression"] for row in integration_rows])),
+        "mean_activated_terminal_loser_suppression": float(
+            np.mean([row["activated_terminal_loser_suppression"] for row in integration_rows])
+        ),
         "mean_winner_drain_path_count": float(np.mean([row["winner_drain_path_count"] for row in integration_rows])),
         "reduced_winner_fraction_abs_diff": float(np.mean([row["winner_fraction_abs_diff"] for row in comparison_rows])),
         "reduced_loser_fraction_abs_diff": float(np.mean([row["loser_fraction_abs_diff"] for row in comparison_rows])),
@@ -198,11 +214,12 @@ def _aggregate_case_results(
     }
     summary_metrics["pre_click_transparency_pass"] = float(summary_metrics["pre_click_transparency_rms_shift"]) < 0.01
     summary_metrics["winner_dominance_pass"] = (
-        float(summary_metrics["mean_winner_drain_fraction"]) > 0.88
-        and float(summary_metrics["mean_loser_fraction"]) < 0.02
-        and float(summary_metrics["mean_terminal_loser_suppression"]) > 0.93
-        and abs(float(summary_metrics["mean_winner_drain_path_count"]) - 1.0) < 1e-9
+        float(summary_metrics["winner_path_activation_rate"]) > 0.0
+        and float(summary_metrics["mean_activated_winner_drain_fraction"]) > 0.88
+        and float(summary_metrics["mean_activated_loser_fraction"]) < 0.02
+        and float(summary_metrics["mean_activated_terminal_loser_suppression"]) > 0.93
     )
+    summary_metrics["winner_path_activation_pass"] = float(summary_metrics["winner_path_activation_rate"]) >= 0.99
     summary_metrics["completion_pass"] = float(summary_metrics["completion_rate"]) > 0.9 and bool(summary_metrics["monotonic_remaining_energy"])
     summary_metrics["reduced_consistency_pass"] = (
         float(summary_metrics["reduced_winner_fraction_abs_diff"]) < 0.12
@@ -222,7 +239,11 @@ def _aggregate_case_results(
         and float(summary_metrics["mean_loser_fraction"]) < 0.02
         and float(summary_metrics["mean_terminal_loser_suppression"]) > 0.93
     )
-    summary_metrics["proceed_to_next_phase"] = bool(summary_metrics["guardrail_pass"]) and bool(summary_metrics["winner_dominance_pass"])
+    summary_metrics["proceed_to_next_phase"] = (
+        bool(summary_metrics["guardrail_pass"])
+        and bool(summary_metrics["winner_dominance_pass"])
+        and bool(summary_metrics["winner_path_activation_pass"])
+    )
     return {
         "integration_rows": integration_rows,
         "comparison_rows": comparison_rows,
@@ -256,9 +277,11 @@ def _candidate_rank(summary_metrics: Mapping[str, float | bool]) -> tuple[float,
     return (
         float(bool(summary_metrics["guardrail_pass"])),
         float(bool(summary_metrics["winner_dominance_pass"])),
-        float(summary_metrics["mean_winner_drain_fraction"]),
-        -float(summary_metrics["mean_loser_fraction"]),
-        float(summary_metrics["mean_terminal_loser_suppression"]),
+        float(bool(summary_metrics["winner_path_activation_pass"])),
+        float(summary_metrics["mean_activated_winner_drain_fraction"]),
+        -float(summary_metrics["mean_activated_loser_fraction"]),
+        float(summary_metrics["mean_activated_terminal_loser_suppression"]),
+        float(summary_metrics["winner_path_activation_rate"]),
         -completion_time_penalty,
         -float(summary_metrics["reduced_winner_fraction_abs_diff"]),
         -float(summary_metrics["pre_click_transparency_rms_shift"]),
@@ -273,11 +296,13 @@ def _top_candidate_rank(row: Mapping[str, Any]) -> tuple[float, ...]:
     completion_time = float(row["mean_completion_time_s"])
     completion_time_penalty = 1e12 if np.isinf(completion_time) else completion_time
     return (
-        float(row["mean_winner_drain_fraction"]),
-        -float(row["mean_loser_fraction"]),
-        float(row["mean_terminal_loser_suppression"]),
+        float(row["mean_activated_winner_drain_fraction"]),
+        -float(row["mean_activated_loser_fraction"]),
+        float(row["mean_activated_terminal_loser_suppression"]),
+        float(row["winner_path_activation_rate"]),
         float(bool(row["guardrail_pass"])),
         float(bool(row["winner_dominance_pass"])),
+        float(bool(row["winner_path_activation_pass"])),
         -completion_time_penalty,
     )
 
@@ -331,12 +356,17 @@ def _candidate_row_from_evaluation(
         "winner_drain_tau_s": float(metrics["winner_drain_tau_s"]),
         "mean_winner_drain_fraction": float(metrics["mean_winner_drain_fraction"]),
         "mean_loser_fraction": float(metrics["mean_loser_fraction"]),
+        "winner_path_activation_rate": float(metrics["winner_path_activation_rate"]),
+        "mean_activated_winner_drain_fraction": float(metrics["mean_activated_winner_drain_fraction"]),
+        "mean_activated_loser_fraction": float(metrics["mean_activated_loser_fraction"]),
         "mean_terminal_loser_suppression": float(metrics["mean_terminal_loser_suppression"]),
+        "mean_activated_terminal_loser_suppression": float(metrics["mean_activated_terminal_loser_suppression"]),
         "completion_rate": float(metrics["completion_rate"]),
         "mean_completion_time_s": float(metrics["mean_completion_time_s"]),
         "pre_click_transparency_rms_shift": float(metrics["pre_click_transparency_rms_shift"]),
         "guardrail_pass": bool(metrics["guardrail_pass"]),
         "winner_dominance_pass": bool(metrics["winner_dominance_pass"]),
+        "winner_path_activation_pass": bool(metrics["winner_path_activation_pass"]),
         "proceed_to_next_phase": bool(metrics["proceed_to_next_phase"]),
         "score": float(evaluation["score"]),
     }

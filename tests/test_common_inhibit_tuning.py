@@ -90,6 +90,8 @@ def test_shared_energy_remains_monotonic_after_tuning() -> None:
 def test_best_tuned_candidate_improves_on_first_candidate() -> None:
     tuning = run_common_inhibit_parameter_sweeps(SHOT_TRIGGER_SPEC, n_trials=6, seed=20260404, case_names=("case_a",))
     assert tuning["best_tuned"]["summary_metrics"]["mean_winner_drain_fraction"] > tuning["baseline"]["summary_metrics"]["mean_winner_drain_fraction"]
+    assert "winner_path_activation_rate" in tuning["best_tuned"]["summary_metrics"]
+    assert "winner_path_activation_pass" in tuning["best_tuned"]["summary_metrics"]
 
 
 def test_common_inhibit_tuning_report_smoke_writes_artifacts(tmp_path: Path) -> None:
@@ -124,3 +126,5 @@ def test_common_inhibit_tuning_report_smoke_writes_artifacts(tmp_path: Path) -> 
     assert "summary_metrics" in summary
     assert "sweep_rows" in summary
     assert "top_candidates" in summary
+    assert "winner_path_activation_rate" in summary["summary_metrics"]
+    assert "winner_path_activation_pass" in summary["summary_metrics"]

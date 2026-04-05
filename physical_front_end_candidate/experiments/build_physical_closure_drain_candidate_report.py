@@ -73,11 +73,15 @@ def _summary_markdown(
             "",
             "## Post-Click Exclusivity",
             "",
-            f"- Mean winner drain fraction: {float(summary_metrics['mean_winner_drain_fraction']):.6f}",
-            f"- Mean loser residual fraction: {float(summary_metrics['mean_loser_fraction']):.6f}",
-            f"- Mean terminal loser suppression: {float(summary_metrics['mean_terminal_loser_suppression']):.6f}",
+            f"- Mean winner drain fraction (all trials): {float(summary_metrics['mean_winner_drain_fraction']):.6f}",
+            f"- Mean winner drain fraction (activated trials): {float(summary_metrics['mean_activated_winner_drain_fraction']):.6f}",
+            f"- Mean loser residual fraction (all trials): {float(summary_metrics['mean_loser_fraction']):.6f}",
+            f"- Mean loser residual fraction (activated trials): {float(summary_metrics['mean_activated_loser_fraction']):.6f}",
+            f"- Mean terminal loser suppression (activated trials): {float(summary_metrics['mean_activated_terminal_loser_suppression']):.6f}",
             f"- Winner drain path count: {float(summary_metrics['mean_winner_drain_path_count']):.6f}",
             f"- Winner dominance pass: {bool(summary_metrics['winner_dominance_pass'])}",
+            f"- Winner path activation rate: {float(summary_metrics['winner_path_activation_rate']):.6f}",
+            f"- Winner path activation pass: {bool(summary_metrics['winner_path_activation_pass'])}",
             "",
             "## Trial Completion",
             "",
@@ -170,10 +174,18 @@ def build_physical_closure_drain_candidate_report(
                 "pre_click_transparency_rms_shift": float(result["closure_metrics"]["pre_click_transparency_rms_shift"]),
                 "winner_drain_fraction": float(result["closure_metrics"]["mean_winner_drain_fraction"]),
                 "loser_fraction": float(result["closure_metrics"]["mean_loser_fraction"]),
+                "winner_path_activation_rate": float(result["closure_metrics"]["winner_path_activation_rate"]),
+                "activated_trial_count": int(result["closure_metrics"]["activated_trial_count"]),
+                "trial_count": int(result["closure_metrics"].get("trial_count", 0)),
+                "activated_winner_drain_fraction": float(result["closure_metrics"]["mean_activated_winner_drain_fraction"]),
+                "activated_loser_fraction": float(result["closure_metrics"]["mean_activated_loser_fraction"]),
                 "completion_rate": float(result["closure_metrics"]["completion_rate"]),
                 "mean_completion_time_s": float(result["closure_metrics"]["mean_completion_time_s"]),
                 "monotonic_remaining_energy": bool(result["closure_metrics"]["monotonic_remaining_energy"]),
                 "mean_terminal_loser_suppression": float(result["closure_metrics"]["mean_terminal_loser_suppression"]),
+                "activated_terminal_loser_suppression": float(
+                    result["closure_metrics"]["mean_activated_terminal_loser_suppression"]
+                ),
                 "winner_drain_path_count": float(result["closure_metrics"]["mean_winner_drain_path_count"]),
             }
         )
@@ -242,10 +254,18 @@ def build_physical_closure_drain_candidate_report(
         "pre_click_transparency_rms_shift": float(np.sqrt(np.mean(np.square([row["pre_click_transparency_rms_shift"] for row in integration_rows])))),
         "mean_winner_drain_fraction": float(np.mean([row["winner_drain_fraction"] for row in integration_rows])),
         "mean_loser_fraction": float(np.mean([row["loser_fraction"] for row in integration_rows])),
+        "winner_path_activation_rate": float(np.mean([row["winner_path_activation_rate"] for row in integration_rows])),
+        "mean_activated_winner_drain_fraction": float(
+            np.mean([row["activated_winner_drain_fraction"] for row in integration_rows])
+        ),
+        "mean_activated_loser_fraction": float(np.mean([row["activated_loser_fraction"] for row in integration_rows])),
         "completion_rate": float(np.mean([row["completion_rate"] for row in integration_rows])),
         "mean_completion_time_s": float(np.mean([row["mean_completion_time_s"] for row in integration_rows])),
         "monotonic_remaining_energy": bool(all(bool(row["monotonic_remaining_energy"]) for row in integration_rows)),
         "mean_terminal_loser_suppression": float(np.mean([row["mean_terminal_loser_suppression"] for row in integration_rows])),
+        "mean_activated_terminal_loser_suppression": float(
+            np.mean([row["activated_terminal_loser_suppression"] for row in integration_rows])
+        ),
         "mean_winner_drain_path_count": float(np.mean([row["winner_drain_path_count"] for row in integration_rows])),
         "reduced_winner_fraction_abs_diff": float(np.mean([row["winner_fraction_abs_diff"] for row in comparison_rows])),
         "reduced_loser_fraction_abs_diff": float(np.mean([row["loser_fraction_abs_diff"] for row in comparison_rows])),
@@ -254,11 +274,12 @@ def build_physical_closure_drain_candidate_report(
     }
     summary_metrics["pre_click_transparency_pass"] = float(summary_metrics["pre_click_transparency_rms_shift"]) < 0.01
     summary_metrics["winner_dominance_pass"] = (
-        float(summary_metrics["mean_winner_drain_fraction"]) > 0.75
-        and float(summary_metrics["mean_loser_fraction"]) < 0.05
-        and float(summary_metrics["mean_terminal_loser_suppression"]) > 0.9
-        and abs(float(summary_metrics["mean_winner_drain_path_count"]) - 1.0) < 1e-9
+        float(summary_metrics["winner_path_activation_rate"]) > 0.0
+        and float(summary_metrics["mean_activated_winner_drain_fraction"]) > 0.75
+        and float(summary_metrics["mean_activated_loser_fraction"]) < 0.05
+        and float(summary_metrics["mean_activated_terminal_loser_suppression"]) > 0.9
     )
+    summary_metrics["winner_path_activation_pass"] = float(summary_metrics["winner_path_activation_rate"]) >= 0.99
     summary_metrics["completion_pass"] = (
         float(summary_metrics["completion_rate"]) > 0.9 and bool(summary_metrics["monotonic_remaining_energy"])
     )
@@ -272,6 +293,7 @@ def build_physical_closure_drain_candidate_report(
         for key in (
             "pre_click_transparency_pass",
             "winner_dominance_pass",
+            "winner_path_activation_pass",
             "completion_pass",
             "reduced_consistency_pass",
         )
