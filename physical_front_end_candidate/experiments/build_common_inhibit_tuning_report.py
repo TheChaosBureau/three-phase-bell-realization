@@ -49,6 +49,7 @@ def _summary_markdown(
     tuned: Mapping[str, Any],
     comparison_row: Mapping[str, Any],
     outputs: Mapping[str, str],
+    top_candidates: Sequence[Mapping[str, Any]],
 ) -> str:
     baseline_metrics = baseline["summary_metrics"]
     tuned_metrics = tuned["summary_metrics"]
@@ -59,7 +60,7 @@ def _summary_markdown(
             "## Objective",
             "",
             "- Topology kept fixed: `common inhibit rail + winner-gated shunt drain`.",
-            "- Tuning focus: inhibit rise, loser clamp strength, winner drain strength.",
+            "- Tuning focus: inhibit rise, loser clamp strength, winner drain strength, winner drain turn-on speed.",
             "",
             "## Baseline vs Tuned",
             "",
@@ -75,6 +76,7 @@ def _summary_markdown(
             f"- `control_tau_s`: {float(tuned_metrics['control_tau_s']):.6f}",
             f"- `clamp_reference_g_on_s`: {float(tuned_metrics['clamp_reference_g_on_s']):.6f}",
             f"- `winner_drain_g_on_s`: {float(tuned_metrics['winner_drain_g_on_s']):.6f}",
+            f"- `winner_drain_tau_s`: {float(tuned_metrics['winner_drain_tau_s']):.6f}",
             "",
             "## Acceptance",
             "",
@@ -82,12 +84,20 @@ def _summary_markdown(
             f"- Winner drain dominance pass: {bool(tuned_metrics['winner_dominance_pass'])}",
             f"- Completion pass: {bool(tuned_metrics['completion_pass'])}",
             f"- Reduced consistency pass: {bool(tuned_metrics['reduced_consistency_pass'])}",
+            f"- Proceed to next phase: {bool(tuned_metrics['proceed_to_next_phase'])}",
+            "",
+            "## Top Candidates",
+            "",
+            f"- Ranked top-10 table: `{outputs['top_candidates_csv']}`",
+            f"- Best candidate source: `{tuned.get('source', 'unknown')}`",
+            f"- Highest ranked winner drain fraction: {float(top_candidates[0]['mean_winner_drain_fraction']):.6f}" if top_candidates else "- No ranked candidates recorded.",
             "",
             "## Artifacts",
             "",
             f"- Parameter sweeps: `{outputs['parameter_sweeps_dir']}`",
             f"- Best candidate artifacts: `{outputs['best_candidate_dir']}`",
             f"- Tuned design note: `{outputs['design_md']}`",
+            f"- Progress tracker: `{outputs['progress_json']}`",
             "",
         ]
     )
@@ -129,8 +139,12 @@ def build_common_inhibit_tuning_report(
     _write_csv(sweeps_dir / "winner_drain_strength_sweep.csv", tuning["sweep_rows"]["winner_drain_g_on_s"])
     _write_csv(sweeps_dir / "loser_clamp_strength_sweep.csv", tuning["sweep_rows"]["clamp_reference_g_on_s"])
     _write_csv(sweeps_dir / "inhibit_rise_sweep.csv", tuning["sweep_rows"]["control_tau_s"])
+    _write_csv(sweeps_dir / "winner_drain_tau_sweep.csv", tuning["sweep_rows"]["winner_drain_tau_s"])
+    _write_csv(sweeps_dir / "joint_search.csv", tuning["sweep_rows"]["combination_search"])
     _write_csv(best_dir / "integration_summary.csv", tuned["integration_rows"])
     _write_csv(best_dir / "reduced_comparison.csv", tuned["comparison_rows"])
+    top_candidates_csv = output_dir / "top_winner_drain_candidates.csv"
+    _write_csv(top_candidates_csv, list(tuning["top_candidates"]))
 
     plot_parameter_response(
         tuning["sweep_rows"]["winner_drain_g_on_s"],
@@ -156,6 +170,14 @@ def build_common_inhibit_tuning_report(
         xlabel="Inhibit rise time constant (s)",
         ylabel="Winner drain fraction",
     ).savefig(sweeps_dir / "winner_drain_fraction_vs_inhibit_rise_rate.png")
+    plot_parameter_response(
+        tuning["sweep_rows"]["winner_drain_tau_s"],
+        param_key="winner_drain_tau_s",
+        metric_key="mean_winner_drain_fraction",
+        title="Winner drain fraction vs winner drain turn-on time constant",
+        xlabel="Winner drain time constant (s)",
+        ylabel="Winner drain fraction",
+    ).savefig(sweeps_dir / "winner_drain_fraction_vs_winner_drain_tau.png")
 
     panel_rows = [
         {
@@ -174,6 +196,12 @@ def build_common_inhibit_tuning_report(
             "label": "Inhibit Rise",
             "rows": tuning["sweep_rows"]["control_tau_s"],
             "param_key": "control_tau_s",
+            "xlabel": "Time constant (s)",
+        },
+        {
+            "label": "Winner Drain Tau",
+            "rows": tuning["sweep_rows"]["winner_drain_tau_s"],
+            "param_key": "winner_drain_tau_s",
             "xlabel": "Time constant (s)",
         },
     ]
@@ -257,6 +285,7 @@ def build_common_inhibit_tuning_report(
         "loser_fraction_delta": comparison_row["loser_fraction_delta"],
         "terminal_loser_suppression_delta": comparison_row["terminal_loser_suppression_delta"],
         "completion_rate_delta": comparison_row["completion_rate_delta"],
+        "best_tuned_source": tuning.get("best_tuned_source", "unknown"),
     }
 
     design_md = output_dir / "tuned_candidate_design_note.md"
@@ -270,6 +299,7 @@ def build_common_inhibit_tuning_report(
                 "- Inhibit rise time constant (`control_tau_s`).",
                 "- Loser clamp strength (`clamp_reference_g_on_s`).",
                 "- Winner drain conductance (`winner_drain_g_on_s`).",
+                "- Winner drain time constant (`winner_drain_tau_s`).",
                 "",
                 "## What Changed Relative To First Candidate",
                 "",
@@ -283,6 +313,8 @@ def build_common_inhibit_tuning_report(
                 f"- `control_tau_s = {float(tuned['summary_metrics']['control_tau_s']):.6f}`",
                 f"- `clamp_reference_g_on_s = {float(tuned['summary_metrics']['clamp_reference_g_on_s']):.6f}`",
                 f"- `winner_drain_g_on_s = {float(tuned['summary_metrics']['winner_drain_g_on_s']):.6f}`",
+                f"- `winner_drain_tau_s = {float(tuned['summary_metrics']['winner_drain_tau_s']):.6f}`",
+                f"- Selection basis: maximize winner drain fraction subject to transparency/completion/reduced-consistency guardrails.",
                 "",
                 "## Topology Consistency",
                 "",
@@ -307,6 +339,7 @@ def build_common_inhibit_tuning_report(
         "best_candidate_dir": str(best_dir),
         "design_md": str(design_md),
         "progress_json": str(progress_json),
+        "top_candidates_csv": str(top_candidates_csv),
     }
     summary_json = output_dir / "summary_metrics.json"
     summary_json.write_text(
@@ -317,6 +350,7 @@ def build_common_inhibit_tuning_report(
                 "best_tuned": tuned["summary_metrics"],
                 "sweep_rows": tuning["sweep_rows"],
                 "comparison_row": comparison_row,
+                "top_candidates": tuning["top_candidates"],
                 "outputs": outputs,
             },
             indent=2,
@@ -327,7 +361,14 @@ def build_common_inhibit_tuning_report(
     )
     summary_md = output_dir / "summary_report.md"
     summary_md.write_text(
-        _summary_markdown(baseline=baseline, tuned=tuned, comparison_row=comparison_row, outputs=outputs) + "\n",
+        _summary_markdown(
+            baseline=baseline,
+            tuned={**tuned, "source": tuning.get("best_tuned_source", "unknown")},
+            comparison_row=comparison_row,
+            outputs=outputs,
+            top_candidates=tuning["top_candidates"],
+        )
+        + "\n",
         encoding="utf-8",
     )
     return {
@@ -338,6 +379,7 @@ def build_common_inhibit_tuning_report(
         "parameter_sweeps_dir": str(sweeps_dir),
         "best_candidate_dir": str(best_dir),
         "progress_json": str(progress_json),
+        "top_candidates_csv": str(top_candidates_csv),
     }
 
 

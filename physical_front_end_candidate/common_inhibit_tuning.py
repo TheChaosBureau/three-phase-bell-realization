@@ -5,6 +5,7 @@ import sys
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
+from itertools import product
 from pathlib import Path
 from typing import Any
 
@@ -22,9 +23,11 @@ from .resonant_four_branch_candidate import benchmark_resonant_four_branch_cases
 
 @dataclass(frozen=True)
 class CommonInhibitTuningSweepConfig:
-    inhibit_tau_values_s: tuple[float, ...] = (0.05, 0.08, 0.10, 0.14, 0.20)
-    clamp_strength_values_s: tuple[float, ...] = (0.4, 0.7, 1.0, 1.4, 2.0)
-    drain_strength_values_s: tuple[float, ...] = (1.6, 2.0, 2.6, 3.2, 4.0)
+    inhibit_tau_values_s: tuple[float, ...] = (0.02, 0.04, 0.06, 0.08, 0.10, 0.14, 0.20)
+    clamp_strength_values_s: tuple[float, ...] = (0.4, 0.7, 1.0, 1.4, 2.0, 3.0, 4.5, 6.0)
+    drain_strength_values_s: tuple[float, ...] = (1.6, 2.0, 2.6, 3.2, 4.0, 5.0, 6.5, 8.0, 10.0)
+    winner_drain_tau_values_s: tuple[float, ...] = (0.01, 0.02, 0.04, 0.06, 0.08, 0.12)
+    combination_top_k_per_param: int = 2
 
 
 @dataclass
@@ -80,14 +83,25 @@ def default_common_inhibit_tuning_sweep_config() -> CommonInhibitTuningSweepConf
     base = default_physical_closure_drain_config()
     return CommonInhibitTuningSweepConfig(
         inhibit_tau_values_s=(
+            round(base.control_tau_s * 0.2, 6),
+            round(base.control_tau_s * 0.4, 6),
             round(base.control_tau_s * 0.6, 6),
             round(base.control_tau_s * 0.8, 6),
             round(base.control_tau_s, 6),
             round(base.control_tau_s * 1.25, 6),
             round(base.control_tau_s * 1.6, 6),
         ),
-        clamp_strength_values_s=(0.4, 0.7, 1.0, 1.4, 2.0),
-        drain_strength_values_s=(1.6, 2.0, 2.6, 3.2, 4.0),
+        clamp_strength_values_s=(0.4, 0.7, 1.0, 1.4, 2.0, 3.0, 4.5, 6.0),
+        drain_strength_values_s=(1.6, 2.0, 2.6, 3.2, 4.0, 5.0, 6.5, 8.0, 10.0),
+        winner_drain_tau_values_s=(
+            round(base.winner_drain_tau_s * 0.125, 6),
+            round(base.winner_drain_tau_s * 0.25, 6),
+            round(base.winner_drain_tau_s * 0.5, 6),
+            round(base.winner_drain_tau_s * 0.75, 6),
+            round(base.winner_drain_tau_s, 6),
+            round(base.winner_drain_tau_s * 1.5, 6),
+        ),
+        combination_top_k_per_param=2,
     )
 
 
@@ -197,6 +211,14 @@ def _aggregate_case_results(
         summary_metrics["improvement_vs_baseline"] = (
             float(summary_metrics["mean_winner_drain_fraction"]) - float(baseline_summary["mean_winner_drain_fraction"])
         )
+    summary_metrics["guardrail_pass"] = (
+        bool(summary_metrics["pre_click_transparency_pass"])
+        and bool(summary_metrics["completion_pass"])
+        and bool(summary_metrics["reduced_consistency_pass"])
+        and float(summary_metrics["mean_loser_fraction"]) < 0.02
+        and float(summary_metrics["mean_terminal_loser_suppression"]) > 0.93
+    )
+    summary_metrics["proceed_to_next_phase"] = bool(summary_metrics["guardrail_pass"]) and bool(summary_metrics["winner_dominance_pass"])
     return {
         "integration_rows": integration_rows,
         "comparison_rows": comparison_rows,
@@ -222,6 +244,79 @@ def score_tuned_candidate(summary_metrics: Mapping[str, float | bool]) -> float:
         + 3.0 * float(summary_metrics["improvement_vs_baseline"])
         - penalty
     )
+
+
+def _candidate_rank(summary_metrics: Mapping[str, float | bool]) -> tuple[float, ...]:
+    completion_time = float(summary_metrics["mean_completion_time_s"])
+    completion_time_penalty = 1e12 if np.isinf(completion_time) else completion_time
+    return (
+        float(bool(summary_metrics["guardrail_pass"])),
+        float(bool(summary_metrics["winner_dominance_pass"])),
+        float(summary_metrics["mean_winner_drain_fraction"]),
+        -float(summary_metrics["mean_loser_fraction"]),
+        float(summary_metrics["mean_terminal_loser_suppression"]),
+        -completion_time_penalty,
+        -float(summary_metrics["reduced_winner_fraction_abs_diff"]),
+        -float(summary_metrics["pre_click_transparency_rms_shift"]),
+    )
+
+
+def _row_rank(row: Mapping[str, Any]) -> tuple[float, ...]:
+    return _candidate_rank(row)
+
+
+def _top_candidate_rank(row: Mapping[str, Any]) -> tuple[float, ...]:
+    completion_time = float(row["mean_completion_time_s"])
+    completion_time_penalty = 1e12 if np.isinf(completion_time) else completion_time
+    return (
+        float(row["mean_winner_drain_fraction"]),
+        -float(row["mean_loser_fraction"]),
+        float(row["mean_terminal_loser_suppression"]),
+        float(bool(row["guardrail_pass"])),
+        float(bool(row["winner_dominance_pass"])),
+        -completion_time_penalty,
+    )
+
+
+def _unique_top_values(rows: Sequence[Mapping[str, Any]], key: str, *, top_k: int, fallback: float) -> list[float]:
+    selected: list[float] = []
+    seen: set[float] = set()
+    for row in sorted(rows, key=_row_rank, reverse=True):
+        value = float(row[key])
+        if value in seen:
+            continue
+        seen.add(value)
+        selected.append(value)
+        if len(selected) >= top_k:
+            break
+    if fallback not in seen:
+        selected.append(float(fallback))
+    return selected
+
+
+def _candidate_row_from_evaluation(
+    evaluation: Mapping[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    metrics = dict(evaluation["summary_metrics"])
+    return {
+        "source": source,
+        "control_tau_s": float(metrics["control_tau_s"]),
+        "clamp_reference_g_on_s": float(metrics["clamp_reference_g_on_s"]),
+        "winner_drain_g_on_s": float(metrics["winner_drain_g_on_s"]),
+        "winner_drain_tau_s": float(metrics["winner_drain_tau_s"]),
+        "mean_winner_drain_fraction": float(metrics["mean_winner_drain_fraction"]),
+        "mean_loser_fraction": float(metrics["mean_loser_fraction"]),
+        "mean_terminal_loser_suppression": float(metrics["mean_terminal_loser_suppression"]),
+        "completion_rate": float(metrics["completion_rate"]),
+        "mean_completion_time_s": float(metrics["mean_completion_time_s"]),
+        "pre_click_transparency_rms_shift": float(metrics["pre_click_transparency_rms_shift"]),
+        "guardrail_pass": bool(metrics["guardrail_pass"]),
+        "winner_dominance_pass": bool(metrics["winner_dominance_pass"]),
+        "proceed_to_next_phase": bool(metrics["proceed_to_next_phase"]),
+        "score": float(evaluation["score"]),
+    }
 
 
 def evaluate_tuned_closure_config(
@@ -296,7 +391,20 @@ def run_common_inhibit_parameter_sweeps(
         for case in benchmark_resonant_four_branch_cases()
         if selected_case_names is None or case["case"] in selected_case_names
     )
-    total_eval_count = 1 + len(sweeps.drain_strength_values_s) + len(sweeps.clamp_strength_values_s) + len(sweeps.inhibit_tau_values_s) + 1
+    top_k = max(int(sweeps.combination_top_k_per_param), 1)
+    combo_drain_count = min(len(sweeps.drain_strength_values_s), top_k) + int(base_config.winner_drain_g_on_s not in sweeps.drain_strength_values_s)
+    combo_clamp_count = min(len(sweeps.clamp_strength_values_s), top_k) + int(base_config.clamp_reference_g_on_s not in sweeps.clamp_strength_values_s)
+    combo_inhibit_count = min(len(sweeps.inhibit_tau_values_s), top_k) + int(base_config.control_tau_s not in sweeps.inhibit_tau_values_s)
+    combo_drain_tau_count = min(len(sweeps.winner_drain_tau_values_s), top_k) + int(base_config.winner_drain_tau_s not in sweeps.winner_drain_tau_values_s)
+    combo_eval_count = combo_drain_count * combo_clamp_count * combo_inhibit_count * combo_drain_tau_count
+    total_eval_count = (
+        1
+        + len(sweeps.drain_strength_values_s)
+        + len(sweeps.clamp_strength_values_s)
+        + len(sweeps.inhibit_tau_values_s)
+        + len(sweeps.winner_drain_tau_values_s)
+        + combo_eval_count
+    )
     progress = _ProgressReporter(
         total_steps=case_count * (1 + total_eval_count),
         enabled=verbose_progress,
@@ -322,12 +430,10 @@ def run_common_inhibit_parameter_sweeps(
         "winner_drain_g_on_s": [],
         "clamp_reference_g_on_s": [],
         "control_tau_s": [],
+        "winner_drain_tau_s": [],
+        "combination_search": [],
     }
-    best_values = {
-        "winner_drain_g_on_s": base_config.winner_drain_g_on_s,
-        "clamp_reference_g_on_s": base_config.clamp_reference_g_on_s,
-        "control_tau_s": base_config.control_tau_s,
-    }
+    candidate_evaluations: list[tuple[str, dict[str, Any]]] = [("baseline", baseline)]
 
     for value in sweeps.drain_strength_values_s:
         config = replace(base_config, winner_drain_g_on_s=float(value))
@@ -342,6 +448,7 @@ def run_common_inhibit_parameter_sweeps(
         )
         row = {"winner_drain_g_on_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["winner_drain_g_on_s"].append(row)
+        candidate_evaluations.append(("winner_drain_g_on_s", evaluation))
 
     for value in sweeps.clamp_strength_values_s:
         config = replace(base_config, clamp_reference_g_on_s=float(value))
@@ -356,6 +463,7 @@ def run_common_inhibit_parameter_sweeps(
         )
         row = {"clamp_reference_g_on_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["clamp_reference_g_on_s"].append(row)
+        candidate_evaluations.append(("clamp_reference_g_on_s", evaluation))
 
     for value in sweeps.inhibit_tau_values_s:
         config = replace(
@@ -374,31 +482,100 @@ def run_common_inhibit_parameter_sweeps(
         )
         row = {"control_tau_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
         sweep_rows["control_tau_s"].append(row)
+        candidate_evaluations.append(("control_tau_s", evaluation))
 
-    for key, rows in sweep_rows.items():
-        best_values[key] = max(rows, key=lambda row: float(row["score"]))[key]
+    for value in sweeps.winner_drain_tau_values_s:
+        config = replace(base_config, winner_drain_tau_s=float(value))
+        evaluation = evaluate_tuned_closure_config(
+            case_runs,
+            detector_spec,
+            config=config,
+            seed=seed,
+            baseline_summary=baseline["summary_metrics"],
+            progress=progress,
+            progress_phase=f"winner-drain-tau={float(value):.6g}",
+        )
+        row = {"winner_drain_tau_s": float(value), **evaluation["summary_metrics"], "score": float(evaluation["score"])}
+        sweep_rows["winner_drain_tau_s"].append(row)
+        candidate_evaluations.append(("winner_drain_tau_s", evaluation))
 
-    tuned_config = replace(
-        base_config,
-        winner_drain_g_on_s=float(best_values["winner_drain_g_on_s"]),
-        clamp_reference_g_on_s=float(best_values["clamp_reference_g_on_s"]),
-        control_tau_s=float(best_values["control_tau_s"]),
-        winner_drain_tau_s=min(base_config.winner_drain_tau_s, float(best_values["control_tau_s"])),
+    combo_winner_drain_values = _unique_top_values(
+        sweep_rows["winner_drain_g_on_s"],
+        "winner_drain_g_on_s",
+        top_k=top_k,
+        fallback=base_config.winner_drain_g_on_s,
     )
-    tuned = evaluate_tuned_closure_config(
-        case_runs,
-        detector_spec,
-        config=tuned_config,
-        seed=seed,
-        baseline_summary=baseline["summary_metrics"],
-        progress=progress,
-        progress_phase="best-tuned",
+    combo_clamp_values = _unique_top_values(
+        sweep_rows["clamp_reference_g_on_s"],
+        "clamp_reference_g_on_s",
+        top_k=top_k,
+        fallback=base_config.clamp_reference_g_on_s,
     )
+    combo_inhibit_values = _unique_top_values(
+        sweep_rows["control_tau_s"],
+        "control_tau_s",
+        top_k=top_k,
+        fallback=base_config.control_tau_s,
+    )
+    combo_drain_tau_values = _unique_top_values(
+        sweep_rows["winner_drain_tau_s"],
+        "winner_drain_tau_s",
+        top_k=top_k,
+        fallback=base_config.winner_drain_tau_s,
+    )
+    seen_combinations: set[tuple[float, float, float, float]] = set()
+    for combo_index, (winner_drain_g_on_s, clamp_reference_g_on_s, control_tau_s, winner_drain_tau_s) in enumerate(
+        product(combo_winner_drain_values, combo_clamp_values, combo_inhibit_values, combo_drain_tau_values),
+        start=1,
+    ):
+        combo_key = (
+            float(winner_drain_g_on_s),
+            float(clamp_reference_g_on_s),
+            float(control_tau_s),
+            float(winner_drain_tau_s),
+        )
+        if combo_key in seen_combinations:
+            continue
+        seen_combinations.add(combo_key)
+        config = replace(
+            base_config,
+            winner_drain_g_on_s=float(winner_drain_g_on_s),
+            clamp_reference_g_on_s=float(clamp_reference_g_on_s),
+            control_tau_s=float(control_tau_s),
+            winner_drain_tau_s=float(winner_drain_tau_s),
+        )
+        evaluation = evaluate_tuned_closure_config(
+            case_runs,
+            detector_spec,
+            config=config,
+            seed=seed,
+            baseline_summary=baseline["summary_metrics"],
+            progress=progress,
+            progress_phase=f"joint-search#{combo_index}",
+        )
+        row = {
+            "winner_drain_g_on_s": float(winner_drain_g_on_s),
+            "clamp_reference_g_on_s": float(clamp_reference_g_on_s),
+            "control_tau_s": float(control_tau_s),
+            "winner_drain_tau_s": float(winner_drain_tau_s),
+            **evaluation["summary_metrics"],
+            "score": float(evaluation["score"]),
+        }
+        sweep_rows["combination_search"].append(row)
+        candidate_evaluations.append(("combination_search", evaluation))
+
+    tuned_source, tuned = max(candidate_evaluations, key=lambda item: _candidate_rank(item[1]["summary_metrics"]))
+    top_candidates = sorted(
+        (_candidate_row_from_evaluation(evaluation, source=source) for source, evaluation in candidate_evaluations),
+        key=_top_candidate_rank,
+        reverse=True,
+    )[:10]
     return {
         "base_config": asdict(base_config),
         "baseline": baseline,
         "sweep_rows": sweep_rows,
-        "best_values": best_values,
         "best_tuned": tuned,
+        "best_tuned_source": tuned_source,
+        "top_candidates": top_candidates,
         "case_runs": case_runs,
     }

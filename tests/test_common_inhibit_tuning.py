@@ -119,6 +119,8 @@ def test_common_inhibit_tuning_report_smoke_writes_artifacts(tmp_path: Path) -> 
     assert Path(outputs["parameter_sweeps_dir"]).exists()
     assert Path(outputs["best_candidate_dir"]).exists()
     assert Path(outputs["progress_json"]).exists()
+    assert Path(outputs["top_candidates_csv"]).exists()
     summary = json.loads(Path(outputs["summary_json"]).read_text(encoding="utf-8"))
     assert "summary_metrics" in summary
     assert "sweep_rows" in summary
+    assert "top_candidates" in summary
