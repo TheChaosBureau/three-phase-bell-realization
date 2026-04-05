@@ -47,6 +47,10 @@ class _ProgressReporter:
         self.completed_steps += 1
         self._emit(phase, case_name=case_name)
 
+    def update_total_steps(self, total_steps: int, *, phase: str = "recount") -> None:
+        self.total_steps = max(int(total_steps), self.completed_steps, 1)
+        self._emit(phase)
+
     def _emit(self, phase: str, *, case_name: str | None = None, initial: bool = False) -> None:
         elapsed_s = max(time.monotonic() - self.start_time_s, 0.0)
         completed = self.completed_steps
@@ -294,6 +298,25 @@ def _unique_top_values(rows: Sequence[Mapping[str, Any]], key: str, *, top_k: in
     return selected
 
 
+def _exact_joint_combo_count(
+    winner_drain_values: Sequence[float],
+    clamp_values: Sequence[float],
+    inhibit_values: Sequence[float],
+    winner_drain_tau_values: Sequence[float],
+) -> int:
+    return len(
+        {
+            (float(winner_drain_g_on_s), float(clamp_reference_g_on_s), float(control_tau_s), float(winner_drain_tau_s))
+            for winner_drain_g_on_s, clamp_reference_g_on_s, control_tau_s, winner_drain_tau_s in product(
+                winner_drain_values,
+                clamp_values,
+                inhibit_values,
+                winner_drain_tau_values,
+            )
+        }
+    )
+
+
 def _candidate_row_from_evaluation(
     evaluation: Mapping[str, Any],
     *,
@@ -392,21 +415,25 @@ def run_common_inhibit_parameter_sweeps(
         if selected_case_names is None or case["case"] in selected_case_names
     )
     top_k = max(int(sweeps.combination_top_k_per_param), 1)
-    combo_drain_count = min(len(sweeps.drain_strength_values_s), top_k) + int(base_config.winner_drain_g_on_s not in sweeps.drain_strength_values_s)
-    combo_clamp_count = min(len(sweeps.clamp_strength_values_s), top_k) + int(base_config.clamp_reference_g_on_s not in sweeps.clamp_strength_values_s)
-    combo_inhibit_count = min(len(sweeps.inhibit_tau_values_s), top_k) + int(base_config.control_tau_s not in sweeps.inhibit_tau_values_s)
-    combo_drain_tau_count = min(len(sweeps.winner_drain_tau_values_s), top_k) + int(base_config.winner_drain_tau_s not in sweeps.winner_drain_tau_values_s)
-    combo_eval_count = combo_drain_count * combo_clamp_count * combo_inhibit_count * combo_drain_tau_count
-    total_eval_count = (
+    non_combo_steps_per_case = (
         1
+        + 1
         + len(sweeps.drain_strength_values_s)
         + len(sweeps.clamp_strength_values_s)
         + len(sweeps.inhibit_tau_values_s)
         + len(sweeps.winner_drain_tau_values_s)
-        + combo_eval_count
+    )
+    combo_upper_bound = (
+        min(len(sweeps.drain_strength_values_s), top_k) + 1
+    ) * (
+        min(len(sweeps.clamp_strength_values_s), top_k) + 1
+    ) * (
+        min(len(sweeps.inhibit_tau_values_s), top_k) + 1
+    ) * (
+        min(len(sweeps.winner_drain_tau_values_s), top_k) + 1
     )
     progress = _ProgressReporter(
-        total_steps=case_count * (1 + total_eval_count),
+        total_steps=max(case_count * (non_combo_steps_per_case + combo_upper_bound), 1),
         enabled=verbose_progress,
         path=None if progress_path is None else Path(progress_path),
     )
@@ -523,7 +550,15 @@ def run_common_inhibit_parameter_sweeps(
         top_k=top_k,
         fallback=base_config.winner_drain_tau_s,
     )
+    exact_combo_eval_count = _exact_joint_combo_count(
+        combo_winner_drain_values,
+        combo_clamp_values,
+        combo_inhibit_values,
+        combo_drain_tau_values,
+    )
+    progress.update_total_steps(case_count * (non_combo_steps_per_case + exact_combo_eval_count), phase="joint-search-plan")
     seen_combinations: set[tuple[float, float, float, float]] = set()
+    joint_combo_count = 0
     for combo_index, (winner_drain_g_on_s, clamp_reference_g_on_s, control_tau_s, winner_drain_tau_s) in enumerate(
         product(combo_winner_drain_values, combo_clamp_values, combo_inhibit_values, combo_drain_tau_values),
         start=1,
@@ -537,6 +572,7 @@ def run_common_inhibit_parameter_sweeps(
         if combo_key in seen_combinations:
             continue
         seen_combinations.add(combo_key)
+        joint_combo_count += 1
         config = replace(
             base_config,
             winner_drain_g_on_s=float(winner_drain_g_on_s),
@@ -551,7 +587,7 @@ def run_common_inhibit_parameter_sweeps(
             seed=seed,
             baseline_summary=baseline["summary_metrics"],
             progress=progress,
-            progress_phase=f"joint-search#{combo_index}",
+            progress_phase=f"joint-search#{joint_combo_count}/{exact_combo_eval_count}",
         )
         row = {
             "winner_drain_g_on_s": float(winner_drain_g_on_s),

@@ -115,6 +115,7 @@ def simulate_physical_closure_drain(
     capture_time_s: float,
     config: PhysicalClosureDrainConfig | None = None,
     candidate_cache: Mapping[str, Any] | None = None,
+    include_traces: bool = True,
 ) -> dict[str, Any]:
     resolved = default_physical_closure_drain_config() if config is None else config
     values_t = np.asarray(time_s, dtype=float).reshape(-1)
@@ -123,25 +124,11 @@ def simulate_physical_closure_drain(
     zero_branch_map = {label: zero_trace.tolist() for label in labels}
 
     if not winner_valid or winner_index < 0 or winner_index >= len(labels):
-        return {
-            "time_s": values_t.tolist(),
+        payload = {
             "control_node_name": resolved.control_node_name,
-            "closure_variable": zero_trace.tolist(),
-            "common_inhibit_v": zero_trace.tolist(),
-            "shared_node_voltage_v": zero_trace.tolist(),
-            "winner_drain_enable_by_branch": dict(zero_branch_map),
-            "winner_drain_power_w": zero_trace.tolist(),
-            "winner_drain_current_a": zero_trace.tolist(),
-            "winner_drain_energy_j": zero_trace.tolist(),
-            "remaining_shared_energy_j": zero_trace.tolist(),
-            "trial_complete_signal": zero_trace.tolist(),
-            "winner_branch_power_w": zero_trace.tolist(),
             "winner_branch_post_click_energy_j": 0.0,
             "winner_drain_total_energy_j": 0.0,
             "shared_leak_total_energy_j": 0.0,
-            "loser_branch_power_w": dict(zero_branch_map),
-            "loser_suppression": dict(zero_branch_map),
-            "loser_clamp_conductance_s": dict(zero_branch_map),
             "loser_post_click_energy_j": {label: 0.0 for label in labels},
             "initial_remaining_energy_j": 0.0,
             "winner_index": int(winner_index),
@@ -153,7 +140,28 @@ def simulate_physical_closure_drain(
             "trial_complete_time_s": float("inf"),
             "trial_complete_reason": "inactive",
             "monotonic_remaining_energy": True,
+            "terminal_loser_suppression_mean": 0.0,
         }
+        if include_traces:
+            payload.update(
+                {
+                    "time_s": values_t.tolist(),
+                    "closure_variable": zero_trace.tolist(),
+                    "common_inhibit_v": zero_trace.tolist(),
+                    "shared_node_voltage_v": zero_trace.tolist(),
+                    "winner_drain_enable_by_branch": dict(zero_branch_map),
+                    "winner_drain_power_w": zero_trace.tolist(),
+                    "winner_drain_current_a": zero_trace.tolist(),
+                    "winner_drain_energy_j": zero_trace.tolist(),
+                    "remaining_shared_energy_j": zero_trace.tolist(),
+                    "trial_complete_signal": zero_trace.tolist(),
+                    "winner_branch_power_w": zero_trace.tolist(),
+                    "loser_branch_power_w": dict(zero_branch_map),
+                    "loser_suppression": dict(zero_branch_map),
+                    "loser_clamp_conductance_s": dict(zero_branch_map),
+                }
+            )
+        return payload
 
     winner_label = labels[winner_index]
     cache = (
@@ -169,25 +177,11 @@ def simulate_physical_closure_drain(
             label: (unit_step.tolist() if label == winner_label else zero_trace.tolist())
             for label in labels
         }
-        return {
-            "time_s": values_t.tolist(),
+        payload = {
             "control_node_name": resolved.control_node_name,
-            "closure_variable": unit_step.tolist(),
-            "common_inhibit_v": (resolved.supply_v * unit_step).tolist(),
-            "shared_node_voltage_v": zero_trace.tolist(),
-            "winner_drain_enable_by_branch": winner_enable,
-            "winner_drain_power_w": zero_trace.tolist(),
-            "winner_drain_current_a": zero_trace.tolist(),
-            "winner_drain_energy_j": zero_trace.tolist(),
-            "remaining_shared_energy_j": zero_trace.tolist(),
-            "trial_complete_signal": unit_step.tolist(),
-            "winner_branch_power_w": zero_trace.tolist(),
             "winner_branch_post_click_energy_j": 0.0,
             "winner_drain_total_energy_j": 0.0,
             "shared_leak_total_energy_j": 0.0,
-            "loser_branch_power_w": {label: zero_trace.tolist() for label in labels if label != winner_label},
-            "loser_suppression": {label: unit_step.tolist() for label in labels if label != winner_label},
-            "loser_clamp_conductance_s": {label: (resolved.clamp_reference_g_on_s * unit_step).tolist() for label in labels if label != winner_label},
             "loser_post_click_energy_j": {label: 0.0 for label in labels if label != winner_label},
             "initial_remaining_energy_j": 0.0,
             "winner_index": int(winner_index),
@@ -199,7 +193,28 @@ def simulate_physical_closure_drain(
             "trial_complete_time_s": float(capture_time_s),
             "trial_complete_reason": "shared_energy_below_threshold",
             "monotonic_remaining_energy": True,
+            "terminal_loser_suppression_mean": 1.0 if len(labels) > 1 else 0.0,
         }
+        if include_traces:
+            payload.update(
+                {
+                    "time_s": values_t.tolist(),
+                    "closure_variable": unit_step.tolist(),
+                    "common_inhibit_v": (resolved.supply_v * unit_step).tolist(),
+                    "shared_node_voltage_v": zero_trace.tolist(),
+                    "winner_drain_enable_by_branch": winner_enable,
+                    "winner_drain_power_w": zero_trace.tolist(),
+                    "winner_drain_current_a": zero_trace.tolist(),
+                    "winner_drain_energy_j": zero_trace.tolist(),
+                    "remaining_shared_energy_j": zero_trace.tolist(),
+                    "trial_complete_signal": unit_step.tolist(),
+                    "winner_branch_power_w": zero_trace.tolist(),
+                    "loser_branch_power_w": {label: zero_trace.tolist() for label in labels if label != winner_label},
+                    "loser_suppression": {label: unit_step.tolist() for label in labels if label != winner_label},
+                    "loser_clamp_conductance_s": {label: (resolved.clamp_reference_g_on_s * unit_step).tolist() for label in labels if label != winner_label},
+                }
+            )
+        return payload
 
     base_shares = {
         label: future_energy_by_branch[label] / max(initial_remaining_energy, 1e-18)
@@ -312,25 +327,16 @@ def simulate_physical_closure_drain(
 
     post_capture_mask = active_indices
     monotonic = bool(np.all(np.diff(remaining_energy[post_capture_mask]) <= 1e-12)) if post_capture_mask.size else True
-    return {
-        "time_s": values_t.tolist(),
+    terminal_loser_suppression_mean = (
+        float(np.mean([values[active_indices[-1]] for values in loser_suppression.values()]))
+        if loser_suppression and active_indices.size
+        else 0.0
+    )
+    payload = {
         "control_node_name": resolved.control_node_name,
-        "closure_variable": closure_variable.tolist(),
-        "common_inhibit_v": common_inhibit_v.tolist(),
-        "shared_node_voltage_v": shared_node_voltage_v.tolist(),
-        "winner_drain_enable_by_branch": {label: values.tolist() for label, values in winner_enable.items()},
-        "winner_drain_power_w": winner_drain_power.tolist(),
-        "winner_drain_current_a": winner_drain_current.tolist(),
-        "winner_drain_energy_j": winner_drain_energy.tolist(),
-        "remaining_shared_energy_j": remaining_energy.tolist(),
-        "trial_complete_signal": trial_complete_signal.tolist(),
-        "winner_branch_power_w": winner_branch_power.tolist(),
         "winner_branch_post_click_energy_j": winner_branch_energy,
         "winner_drain_total_energy_j": float(winner_drain_energy[-1]),
         "shared_leak_total_energy_j": shared_leak_energy,
-        "loser_branch_power_w": {label: values.tolist() for label, values in loser_branch_power.items()},
-        "loser_suppression": {label: values.tolist() for label, values in loser_suppression.items()},
-        "loser_clamp_conductance_s": {label: values.tolist() for label, values in loser_clamp_conductance.items()},
         "loser_post_click_energy_j": loser_energy,
         "initial_remaining_energy_j": initial_remaining_energy,
         "winner_index": int(winner_index),
@@ -342,7 +348,28 @@ def simulate_physical_closure_drain(
         "trial_complete_time_s": completed_time,
         "trial_complete_reason": completed_reason,
         "monotonic_remaining_energy": monotonic,
+        "terminal_loser_suppression_mean": terminal_loser_suppression_mean,
     }
+    if include_traces:
+        payload.update(
+            {
+                "time_s": values_t.tolist(),
+                "closure_variable": closure_variable.tolist(),
+                "common_inhibit_v": common_inhibit_v.tolist(),
+                "shared_node_voltage_v": shared_node_voltage_v.tolist(),
+                "winner_drain_enable_by_branch": {label: values.tolist() for label, values in winner_enable.items()},
+                "winner_drain_power_w": winner_drain_power.tolist(),
+                "winner_drain_current_a": winner_drain_current.tolist(),
+                "winner_drain_energy_j": winner_drain_energy.tolist(),
+                "remaining_shared_energy_j": remaining_energy.tolist(),
+                "trial_complete_signal": trial_complete_signal.tolist(),
+                "winner_branch_power_w": winner_branch_power.tolist(),
+                "loser_branch_power_w": {label: values.tolist() for label, values in loser_branch_power.items()},
+                "loser_suppression": {label: values.tolist() for label, values in loser_suppression.items()},
+                "loser_clamp_conductance_s": {label: values.tolist() for label, values in loser_clamp_conductance.items()},
+            }
+        )
+    return payload
 
 
 def run_four_branch_candidate_with_physical_closure(
@@ -402,6 +429,7 @@ def run_four_branch_candidate_with_physical_closure(
             capture_time_s=float(latch_result["settled_at_s"]),
             config=resolved,
             candidate_cache=cache,
+            include_traces=False,
         )
         reduced_row = simulate_post_click_closure(
             time_s=candidate["time_s"],
@@ -412,6 +440,7 @@ def run_four_branch_candidate_with_physical_closure(
             capture_time_s=float(latch_result["settled_at_s"]),
             interpretation=reduced,
             candidate_cache=cache,
+            include_traces=False,
         )
         initial_remaining = float(physical["initial_remaining_energy_j"])
         winner_drain = float(physical["winner_drain_total_energy_j"])
@@ -428,8 +457,8 @@ def run_four_branch_candidate_with_physical_closure(
         total_reduced_loser_fraction += reduced_loser / denom
         total_winner_drain_path_count += float(physical["winner_drain_path_count"])
         all_monotonic = all_monotonic and bool(physical["monotonic_remaining_energy"])
-        if physical["loser_suppression"]:
-            total_terminal_loser_suppression += float(np.mean([values[-1] for values in physical["loser_suppression"].values()]))
+        if physical["winner_index"] >= 0 and physical["winner_label"] is not None:
+            total_terminal_loser_suppression += float(physical["terminal_loser_suppression_mean"])
             terminal_loser_suppression_count += 1
         if bool(physical["trial_complete"]):
             total_completion_count += 1
@@ -438,10 +467,32 @@ def run_four_branch_candidate_with_physical_closure(
             total_reduced_completion_count += 1
             total_reduced_completion_time += float(reduced_row["trial_complete_time_s"])
         if example_trial is None and physical["closure_active"]:
+            physical_trace = simulate_physical_closure_drain(
+                time_s=candidate["time_s"],
+                branch_power_w=candidate["branch_power_w"],
+                branch_labels=candidate["branch_labels"],
+                winner_index=int(latch_result["winner_index"]),
+                winner_valid=bool(latch_result["winner_valid"]),
+                capture_time_s=float(latch_result["settled_at_s"]),
+                config=resolved,
+                candidate_cache=cache,
+                include_traces=True,
+            )
+            reduced_trace = simulate_post_click_closure(
+                time_s=candidate["time_s"],
+                branch_power_w=candidate["branch_power_w"],
+                branch_labels=candidate["branch_labels"],
+                winner_index=int(latch_result["winner_index"]),
+                winner_valid=bool(latch_result["winner_valid"]),
+                capture_time_s=float(latch_result["settled_at_s"]),
+                interpretation=reduced,
+                candidate_cache=cache,
+                include_traces=True,
+            )
             example_trial = {
                 "latch_result": dict(latch_result),
-                "physical": physical,
-                "reduced": reduced_row,
+                "physical": physical_trace,
+                "reduced": reduced_trace,
                 "event_times": event_times[trial_index].tolist(),
             }
 

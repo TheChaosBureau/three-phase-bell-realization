@@ -181,22 +181,17 @@ def simulate_post_click_closure(
     capture_time_s: float,
     interpretation: ClosureInterpretationConfig,
     candidate_cache: Mapping[str, Any] | None = None,
+    include_traces: bool = True,
 ) -> dict[str, Any]:
     values_t = np.asarray(time_s, dtype=float).reshape(-1)
     labels = list(branch_labels)
     if not winner_valid or winner_index < 0 or winner_index >= len(labels):
         zero_trace = np.zeros_like(values_t)
-        return {
-            "time_s": values_t.tolist(),
+        payload = {
             "activation_count": 0,
             "closure_active": False,
             "winner_index": int(winner_index),
             "winner_label": None,
-            "closure_variable": zero_trace.tolist(),
-            "remaining_shared_energy_j": zero_trace.tolist(),
-            "winner_drain_power_w": zero_trace.tolist(),
-            "winner_drain_energy_j": zero_trace.tolist(),
-            "loser_suppression": {label: zero_trace.tolist() for label in labels},
             "loser_post_click_energy_j": {label: 0.0 for label in labels},
             "winner_branch_post_click_energy_j": 0.0,
             "winner_drain_total_energy_j": 0.0,
@@ -204,7 +199,20 @@ def simulate_post_click_closure(
             "trial_complete": False,
             "trial_complete_time_s": float("inf"),
             "monotonic_remaining_energy": True,
+            "terminal_loser_suppression_mean": 0.0,
         }
+        if include_traces:
+            payload.update(
+                {
+                    "time_s": values_t.tolist(),
+                    "closure_variable": zero_trace.tolist(),
+                    "remaining_shared_energy_j": zero_trace.tolist(),
+                    "winner_drain_power_w": zero_trace.tolist(),
+                    "winner_drain_energy_j": zero_trace.tolist(),
+                    "loser_suppression": {label: zero_trace.tolist() for label in labels},
+                }
+            )
+        return payload
 
     winner_label = labels[winner_index]
     cache = (
@@ -215,17 +223,11 @@ def simulate_post_click_closure(
     future_energies = future_branch_energy_from_cache(cache, capture_time_s=float(capture_time_s))
     initial_remaining_energy = float(sum(future_energies.values()))
     if initial_remaining_energy <= 1e-18:
-        return {
-            "time_s": values_t.tolist(),
+        payload = {
             "activation_count": 1,
             "closure_active": True,
             "winner_index": int(winner_index),
             "winner_label": winner_label,
-            "closure_variable": np.where(values_t >= capture_time_s, 1.0, 0.0).tolist(),
-            "remaining_shared_energy_j": np.zeros_like(values_t).tolist(),
-            "winner_drain_power_w": np.zeros_like(values_t).tolist(),
-            "winner_drain_energy_j": np.zeros_like(values_t).tolist(),
-            "loser_suppression": {label: np.zeros_like(values_t).tolist() for label in labels if label != winner_label},
             "loser_post_click_energy_j": {label: 0.0 for label in labels if label != winner_label},
             "winner_branch_post_click_energy_j": 0.0,
             "winner_drain_total_energy_j": 0.0,
@@ -233,7 +235,20 @@ def simulate_post_click_closure(
             "trial_complete": True,
             "trial_complete_time_s": float(capture_time_s),
             "monotonic_remaining_energy": True,
+            "terminal_loser_suppression_mean": 0.0,
         }
+        if include_traces:
+            payload.update(
+                {
+                    "time_s": values_t.tolist(),
+                    "closure_variable": np.where(values_t >= capture_time_s, 1.0, 0.0).tolist(),
+                    "remaining_shared_energy_j": np.zeros_like(values_t).tolist(),
+                    "winner_drain_power_w": np.zeros_like(values_t).tolist(),
+                    "winner_drain_energy_j": np.zeros_like(values_t).tolist(),
+                    "loser_suppression": {label: np.zeros_like(values_t).tolist() for label in labels if label != winner_label},
+                }
+            )
+        return payload
 
     base_shares = {label: future_energies[label] / initial_remaining_energy for label in labels}
     dt = np.asarray(cache["dt"], dtype=float)
@@ -288,17 +303,16 @@ def simulate_post_click_closure(
             completed_time = float(values_t[active_indices[completion_hits[0]]])
 
     monotonic = bool(np.all(np.diff(remaining_energy[active_indices]) <= 1e-12)) if active_indices.size else True
-    return {
-        "time_s": values_t.tolist(),
+    terminal_loser_suppression_mean = (
+        float(np.mean([values[active_indices[-1]] for values in loser_suppression.values()]))
+        if loser_suppression and active_indices.size
+        else 0.0
+    )
+    payload = {
         "activation_count": 1,
         "closure_active": True,
         "winner_index": int(winner_index),
         "winner_label": winner_label,
-        "closure_variable": z_trace.tolist(),
-        "remaining_shared_energy_j": remaining_energy.tolist(),
-        "winner_drain_power_w": winner_drain_power.tolist(),
-        "winner_drain_energy_j": winner_drain_energy.tolist(),
-        "loser_suppression": {label: values.tolist() for label, values in loser_suppression.items()},
         "loser_post_click_energy_j": loser_energy,
         "winner_branch_post_click_energy_j": winner_branch_energy,
         "winner_drain_total_energy_j": float(winner_drain_energy[-1]),
@@ -306,7 +320,20 @@ def simulate_post_click_closure(
         "trial_complete": completed,
         "trial_complete_time_s": completed_time,
         "monotonic_remaining_energy": monotonic,
+        "terminal_loser_suppression_mean": terminal_loser_suppression_mean,
     }
+    if include_traces:
+        payload.update(
+            {
+                "time_s": values_t.tolist(),
+                "closure_variable": z_trace.tolist(),
+                "remaining_shared_energy_j": remaining_energy.tolist(),
+                "winner_drain_power_w": winner_drain_power.tolist(),
+                "winner_drain_energy_j": winner_drain_energy.tolist(),
+                "loser_suppression": {label: values.tolist() for label, values in loser_suppression.items()},
+            }
+        )
+    return payload
 
 
 def run_four_branch_candidate_with_closure(
@@ -341,12 +368,23 @@ def run_four_branch_candidate_with_closure(
             winner_valid=bool(latch_result["winner_valid"]),
             capture_time_s=float(latch_result["settled_at_s"]),
             interpretation=interpretation,
+            include_traces=False,
         )
         closure_rows.append(closure)
         if example_trial is None and closure["closure_active"]:
+            closure_trace = simulate_post_click_closure(
+                time_s=candidate["time_s"],
+                branch_power_w=candidate["branch_power_w"],
+                branch_labels=candidate["branch_labels"],
+                winner_index=int(latch_result["winner_index"]),
+                winner_valid=bool(latch_result["winner_valid"]),
+                capture_time_s=float(latch_result["settled_at_s"]),
+                interpretation=interpretation,
+                include_traces=True,
+            )
             example_trial = {
                 "latch_result": dict(latch_result),
-                "closure": closure,
+                "closure": closure_trace,
                 "event_times": event_time_rows[trial_index].tolist(),
             }
 
