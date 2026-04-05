@@ -99,6 +99,20 @@ def test_preferred_chain_energy_accounting_is_finite_and_consistent() -> None:
     assert energy["max_energy_balance_abs_fraction"] < 1e-6
 
 
+def test_preferred_chain_progress_output_can_be_enabled(capsys) -> None:
+    run_preferred_physical_chain_benchmark(
+        SHOT_TRIGGER_SPEC,
+        n_trials=2,
+        seed=20260405,
+        case_names=("case_a",),
+        verbose_progress=True,
+    )
+    captured = capsys.readouterr()
+    assert "preferred-physical-chain" in captured.err
+    assert "pre-click-race" in captured.err
+    assert "post-click-closure" in captured.err
+
+
 def test_preferred_chain_report_smoke_writes_artifacts(tmp_path: Path) -> None:
     detector_next_summary = tmp_path / "detector_next_summary.csv"
     detector_next_summary.write_text(

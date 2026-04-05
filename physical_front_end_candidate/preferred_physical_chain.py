@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import sys
+import time
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Any
 
 import numpy as np
@@ -32,6 +34,51 @@ from .preferred_physical_chain_metrics import (
 from .resonant_four_branch_candidate import benchmark_resonant_four_branch_cases, simulate_resonant_four_branch_candidate
 
 
+@dataclass
+class _ProgressReporter:
+    total_steps: int
+    enabled: bool = False
+    completed_steps: int = 0
+    start_time_s: float = 0.0
+    last_report_time_s: float = 0.0
+    last_phase: str | None = None
+    last_case_name: str | None = None
+
+    def __post_init__(self) -> None:
+        self.start_time_s = time.monotonic()
+        self.last_report_time_s = self.start_time_s
+        if self.enabled:
+            self.report("starting", force=True)
+
+    def report(self, phase: str, case_name: str | None = None, *, force: bool = False) -> None:
+        if not self.enabled:
+            return
+        now = time.monotonic()
+        phase_changed = phase != self.last_phase or case_name != self.last_case_name
+        if not force and not phase_changed and (now - self.last_report_time_s) < 0.5:
+            return
+        elapsed_s = max(now - self.start_time_s, 0.0)
+        completed = self.completed_steps
+        rate = completed / elapsed_s if elapsed_s > 0.0 else 0.0
+        remaining = max(self.total_steps - completed, 0)
+        eta_s = remaining / rate if rate > 0.0 else None
+        percent = 100.0 * completed / max(self.total_steps, 1)
+        eta_text = "unknown" if eta_s is None else f"{eta_s:.1f}s"
+        case_text = "" if case_name is None else f", case={case_name}"
+        message = (
+            f"[preferred-physical-chain] {completed}/{self.total_steps} steps "
+            f"({percent:.1f}%), elapsed {elapsed_s:.1f}s, ETA {eta_text}, phase={phase}{case_text}"
+        )
+        print(message, file=sys.stderr, flush=True)
+        self.last_report_time_s = now
+        self.last_phase = phase
+        self.last_case_name = case_name
+
+    def advance(self, phase: str, case_name: str | None = None, *, steps: int = 1) -> None:
+        self.completed_steps += int(steps)
+        self.report(phase, case_name=case_name, force=self.completed_steps >= self.total_steps)
+
+
 def preferred_physical_chain_benchmark_cases() -> list[dict[str, Any]]:
     return benchmark_resonant_four_branch_cases()
 
@@ -53,6 +100,8 @@ def _run_pre_click_race(
     n_trials: int,
     seed: int,
     boundary_config: Mapping[str, Any] | None = None,
+    progress: _ProgressReporter | None = None,
+    case_name: str | None = None,
 ) -> dict[str, Any]:
     trace = materialize_candidate_trace(candidate, boundary_config=boundary_config)
     detector_envelopes = trace_to_detector_envelopes(trace)
@@ -90,6 +139,8 @@ def _run_pre_click_race(
                 "suppressed_indices": list(latch_result["suppressed_indices"]),
             }
         )
+        if progress is not None:
+            progress.advance("pre-click-race", case_name=case_name)
 
     frequency_summary = winner_frequency_summary(winners, n_branches=len(candidate["branch_labels"]))
     return {
@@ -115,10 +166,20 @@ def run_preferred_physical_chain_candidate(
     boundary_config: Mapping[str, Any] | None = None,
     race_result: Mapping[str, Any] | None = None,
     candidate_cache: Mapping[str, Any] | None = None,
+    progress: _ProgressReporter | None = None,
+    case_name: str | None = None,
 ) -> dict[str, Any]:
     resolved_closure = _resolve_closure_config(closure_config)
     race = (
-        _run_pre_click_race(candidate, detector_spec, n_trials=n_trials, seed=seed, boundary_config=boundary_config)
+        _run_pre_click_race(
+            candidate,
+            detector_spec,
+            n_trials=n_trials,
+            seed=seed,
+            boundary_config=boundary_config,
+            progress=progress,
+            case_name=case_name,
+        )
         if race_result is None
         else dict(race_result)
     )
@@ -154,6 +215,8 @@ def run_preferred_physical_chain_candidate(
                 **energy_row,
             }
         )
+        if progress is not None:
+            progress.advance("post-click-closure", case_name=case_name)
         if example_trial is None and bool(physical["closure_active"]):
             physical_trace = simulate_physical_closure_drain(
                 time_s=candidate["time_s"],
@@ -222,6 +285,8 @@ def run_preferred_physical_chain_case(
     seed: int,
     closure_config: PhysicalClosureDrainConfig | Mapping[str, Any] | None = None,
     boundary_config: Mapping[str, Any] | None = None,
+    progress: _ProgressReporter | None = None,
+    case_name: str | None = None,
 ) -> dict[str, Any]:
     candidate = simulate_resonant_four_branch_candidate(state4, a_deg=a_deg, b_deg=b_deg)
     return run_preferred_physical_chain_candidate(
@@ -231,6 +296,8 @@ def run_preferred_physical_chain_case(
         seed=seed,
         closure_config=closure_config,
         boundary_config=boundary_config,
+        progress=progress,
+        case_name=case_name,
     )
 
 
@@ -242,6 +309,7 @@ def run_preferred_physical_chain_benchmark(
     case_names: Sequence[str] | None = None,
     closure_config: PhysicalClosureDrainConfig | Mapping[str, Any] | None = None,
     boundary_config: Mapping[str, Any] | None = None,
+    verbose_progress: bool = False,
 ) -> dict[str, Any]:
     selected_case_names = None if case_names is None else set(case_names)
     cases = [
@@ -251,6 +319,10 @@ def run_preferred_physical_chain_benchmark(
     ]
     if not cases:
         raise ValueError("No preferred physical-chain benchmark cases selected.")
+    progress = _ProgressReporter(
+        total_steps=max(len(cases) * max(2 * n_trials, 1), 1),
+        enabled=verbose_progress,
+    )
 
     case_results: list[dict[str, Any]] = []
     case_rows: list[dict[str, Any]] = []
@@ -261,6 +333,7 @@ def run_preferred_physical_chain_benchmark(
     example_trial: dict[str, Any] | None = None
 
     for case_index, case in enumerate(cases):
+        progress.report("starting-case", case_name=str(case["case"]), force=True)
         candidate = simulate_resonant_four_branch_candidate(case["state4"], a_deg=case["a_deg"], b_deg=case["b_deg"])
         result = run_preferred_physical_chain_candidate(
             candidate,
@@ -269,6 +342,8 @@ def run_preferred_physical_chain_benchmark(
             seed=seed + 1_003 * case_index,
             closure_config=closure_config,
             boundary_config=boundary_config,
+            progress=progress,
+            case_name=str(case["case"]),
         )
         case_results.append({"case": case, "result": result})
         case_rows.append(
@@ -340,6 +415,7 @@ def run_preferred_physical_chain_benchmark(
         energy_summary,
         chsh_result,
     )
+    progress.report("benchmark-complete", force=True)
     return {
         "case_results": case_results,
         "case_rows": case_rows,

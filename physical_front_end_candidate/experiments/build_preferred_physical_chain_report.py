@@ -191,6 +191,7 @@ def build_preferred_physical_chain_report(
     n_trials: int = 1_200,
     seed: int = 20260405,
     case_names: Sequence[str] | None = None,
+    verbose_progress: bool = False,
 ) -> dict[str, Any]:
     output_dir = Path(outdir)
     full_chain_dir = output_dir / "full_chain"
@@ -211,6 +212,7 @@ def build_preferred_physical_chain_report(
         n_trials=n_trials,
         seed=seed,
         case_names=case_names,
+        verbose_progress=verbose_progress,
     )
 
     full_chain_rows = [
@@ -351,6 +353,7 @@ def main() -> None:
     parser.add_argument("--n-trials", type=int, default=1_200)
     parser.add_argument("--seed", type=int, default=20260405)
     parser.add_argument("--case", action="append", dest="case_names", default=None)
+    parser.add_argument("--quiet-progress", action="store_true")
     args = parser.parse_args()
     build_preferred_physical_chain_report(
         outdir=args.outdir,
@@ -358,6 +361,7 @@ def main() -> None:
         n_trials=args.n_trials,
         seed=args.seed,
         case_names=args.case_names,
+        verbose_progress=not args.quiet_progress,
     )
 
 
