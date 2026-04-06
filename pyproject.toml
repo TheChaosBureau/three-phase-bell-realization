@@ -21,6 +21,7 @@ dependencies = [
     "sympy (>=1.14.0,<2.0.0)",
     "pytest (>=9.0.2,<10.0.0)",
     "allure-pytest (>=2.15.3,<3.0.0)",
+    "pyspice (>=1.5,<2.0)",
 ]
 
 [tool.poetry]
