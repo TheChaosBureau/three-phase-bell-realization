@@ -36,6 +36,16 @@ from .preferred_physical_chain import (
     run_preferred_physical_chain_candidate,
     run_preferred_physical_chain_case,
 )
+from .preferred_physical_chain_lc import (
+    CoupledPortLCFrontEndConfig,
+    ExplicitLCCircuitClosureConfig,
+    preferred_physical_chain_lc_benchmark_cases,
+    run_preferred_physical_chain_lc_benchmark,
+    run_preferred_physical_chain_lc_candidate,
+    run_preferred_physical_chain_lc_case,
+    simulate_explicit_lc_closure_drain,
+    simulate_preferred_physical_chain_lc_candidate,
+)
 from .preferred_physical_chain_energy import build_trial_energy_accounting, summarize_energy_accounting_rows
 from .preferred_physical_chain_metrics import build_chsh_result, build_pre_click_comparison, build_summary_metrics, summarize_post_click_behavior
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
@@ -115,10 +125,18 @@ def build_preferred_physical_chain_report(*args: Any, **kwargs: Any):
     return _build(*args, **kwargs)
 
 
+def build_preferred_physical_chain_lc_report(*args: Any, **kwargs: Any):
+    from .experiments.build_preferred_physical_chain_lc_report import build_preferred_physical_chain_lc_report as _build
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
     "CommonInhibitTuningSweepConfig",
+    "CoupledPortLCFrontEndConfig",
     "ClosureInterpretationConfig",
+    "ExplicitLCCircuitClosureConfig",
     "FourBranchPhysicalFrontEndConfig",
     "PhysicalClosureDrainConfig",
     "PhysicalFrontEndConfig",
@@ -126,6 +144,7 @@ __all__ = [
     "ResonantSharedModeFrontEndConfig",
     "build_common_inhibit_tuning_report",
     "build_preferred_physical_chain_report",
+    "build_preferred_physical_chain_lc_report",
     "build_chsh_result",
     "build_pre_click_comparison",
     "build_summary_metrics",
@@ -161,6 +180,7 @@ __all__ = [
     "materialize_candidate_trace",
     "preferred_common_mode_interpretation",
     "preferred_physical_chain_benchmark_cases",
+    "preferred_physical_chain_lc_benchmark_cases",
     "reduced_to_physical_mapping_summary",
     "run_common_inhibit_parameter_sweeps",
     "run_four_branch_candidate_handoff",
@@ -172,11 +192,16 @@ __all__ = [
     "run_preferred_physical_chain_benchmark",
     "run_preferred_physical_chain_candidate",
     "run_preferred_physical_chain_case",
+    "run_preferred_physical_chain_lc_benchmark",
+    "run_preferred_physical_chain_lc_candidate",
+    "run_preferred_physical_chain_lc_case",
     "resolved_calibrated_boundary_config",
     "resolved_repro_check_config",
     "selected_handoff_export_config",
     "simulate_four_branch_candidate_pre_click_race",
+    "simulate_explicit_lc_closure_drain",
     "simulate_physical_closure_drain",
+    "simulate_preferred_physical_chain_lc_candidate",
     "simulate_refined_four_branch_candidate",
     "simulate_resonant_four_branch_candidate",
     "simulate_post_click_closure",
