@@ -54,6 +54,15 @@ from .preferred_front_end_netlist_candidate import (
     run_preferred_front_end_netlist_case,
     simulate_preferred_front_end_netlist_candidate,
 )
+from .preferred_chain_codesign import (
+    PreferredChainCodesignConfig,
+    preferred_chain_codesign_benchmark_cases,
+    run_preferred_chain_codesign_benchmark,
+    run_preferred_chain_codesign_candidate,
+    run_preferred_chain_codesign_case,
+    simulate_codesigned_closure_drain,
+    simulate_preferred_chain_codesign_candidate,
+)
 from .preferred_physical_chain_energy import build_trial_energy_accounting, summarize_energy_accounting_rows
 from .preferred_physical_chain_metrics import build_chsh_result, build_pre_click_comparison, build_summary_metrics, summarize_post_click_behavior
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
@@ -147,6 +156,14 @@ def build_preferred_front_end_netlist_candidate_report(*args: Any, **kwargs: Any
     return _build(*args, **kwargs)
 
 
+def build_preferred_chain_codesign_report(*args: Any, **kwargs: Any):
+    from .experiments.build_preferred_chain_codesign_report import (
+        build_preferred_chain_codesign_report as _build,
+    )
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "CalibratedBoundaryConfig",
     "CommonInhibitTuningSweepConfig",
@@ -157,10 +174,12 @@ __all__ = [
     "FourBranchPhysicalFrontEndConfig",
     "PhysicalClosureDrainConfig",
     "PhysicalFrontEndConfig",
+    "PreferredChainCodesignConfig",
     "PreferredFrontEndNetlistConfig",
     "RefinedSharedCoreFrontEndConfig",
     "ResonantSharedModeFrontEndConfig",
     "build_common_inhibit_tuning_report",
+    "build_preferred_chain_codesign_report",
     "build_preferred_front_end_netlist_candidate_report",
     "build_preferred_physical_chain_report",
     "build_preferred_physical_chain_lc_report",
@@ -198,6 +217,7 @@ __all__ = [
     "freeze_boundary_note_data",
     "materialize_candidate_trace",
     "preferred_common_mode_interpretation",
+    "preferred_chain_codesign_benchmark_cases",
     "preferred_front_end_netlist_benchmark_cases",
     "preferred_physical_chain_benchmark_cases",
     "preferred_physical_chain_lc_benchmark_cases",
@@ -212,6 +232,9 @@ __all__ = [
     "run_preferred_physical_chain_benchmark",
     "run_preferred_physical_chain_candidate",
     "run_preferred_physical_chain_case",
+    "run_preferred_chain_codesign_benchmark",
+    "run_preferred_chain_codesign_candidate",
+    "run_preferred_chain_codesign_case",
     "run_preferred_front_end_netlist_benchmark",
     "run_preferred_front_end_netlist_case",
     "run_preferred_physical_chain_lc_benchmark",
@@ -222,6 +245,8 @@ __all__ = [
     "selected_handoff_export_config",
     "simulate_four_branch_candidate_pre_click_race",
     "simulate_explicit_lc_closure_drain",
+    "simulate_codesigned_closure_drain",
+    "simulate_preferred_chain_codesign_candidate",
     "simulate_preferred_front_end_netlist_candidate",
     "simulate_physical_closure_drain",
     "simulate_preferred_physical_chain_lc_candidate",
