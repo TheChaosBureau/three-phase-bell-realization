@@ -75,8 +75,11 @@ PREFERRED_PHYSICAL_CHAIN_NEXT_SUMMARY ?= artifacts/detector_next/results_summary
 PREFERRED_PHYSICAL_CHAIN_LC_OUTDIR ?= artifacts/preferred_physical_chain_lc
 PREFERRED_PHYSICAL_CHAIN_LC_TRIALS ?= 1200
 PREFERRED_PHYSICAL_CHAIN_LC_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+PREFERRED_FRONT_END_NETLIST_OUTDIR ?= artifacts/preferred_front_end_netlist_candidate
+PREFERRED_FRONT_END_NETLIST_TRIALS ?= 1200
+PREFERRED_FRONT_END_NETLIST_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report preferred-front-end-netlist-candidate-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -300,4 +303,12 @@ preferred-physical-chain-lc-report:
 		--outdir "$(PREFERRED_PHYSICAL_CHAIN_LC_OUTDIR)" \
 		--detector-next-summary-csv "$(PREFERRED_PHYSICAL_CHAIN_LC_NEXT_SUMMARY)" \
 		--n-trials "$(PREFERRED_PHYSICAL_CHAIN_LC_TRIALS)"
+	@printf '\a'
+
+preferred-front-end-netlist-candidate-report:
+	mkdir -p "$(PREFERRED_FRONT_END_NETLIST_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_preferred_front_end_netlist_candidate_report \
+		--outdir "$(PREFERRED_FRONT_END_NETLIST_OUTDIR)" \
+		--detector-next-summary-csv "$(PREFERRED_FRONT_END_NETLIST_NEXT_SUMMARY)" \
+		--n-trials "$(PREFERRED_FRONT_END_NETLIST_TRIALS)"
 	@printf '\a'
