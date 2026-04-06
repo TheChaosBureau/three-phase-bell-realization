@@ -17,6 +17,7 @@
             quarto            # ipynb / qmd / markdown / pdf converter
             tectonic
             zlib
+            libngspice
             stdenv.cc.cc.lib  # needed b/c I'm keeping nix env deps separate from python deps (poetry)
             allure
           ];
@@ -25,6 +26,7 @@
           export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
             pkgs.stdenv.cc.cc.lib
             pkgs.zlib
+            pkgs.libngspice
           ]}:$LD_LIBRARY_PATH
 
           # Ensure Poetry uses an in-project virtualenv: ./\.venv
