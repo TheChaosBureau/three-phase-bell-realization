@@ -72,6 +72,13 @@ from .preferred_chain_device_physicalization import (
     simulate_device_physicalized_closure_drain,
     simulate_preferred_chain_device_physicalization_candidate,
 )
+from .actual_spice_front_end import (
+    ActualSpiceFrontEndConfig,
+    actual_spice_front_end_benchmark_cases,
+    run_actual_spice_front_end_benchmark,
+    run_actual_spice_front_end_case,
+    simulate_actual_spice_front_end_candidate,
+)
 from .preferred_physical_chain_energy import build_trial_energy_accounting, summarize_energy_accounting_rows
 from .preferred_physical_chain_metrics import build_chsh_result, build_pre_click_comparison, build_summary_metrics, summarize_post_click_behavior
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
@@ -181,8 +188,18 @@ def build_preferred_chain_device_physicalization_report(*args: Any, **kwargs: An
     return _build(*args, **kwargs)
 
 
+def build_actual_spice_front_end_report(*args: Any, **kwargs: Any):
+    from .experiments.build_actual_spice_front_end_report import (
+        build_actual_spice_front_end_report as _build,
+    )
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
+    "ActualSpiceFrontEndConfig",
     "CalibratedBoundaryConfig",
+    "actual_spice_front_end_benchmark_cases",
     "CommonInhibitTuningSweepConfig",
     "CoupledPortLCFrontEndConfig",
     "ClosureInterpretationConfig",
@@ -196,6 +213,7 @@ __all__ = [
     "PreferredFrontEndNetlistConfig",
     "RefinedSharedCoreFrontEndConfig",
     "ResonantSharedModeFrontEndConfig",
+    "build_actual_spice_front_end_report",
     "build_common_inhibit_tuning_report",
     "build_preferred_chain_codesign_report",
     "build_preferred_chain_device_physicalization_report",
@@ -242,6 +260,8 @@ __all__ = [
     "preferred_physical_chain_benchmark_cases",
     "preferred_physical_chain_lc_benchmark_cases",
     "reduced_to_physical_mapping_summary",
+    "run_actual_spice_front_end_benchmark",
+    "run_actual_spice_front_end_case",
     "run_common_inhibit_parameter_sweeps",
     "run_four_branch_candidate_handoff",
     "run_four_branch_candidate_with_closure",
@@ -269,6 +289,7 @@ __all__ = [
     "simulate_four_branch_candidate_pre_click_race",
     "simulate_explicit_lc_closure_drain",
     "simulate_codesigned_closure_drain",
+    "simulate_actual_spice_front_end_candidate",
     "simulate_device_physicalized_closure_drain",
     "simulate_preferred_chain_device_physicalization_candidate",
     "simulate_preferred_chain_codesign_candidate",
