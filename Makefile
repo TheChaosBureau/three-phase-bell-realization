@@ -88,8 +88,11 @@ ACTUAL_SPICE_FRONT_END_OUTDIR ?= artifacts/actual_spice_front_end
 SPICE_DRIVEN_PREFERRED_CHAIN_OUTDIR ?= artifacts/spice_driven_preferred_chain
 SPICE_DRIVEN_PREFERRED_CHAIN_TRIALS ?= 1200
 SPICE_DRIVEN_PREFERRED_CHAIN_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
+SPICE_DRIVEN_ROBUSTNESS_OUTDIR ?= artifacts/spice_driven_robustness
+SPICE_DRIVEN_ROBUSTNESS_TRIALS ?= 180
+SPICE_DRIVEN_ROBUSTNESS_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report preferred-front-end-netlist-candidate-report preferred-chain-codesign-report preferred-chain-device-physicalization-report actual-spice-front-end-report spice-driven-preferred-chain-report
+.PHONY: qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report preferred-front-end-netlist-candidate-report preferred-chain-codesign-report preferred-chain-device-physicalization-report actual-spice-front-end-report spice-driven-preferred-chain-report spice-driven-robustness-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -351,4 +354,12 @@ spice-driven-preferred-chain-report:
 		--outdir "$(SPICE_DRIVEN_PREFERRED_CHAIN_OUTDIR)" \
 		--detector-next-summary-csv "$(SPICE_DRIVEN_PREFERRED_CHAIN_NEXT_SUMMARY)" \
 		--n-trials "$(SPICE_DRIVEN_PREFERRED_CHAIN_TRIALS)"
+	@printf '\a'
+
+spice-driven-robustness-report:
+	mkdir -p "$(SPICE_DRIVEN_ROBUSTNESS_OUTDIR)"
+	poetry run $(PYTHON) -m physical_front_end_candidate.experiments.build_spice_driven_robustness_report \
+		--outdir "$(SPICE_DRIVEN_ROBUSTNESS_OUTDIR)" \
+		--detector-next-summary-csv "$(SPICE_DRIVEN_ROBUSTNESS_NEXT_SUMMARY)" \
+		--n-trials "$(SPICE_DRIVEN_ROBUSTNESS_TRIALS)"
 	@printf '\a'

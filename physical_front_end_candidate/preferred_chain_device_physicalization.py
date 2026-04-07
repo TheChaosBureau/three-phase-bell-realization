@@ -957,6 +957,7 @@ def run_preferred_chain_device_physicalization_candidate(
     n_trials: int,
     seed: int,
     physicalization_config: PreferredChainDevicePhysicalizationConfig | Mapping[str, Any] | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
     baseline_result: Mapping[str, Any] | None = None,
     progress: _ProgressReporter | None = None,
     case_name: str | None = None,
@@ -966,6 +967,7 @@ def run_preferred_chain_device_physicalization_candidate(
         detector_spec,
         n_trials=n_trials,
         seed=seed,
+        boundary_config=boundary_config,
         progress=progress,
         case_name=case_name,
     )
@@ -1072,6 +1074,7 @@ def run_preferred_chain_device_physicalization_case(
     n_trials: int,
     seed: int,
     physicalization_config: PreferredChainDevicePhysicalizationConfig | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
     baseline_result: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     candidate = simulate_preferred_chain_device_physicalization_candidate(
@@ -1086,6 +1089,7 @@ def run_preferred_chain_device_physicalization_case(
         n_trials=n_trials,
         seed=seed,
         physicalization_config=physicalization_config,
+        boundary_config=boundary_config,
         baseline_result=baseline_result,
     )
 
@@ -1097,6 +1101,7 @@ def run_preferred_chain_device_physicalization_benchmark(
     seed: int,
     case_names: Sequence[str] | None = None,
     physicalization_config: PreferredChainDevicePhysicalizationConfig | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
     verbose_progress: bool = False,
 ) -> dict[str, Any]:
     selected_case_names = None if case_names is None else set(case_names)
@@ -1147,6 +1152,7 @@ def run_preferred_chain_device_physicalization_benchmark(
             n_trials=n_trials,
             seed=seed + 1_003 * case_index,
             physicalization_config=physicalization_config,
+            boundary_config=boundary_config,
             baseline_result=baseline_result,
             progress=progress,
             case_name=str(case["case"]),

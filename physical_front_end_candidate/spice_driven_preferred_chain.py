@@ -315,6 +315,7 @@ def run_spice_driven_preferred_chain_candidate(
     *,
     n_trials: int,
     seed: int,
+    boundary_config: Mapping[str, Any] | None = None,
     baseline_result: Mapping[str, Any] | None = None,
     progress: _ProgressReporter | None = None,
     case_name: str | None = None,
@@ -324,6 +325,7 @@ def run_spice_driven_preferred_chain_candidate(
         detector_spec,
         n_trials=n_trials,
         seed=seed,
+        boundary_config=boundary_config,
         baseline_result=baseline_result,
         progress=progress,
         case_name=case_name,
@@ -345,6 +347,7 @@ def run_spice_driven_preferred_chain_case(
     n_trials: int,
     seed: int,
     spice_driven_config: SpiceDrivenPreferredChainConfig | Mapping[str, Any] | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
     baseline_result: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     candidate = simulate_spice_driven_preferred_chain_candidate(
@@ -358,6 +361,7 @@ def run_spice_driven_preferred_chain_case(
         detector_spec,
         n_trials=n_trials,
         seed=seed,
+        boundary_config=boundary_config,
         baseline_result=baseline_result,
     )
 
@@ -369,6 +373,8 @@ def run_spice_driven_preferred_chain_benchmark(
     seed: int,
     case_names: Sequence[str] | None = None,
     spice_driven_config: SpiceDrivenPreferredChainConfig | Mapping[str, Any] | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
+    baseline_case_map: Mapping[str, Mapping[str, Any]] | None = None,
     verbose_progress: bool = False,
 ) -> dict[str, Any]:
     resolved = (
@@ -413,15 +419,18 @@ def run_spice_driven_preferred_chain_benchmark(
         case_name = str(case["case"])
         progress.report("simulate-actual-spice-front-end", case_name=case_name, force=True)
         case_seed = _stable_case_seed(seed, case_name)
-        baseline_result = run_preferred_chain_device_physicalization_case(
-            case["state4"],
-            a_deg=float(case["a_deg"]),
-            b_deg=float(case["b_deg"]),
-            detector_spec=detector_spec,
-            n_trials=n_trials,
-            seed=case_seed,
-            physicalization_config=resolved.physicalization_config,
-        )
+        if baseline_case_map is None:
+            baseline_result = run_preferred_chain_device_physicalization_case(
+                case["state4"],
+                a_deg=float(case["a_deg"]),
+                b_deg=float(case["b_deg"]),
+                detector_spec=detector_spec,
+                n_trials=n_trials,
+                seed=case_seed,
+                physicalization_config=resolved.physicalization_config,
+            )
+        else:
+            baseline_result = baseline_case_map[case_name]
         baseline_front_end_rows.append(
             {
                 "case": case_name,
@@ -485,6 +494,7 @@ def run_spice_driven_preferred_chain_benchmark(
             detector_spec,
             n_trials=n_trials,
             seed=case_seed,
+            boundary_config=boundary_config,
             baseline_result=baseline_result,
             progress=progress,
             case_name=case_name,
