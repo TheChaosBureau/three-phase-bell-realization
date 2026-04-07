@@ -79,6 +79,14 @@ from .actual_spice_front_end import (
     run_actual_spice_front_end_case,
     simulate_actual_spice_front_end_candidate,
 )
+from .spice_driven_preferred_chain import (
+    SpiceDrivenPreferredChainConfig,
+    run_spice_driven_preferred_chain_benchmark,
+    run_spice_driven_preferred_chain_candidate,
+    run_spice_driven_preferred_chain_case,
+    simulate_spice_driven_preferred_chain_candidate,
+    spice_driven_preferred_chain_benchmark_cases,
+)
 from .preferred_physical_chain_energy import build_trial_energy_accounting, summarize_energy_accounting_rows
 from .preferred_physical_chain_metrics import build_chsh_result, build_pre_click_comparison, build_summary_metrics, summarize_post_click_behavior
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
@@ -196,6 +204,14 @@ def build_actual_spice_front_end_report(*args: Any, **kwargs: Any):
     return _build(*args, **kwargs)
 
 
+def build_spice_driven_preferred_chain_report(*args: Any, **kwargs: Any):
+    from .experiments.build_spice_driven_preferred_chain_report import (
+        build_spice_driven_preferred_chain_report as _build,
+    )
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "ActualSpiceFrontEndConfig",
     "CalibratedBoundaryConfig",
@@ -213,6 +229,7 @@ __all__ = [
     "PreferredFrontEndNetlistConfig",
     "RefinedSharedCoreFrontEndConfig",
     "ResonantSharedModeFrontEndConfig",
+    "SpiceDrivenPreferredChainConfig",
     "build_actual_spice_front_end_report",
     "build_common_inhibit_tuning_report",
     "build_preferred_chain_codesign_report",
@@ -220,6 +237,7 @@ __all__ = [
     "build_preferred_front_end_netlist_candidate_report",
     "build_preferred_physical_chain_report",
     "build_preferred_physical_chain_lc_report",
+    "build_spice_driven_preferred_chain_report",
     "build_chsh_result",
     "build_pre_click_comparison",
     "build_summary_metrics",
@@ -259,6 +277,7 @@ __all__ = [
     "preferred_front_end_netlist_benchmark_cases",
     "preferred_physical_chain_benchmark_cases",
     "preferred_physical_chain_lc_benchmark_cases",
+    "spice_driven_preferred_chain_benchmark_cases",
     "reduced_to_physical_mapping_summary",
     "run_actual_spice_front_end_benchmark",
     "run_actual_spice_front_end_case",
@@ -283,6 +302,9 @@ __all__ = [
     "run_preferred_physical_chain_lc_benchmark",
     "run_preferred_physical_chain_lc_candidate",
     "run_preferred_physical_chain_lc_case",
+    "run_spice_driven_preferred_chain_benchmark",
+    "run_spice_driven_preferred_chain_candidate",
+    "run_spice_driven_preferred_chain_case",
     "resolved_calibrated_boundary_config",
     "resolved_repro_check_config",
     "selected_handoff_export_config",
@@ -296,6 +318,7 @@ __all__ = [
     "simulate_preferred_front_end_netlist_candidate",
     "simulate_physical_closure_drain",
     "simulate_preferred_physical_chain_lc_candidate",
+    "simulate_spice_driven_preferred_chain_candidate",
     "simulate_refined_four_branch_candidate",
     "simulate_resonant_four_branch_candidate",
     "simulate_post_click_closure",
