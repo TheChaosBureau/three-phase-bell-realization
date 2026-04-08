@@ -14,7 +14,7 @@ from .preferred_chain_device_physicalization import (
 )
 from .spice_driven_preferred_chain import (
     SpiceDrivenPreferredChainConfig,
-    run_spice_driven_preferred_chain_benchmark,
+    run_spice_driven_preferred_chain_summary,
     spice_driven_preferred_chain_benchmark_cases,
 )
 
@@ -431,6 +431,7 @@ def _build_frozen_baseline_case_map(
     seed: int,
     case_names: Sequence[str] | None,
     spice_driven_config: SpiceDrivenPreferredChainConfig,
+    compact: bool = False,
 ) -> dict[str, dict[str, Any]]:
     selected_case_names = None if case_names is None else set(case_names)
     case_map: dict[str, dict[str, Any]] = {}
@@ -438,7 +439,7 @@ def _build_frozen_baseline_case_map(
         case_name = str(case["case"])
         if selected_case_names is not None and case_name not in selected_case_names:
             continue
-        case_map[case_name] = run_preferred_chain_device_physicalization_case(
+        result = run_preferred_chain_device_physicalization_case(
             case["state4"],
             a_deg=float(case["a_deg"]),
             b_deg=float(case["b_deg"]),
@@ -446,6 +447,15 @@ def _build_frozen_baseline_case_map(
             n_trials=n_trials,
             seed=_stable_case_seed(seed, case_name),
             physicalization_config=spice_driven_config.physicalization_config,
+        )
+        case_map[case_name] = (
+            {
+                "empirical_frequencies": list(result["empirical_frequencies"]),
+                "decisive_fraction": float(result["decisive_fraction"]),
+                "timeout_fraction": float(result["timeout_fraction"]),
+            }
+            if compact
+            else result
         )
     return case_map
 
@@ -596,8 +606,9 @@ def run_spice_driven_robustness_sweep(
         seed=seed,
         case_names=case_names,
         spice_driven_config=resolved.baseline_spice_driven_config,
+        compact=True,
     )
-    baseline_summary = run_spice_driven_preferred_chain_benchmark(
+    baseline_summary = run_spice_driven_preferred_chain_summary(
         detector_spec,
         n_trials=n_trials,
         seed=seed,
@@ -611,7 +622,7 @@ def run_spice_driven_robustness_sweep(
     perturbation_rows: list[dict[str, Any]] = []
     class_case_rows: list[dict[str, Any]] = []
     for point in perturbation_points:
-        summary = run_spice_driven_preferred_chain_benchmark(
+        summary = run_spice_driven_preferred_chain_summary(
             detector_spec,
             n_trials=n_trials,
             seed=seed,
@@ -692,6 +703,8 @@ def run_spice_driven_robustness_sweep(
     safe_window_rows = _safe_window_rows(perturbation_rows)
     passing_rows = [row for row in perturbation_rows if bool(row["robustness_pass"])]
     summary_metrics = {
+        "n_trials": int(n_trials),
+        "seed": int(seed),
         "baseline_winner_law_rms_error": float(baseline_summary["summary_metrics"]["winner_law_rms_error"]),
         "baseline_correlator_rms_error": float(baseline_summary["summary_metrics"]["correlator_rms_error"]),
         "baseline_chsh_abs_error": float(baseline_summary["summary_metrics"]["chsh_abs_error"]),

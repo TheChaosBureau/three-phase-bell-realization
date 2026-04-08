@@ -366,6 +366,213 @@ def run_spice_driven_preferred_chain_case(
     )
 
 
+def run_spice_driven_preferred_chain_summary(
+    detector_spec: Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    *,
+    n_trials: int,
+    seed: int,
+    case_names: Sequence[str] | None = None,
+    spice_driven_config: SpiceDrivenPreferredChainConfig | Mapping[str, Any] | None = None,
+    boundary_config: Mapping[str, Any] | None = None,
+    baseline_case_map: Mapping[str, Mapping[str, Any]] | None = None,
+    verbose_progress: bool = False,
+) -> dict[str, Any]:
+    resolved = (
+        SpiceDrivenPreferredChainConfig()
+        if spice_driven_config is None
+        else spice_driven_config
+        if isinstance(spice_driven_config, SpiceDrivenPreferredChainConfig)
+        else SpiceDrivenPreferredChainConfig(**dict(spice_driven_config))
+    )
+    selected_case_names = None if case_names is None else set(case_names)
+    cases = [
+        case
+        for case in spice_driven_preferred_chain_benchmark_cases()
+        if selected_case_names is None or str(case["case"]) in selected_case_names
+    ]
+    if not cases:
+        raise ValueError("No spice-driven preferred-chain benchmark cases selected.")
+
+    progress = _ProgressReporter(
+        total_steps=max(len(cases) * max(1 + 2 * n_trials, 1), 1),
+        enabled=verbose_progress,
+    )
+    front_end_rows: list[dict[str, Any]] = []
+    boundary_export_rows: list[dict[str, Any]] = []
+    case_rows: list[dict[str, Any]] = []
+    pre_click_rows: list[dict[str, Any]] = []
+    post_click_rows: list[dict[str, Any]] = []
+    energy_rows: list[dict[str, Any]] = []
+    actual_spice_execution_flags: list[bool] = []
+
+    for case in cases:
+        case_name = str(case["case"])
+        progress.report("simulate-actual-spice-front-end", case_name=case_name, force=True)
+        case_seed = _stable_case_seed(seed, case_name)
+        if baseline_case_map is None:
+            baseline_result = run_preferred_chain_device_physicalization_case(
+                case["state4"],
+                a_deg=float(case["a_deg"]),
+                b_deg=float(case["b_deg"]),
+                detector_spec=detector_spec,
+                n_trials=n_trials,
+                seed=case_seed,
+                physicalization_config=resolved.physicalization_config,
+            )
+        else:
+            baseline_result = baseline_case_map[case_name]
+        candidate = simulate_spice_driven_preferred_chain_candidate(
+            case["state4"],
+            a_deg=float(case["a_deg"]),
+            b_deg=float(case["b_deg"]),
+            spice_driven_config=resolved,
+        )
+        progress.advance("actual-spice-front-end-complete", case_name=case_name)
+        result = run_spice_driven_preferred_chain_candidate(
+            candidate,
+            detector_spec,
+            n_trials=n_trials,
+            seed=case_seed,
+            boundary_config=boundary_config,
+            baseline_result=baseline_result,
+            progress=progress,
+            case_name=case_name,
+        )
+
+        actual_spice = dict(candidate["actual_spice_front_end"])
+        adapter = dict(candidate["spice_boundary_adapter"])
+        actual_spice_execution_flags.append(
+            bool(actual_spice["shared_core"]["explicitness_metrics"]["actual_spice_run_succeeded"])
+        )
+        front_end_rows.append(
+            {
+                "case": case_name,
+                "a_deg": float(case["a_deg"]),
+                "b_deg": float(case["b_deg"]),
+                "branch_labels": list(candidate["branch_labels"]),
+                "exact_weights": [float(candidate["exact_weight"][label]) for label in candidate["branch_labels"]],
+                "spice_fractions": [float(actual_spice["branch_energy_fraction"][label]) for label in candidate["branch_labels"]],
+                "replayed_fractions": [float(candidate["branch_energy_fraction"][label]) for label in candidate["branch_labels"]],
+                "rms_error": float(actual_spice["metrics"]["rms_error"]),
+                "max_abs_error": float(actual_spice["metrics"]["max_abs_error"]),
+                "exact_rms_error": float(actual_spice["metrics"]["exact_rms_error"]),
+                "exact_max_abs_error": float(actual_spice["metrics"]["exact_max_abs_error"]),
+                "correlator_exact": float(actual_spice["metrics"]["correlator_exact"]),
+                "correlator_empirical": float(actual_spice["metrics"]["correlator_empirical"]),
+                "correlator_error": float(actual_spice["metrics"]["correlator_error"]),
+                "power_alignment_scale": float(adapter["power_alignment_scale"]),
+                "replayed_total_mean_power_w": float(adapter["replayed_total_mean_power_w"]),
+                "reference_total_mean_power_w": float(adapter["reference_total_mean_power_w"]),
+            }
+        )
+        boundary_export_rows.append(
+            {
+                "case": case_name,
+                "a_deg": float(case["a_deg"]),
+                "b_deg": float(case["b_deg"]),
+                "derived_from_actual_spice_traces": bool(adapter["derived_from_actual_spice_traces"]),
+                "upstream_artifact_kind": str(adapter["upstream_artifact_kind"]),
+                "replay_mode": str(adapter["replay_mode"]),
+                "replay_dt_s": float(adapter["replay_dt_s"]),
+                "replay_exposure_s": float(adapter["replay_exposure_s"]),
+                "power_alignment_mode": str(adapter["power_alignment_mode"]),
+                "power_alignment_scale": float(adapter["power_alignment_scale"]),
+                "raw_spice_total_mean_power_w": float(adapter["raw_spice_total_mean_power_w"]),
+                "reference_total_mean_power_w": float(adapter["reference_total_mean_power_w"]),
+                "replayed_total_mean_power_w": float(adapter["replayed_total_mean_power_w"]),
+                "spice_measurement_start_s": float(adapter["raw_spice_measurement_window_s"]["start"]),
+                "spice_measurement_end_s": float(adapter["raw_spice_measurement_window_s"]["end"]),
+                "export_mode": str(result["export_config"]["mode"]),
+                "piecewise_bin_width_s": float(result["export_config"]["piecewise_bin_width_s"]),
+                "piecewise_mode": str(result["export_config"]["piecewise_mode"]),
+                "boundary_gain": float(result["boundary_config"]["gain"]),
+                "boundary_exposure_s": float(result["boundary_config"]["exposure_s"]),
+            }
+        )
+        case_rows.append(
+            {
+                "case": case_name,
+                "a_deg": float(case["a_deg"]),
+                "b_deg": float(case["b_deg"]),
+                "branch_labels": list(candidate["branch_labels"]),
+                "exact_weights": list(result["exact_weights"]),
+                "realized_fractions": list(result["realized_fractions"]),
+                "empirical_frequencies": list(result["empirical_frequencies"]),
+                "winner_rms_error": float(result["metrics"]["rms_error"]),
+                "winner_max_error": float(result["metrics"]["max_abs_error"]),
+                "correlator_exact": float(result["metrics"]["correlator_exact"]),
+                "correlator_empirical": float(result["metrics"]["correlator_empirical"]),
+                "correlator_error": float(result["metrics"]["correlator_error"]),
+                "decisive_fraction": float(result["decisive_fraction"]),
+                "timeout_fraction": float(result["timeout_fraction"]),
+                "tie_region_fraction": float(result["tie_region_fraction"]),
+            }
+        )
+        pre_click_rows.append(
+            {
+                "case": case_name,
+                "a_deg": float(case["a_deg"]),
+                "b_deg": float(case["b_deg"]),
+                **result["pre_click_comparison"],
+            }
+        )
+        post_click_rows.append(
+            {
+                "case": case_name,
+                "a_deg": float(case["a_deg"]),
+                "b_deg": float(case["b_deg"]),
+                **result["post_click_summary"],
+            }
+        )
+        energy_rows.extend(result["energy_accounting_rows"])
+
+    chsh_result = build_chsh_result(case_rows)
+    energy_summary = summarize_energy_accounting_rows(energy_rows)
+    summary_metrics = build_summary_metrics(case_rows, pre_click_rows, post_click_rows, energy_summary, chsh_result)
+    front_end_fraction = aggregate_case_error(front_end_rows, rms_key="rms_error", max_key="max_abs_error")
+    summary_metrics["front_end_fraction_rms_error"] = float(front_end_fraction["rms_error"])
+    summary_metrics["front_end_fraction_max_error"] = float(front_end_fraction["max_abs_error"])
+    summary_metrics["front_end_fraction_pass"] = (
+        float(summary_metrics["front_end_fraction_rms_error"]) < 0.03
+        and float(summary_metrics["front_end_fraction_max_error"]) < 0.05
+    )
+    summary_metrics["actual_spice_execution_pass"] = bool(all(actual_spice_execution_flags))
+    summary_metrics["spice_trace_ingestion_pass"] = bool(
+        all(bool(row["derived_from_actual_spice_traces"]) for row in boundary_export_rows)
+    )
+    summary_metrics["boundary_export_pass"] = bool(
+        all(
+            row["export_mode"] == "piecewise_envelope"
+            and row["piecewise_mode"] == "linear"
+            and abs(float(row["piecewise_bin_width_s"]) - 0.02) < 1e-12
+            and abs(float(row["boundary_gain"]) - 4.0) < 1e-12
+            and abs(float(row["boundary_exposure_s"]) - 5.0) < 1e-12
+            for row in boundary_export_rows
+        )
+    )
+    summary_metrics["spice_driven_alignment_pass"] = bool(
+        all(float(row["power_alignment_scale"]) > 0.0 for row in boundary_export_rows)
+    )
+    summary_metrics["actual_spice_driven_pass"] = bool(
+        summary_metrics["actual_spice_execution_pass"]
+        and summary_metrics["spice_trace_ingestion_pass"]
+        and summary_metrics["boundary_export_pass"]
+        and summary_metrics["spice_driven_alignment_pass"]
+    )
+    summary_metrics["proceed_to_next_phase"] = bool(summary_metrics["proceed_to_next_phase"]) and bool(
+        summary_metrics["front_end_fraction_pass"] and summary_metrics["actual_spice_driven_pass"]
+    )
+    progress.report("benchmark-complete", force=True)
+    return {
+        "front_end_rows": front_end_rows,
+        "boundary_export_rows": boundary_export_rows,
+        "case_rows": case_rows,
+        "pre_click_rows": pre_click_rows,
+        "post_click_rows": post_click_rows,
+        "summary_metrics": summary_metrics,
+    }
+
+
 def run_spice_driven_preferred_chain_benchmark(
     detector_spec: Mapping[str, Any] | Sequence[Mapping[str, Any]],
     *,
@@ -803,6 +1010,7 @@ def run_spice_driven_preferred_chain_benchmark(
 __all__ = [
     "SpiceDrivenPreferredChainConfig",
     "run_spice_driven_preferred_chain_benchmark",
+    "run_spice_driven_preferred_chain_summary",
     "run_spice_driven_preferred_chain_candidate",
     "run_spice_driven_preferred_chain_case",
     "simulate_spice_driven_preferred_chain_candidate",

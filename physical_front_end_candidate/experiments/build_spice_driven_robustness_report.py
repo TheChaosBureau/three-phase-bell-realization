@@ -59,6 +59,7 @@ def _summary_markdown(*, summary: dict[str, Any], outputs: dict[str, str]) -> st
             "",
             "- Upstream artifact remains actual ngspice-generated shared front-end traces.",
             "- Detector boundary nominal point remains `piecewise_envelope:linear:20.0ms`, gain `4.0x`, exposure `5.0s`.",
+            f"- Nominal baseline sampling: {int(metrics['n_trials'])} trials, seed {int(metrics['seed'])}.",
             f"- Baseline winner-law RMS error: {float(baseline['winner_law_rms_error']):.6f}",
             f"- Baseline correlator RMS error: {float(baseline['correlator_rms_error']):.6f}",
             f"- Baseline CHSH abs error: {float(baseline['chsh_abs_error']):.6f}",
@@ -141,8 +142,8 @@ def build_spice_driven_robustness_report(
     outdir: str | Path = "artifacts/spice_driven_robustness",
     *,
     detector_next_summary_csv: str | Path = "artifacts/detector_next/results_summary.csv",
-    n_trials: int = 180,
-    seed: int = 20260412,
+    n_trials: int = 1_200,
+    seed: int = 20260411,
     case_names: Sequence[str] | None = None,
     robustness_config: SpiceDrivenRobustnessConfig | dict[str, Any] | None = None,
     verbose_progress: bool = False,
@@ -256,8 +257,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build the SPICE-driven robustness report.")
     parser.add_argument("--outdir", default="artifacts/spice_driven_robustness")
     parser.add_argument("--detector-next-summary-csv", default="artifacts/detector_next/results_summary.csv")
-    parser.add_argument("--n-trials", type=int, default=180)
-    parser.add_argument("--seed", type=int, default=20260412)
+    parser.add_argument("--n-trials", type=int, default=1200)
+    parser.add_argument("--seed", type=int, default=20260411)
     parser.add_argument("--case", action="append", dest="case_names", default=None)
     parser.add_argument("--quiet-progress", action="store_true")
     args = parser.parse_args()

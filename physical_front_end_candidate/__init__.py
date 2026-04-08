@@ -92,6 +92,12 @@ from .spice_driven_robustness import (
     run_spice_driven_robustness_sweep,
     spice_driven_robustness_points,
 )
+from .spice_driven_baseline_reconciliation import (
+    ROBUSTNESS_NOMINAL_BASELINE,
+    VALIDATED_SPICE_DRIVEN_BASELINE,
+    BaselineRunSpec,
+    run_spice_driven_baseline_reconciliation,
+)
 from .preferred_physical_chain_energy import build_trial_energy_accounting, summarize_energy_accounting_rows
 from .preferred_physical_chain_metrics import build_chsh_result, build_pre_click_comparison, build_summary_metrics, summarize_post_click_behavior
 from .refined_four_branch_candidate import RefinedSharedCoreFrontEndConfig, benchmark_refined_four_branch_cases, simulate_refined_four_branch_candidate
@@ -225,9 +231,19 @@ def build_spice_driven_robustness_report(*args: Any, **kwargs: Any):
     return _build(*args, **kwargs)
 
 
+def build_spice_driven_baseline_reconciliation_report(*args: Any, **kwargs: Any):
+    from .experiments.build_spice_driven_baseline_reconciliation_report import (
+        build_spice_driven_baseline_reconciliation_report as _build,
+    )
+
+    return _build(*args, **kwargs)
+
+
 __all__ = [
     "ActualSpiceFrontEndConfig",
+    "BaselineRunSpec",
     "CalibratedBoundaryConfig",
+    "ROBUSTNESS_NOMINAL_BASELINE",
     "actual_spice_front_end_benchmark_cases",
     "CommonInhibitTuningSweepConfig",
     "CoupledPortLCFrontEndConfig",
@@ -253,6 +269,7 @@ __all__ = [
     "build_preferred_physical_chain_lc_report",
     "build_spice_driven_robustness_report",
     "build_spice_driven_preferred_chain_report",
+    "build_spice_driven_baseline_reconciliation_report",
     "build_chsh_result",
     "build_pre_click_comparison",
     "build_summary_metrics",
@@ -321,6 +338,7 @@ __all__ = [
     "run_spice_driven_preferred_chain_benchmark",
     "run_spice_driven_preferred_chain_candidate",
     "run_spice_driven_preferred_chain_case",
+    "run_spice_driven_baseline_reconciliation",
     "run_spice_driven_robustness_sweep",
     "resolved_calibrated_boundary_config",
     "resolved_repro_check_config",
@@ -344,4 +362,5 @@ __all__ = [
     "tuned_physical_closure_drain_config",
     "simulate_four_branch_physical_candidate",
     "simulate_two_branch_physical_candidate",
+    "VALIDATED_SPICE_DRIVEN_BASELINE",
 ]
