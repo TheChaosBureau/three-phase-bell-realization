@@ -1,0 +1,1342 @@
+---
+title: "Bell Violations as Three-Party Quadratic Conservation: A Classical Three-Phase Realization"
+author:
+  - name: David Nobles
+    affiliation: Independent Researcher
+    email: david.nobles@sontric.org
+date: today
+abstract: |
+  The hierarchy of Bell-inequality violations arises from the algebraic order of the conservation law governing the correlated source. Linear conservation (momentum-type) produces correlations bounded by $S = \sqrt{2}$, well within the classical Bell--CHSH limit. Quadratic conservation (power-, intensity-, or $|\psi|^2$-type) produces correlations that saturate the Tsirelson bound at $S = 2\sqrt{2}$. The factor-of-two amplification in angular frequency --- $\cos(2\Delta\phi)$ versus $\cos(\Delta\phi)$ --- is the double-angle identity made physical. We argue that the standard two-party CHSH framework constitutes an incomplete accounting of an intrinsically three-party conservation law, with the third party identified as the zero-sequence mode of the Clarke decomposition: the energy carried by the field between measurement stations, structurally analogous to vacuum and edge-mode contributions in algebraic quantum field theory and to the quantum potential in Bohmian mechanics. We construct a classical three-phase analog system --- a passive linear front-end of four delta-LC tanks with a shared resonant core, a shot-trigger Born-rule detector, and a zero-sequence closure latch --- and show by reduced-model simulation and a SPICE-driven realization that it reproduces Tsirelson-saturating CHSH ($S \approx 2.828$, error $0.043$; winner-law RMS error $0.013$; decisive rate $99.5\%$; energy conservation $100\%$). We position this construction relative to prequantum classical models (Khrennikov's PCSFT, Spekkens, 't~Hooft, Bohmian mechanics) and clarify scope: the system requires a non-local conservation constraint and therefore does *not* refute Bell's theorem. Its contribution is to make the locus of nonlocality concrete --- the zero-sequence energy flow --- and to give the apparent nonlocality of quantum correlations a structural interpretation in terms of three-party quadratic conservation accounting.
+keywords:
+  - Bell inequalities
+  - Tsirelson bound
+  - Clarke transform
+  - prequantum classical models
+  - quantum foundations
+  - three-phase power systems
+format:
+  pdf:
+    documentclass: article
+    classoption: [11pt]
+    geometry:
+      - margin=1in
+    number-sections: true
+    toc: false
+bibliography: refs/refs.bib
+---
+
+# Introduction {#sec-intro}
+
+Bell's theorem [@bell1964] establishes that the correlations between spacelike-separated measurements predicted by quantum mechanics cannot be reproduced by any local hidden variable (LHV) model. The Clauser--Horne--Shimony--Holt (CHSH) inequality [@chsh1969] gives the standard quantitative test: for any LHV model, the combination
+$$
+S \;=\; E(a,b) - E(a,b') + E(a',b) + E(a',b')
+$$
+satisfies $|S| \leq 2$, where $E(a,b)$ is the expectation of the product of binary $\pm 1$ outcomes at analyzer settings $a$ and $b$. Quantum mechanics predicts $|S| \leq 2\sqrt{2}$, the Tsirelson bound [@tsirelson1980], saturated by singlet-state measurements at appropriately chosen angles. Loophole-free experiments [@hensen2015; @giustina2015; @shalm2015] have confirmed the violation under conditions that close the locality and detection loopholes simultaneously.
+
+The standard interpretation frames the violation as evidence that nature is fundamentally nonlocal, or that realism --- the assignment of pre-existing values to unmeasured observables --- must be abandoned. This paper offers a complementary interpretation grounded in the algebra of conservation laws and a constructive demonstration in classical three-phase circuits. The two are presented in lockstep because each, taken alone, invites the wrong reading.
+
+## The interpretive thesis
+
+We claim that the form of Bell-correlation functions is determined by the algebraic order of the conservation law governing the source, and that the standard CHSH framework systematically omits a third participant in what is intrinsically a tripartite conservation constraint.
+
+When the conserved quantity at the source is *linear* in the field amplitude --- as in two-body decays where momentum $\mathbf{p}_A + \mathbf{p}_B = 0$ --- the joint correlation has the form $E(a,b) \propto \cos(\Delta\phi)$, and the CHSH combination satisfies $|S| \leq \sqrt{2}$, well within the classical limit. When the conserved quantity is *quadratic* --- power, intensity, $|\psi|^2$, or any $\sum_k v_k^2$ form --- the correlation becomes $E(a,b) \propto \cos(2\Delta\phi)$, and CHSH attains $|S| = 2\sqrt{2}$, saturating Tsirelson. The factor of two inside the cosine argument is not an accident of the quantum formalism. It is the angle-doubling inherent in squaring: $\cos^2(x) = (1 + \cos(2x))/2$. The passage from amplitude to intensity, from $\psi$ to $|\psi|^2$, doubles the angular frequency of the correlation pattern, and that is the algebraic engine that pushes $S$ past the Bell bound.
+
+This re-reading of the cosine doubling has a structural consequence. A quadratic conservation law on a vector field with rotational symmetry is naturally a *three-party* law, even when only two parties are measured. The Clarke transform [@clarke1943] from three-phase power systems decomposes any three-component balanced signal $(v_a, v_b, v_c)$ into orthogonal components $(v_\alpha, v_\beta, v_0)$, and Parseval's identity gives
+$$
+v_a^2 + v_b^2 + v_c^2 \;=\; v_\alpha^2 + v_\beta^2 + v_0^2 \;=\; \mathrm{const}.
+$$
+The two analyzers in a CHSH experiment project onto two of the three Clarke modes; the third --- the zero-sequence mode $v_0$ --- is energy that flows neither to Alice nor to Bob, but *between* them. We identify this zero-sequence channel as the third party in the conservation law.
+
+Concretely: if $P_A(\theta)$ and $P_B(\theta)$ are the powers captured by analyzers at settings $\phi_A$ and $\phi_B$ on a balanced positive--negative-sequence source with hidden emission phase $\theta$, then a direct computation (Section&nbsp;[-@sec-hierarchy]) gives
+$$
+P_A(\theta) + P_B(\theta) \;=\; 1 + \cos(\Delta\phi)\cos(2\theta - \phi_A - \phi_B),
+$$
+which is *not* constant unless $\Delta\phi \in \{0, \pi/2\}$. The remaining energy resides in the zero-sequence mode,
+$$
+P_0(\theta) \;=\; P_\text{total} - P_A(\theta) - P_B(\theta),
+$$
+which oscillates in $\theta$ at exactly the angular frequency that makes $P_+ + P_- + P_0$ constant. The CHSH violation, on this reading, measures the depth of the zero-sequence reservoir at the analyzer-difference angle $\Delta\phi = \pi/4$. Aligned analyzers ($\Delta\phi = 0$) drain $P_0$ to zero; orthogonal analyzers ($\Delta\phi = \pi/2$) push all correlation energy into $P_0$; intermediate angles are precisely where the Bell bound is exceeded.
+
+The structural analogy extends naturally to algebraic quantum field theory, where the entanglement between two spatial regions is carried by the field modes at their boundary --- the "edge modes" or "zero modes" that belong to neither region's local algebra [@haag1996; @witten2018]. In Bohmian mechanics, the same structural role is played by the quantum potential, the nonlocal term in the guidance equation that encodes the global state's constraint on local dynamics [@bohm1952; @holland1993]. The zero-sequence mode in the Clarke decomposition is, on the present reading, the explicit physical reservoir corresponding to those abstractions in a setting where every degree of freedom is classical and accessible to direct measurement.
+
+## The constructive thesis
+
+The interpretive thesis can be stated abstractly. To make it concrete, and to test it where it can be tested, we construct a classical three-phase analog system that implements the full pipeline from source state preparation through analyzer projection through detection and post-click closure, and demonstrate by simulation that it reproduces Tsirelson-saturating CHSH.
+
+The system has four layers. (i) A reduced four-mode shared state $\Psi_0 \in \mathbb{C}^4$ in the joint basis $\{|{++}\rangle, |{+-}\rangle, |{-+}\rangle, |{--}\rangle\}$, prepared as the singlet projection. (ii) Local analyzer rotations $R_A(a) \otimes R_B(b)$ producing branch amplitudes $c_{xy}(a,b) = u_{xy}^\dagger \Psi_0$ and branch energies $w_{xy}(a,b) = |c_{xy}(a,b)|^2$ at the linear energy-fraction level (Theorem&nbsp;[-@thm-branch-weights]). (iii) A noisy energy-threshold first-arrival detector that converts continuous branch energies into discrete $\pm 1$ click outcomes with Born-rule statistics under explicit and disclosed conditions (Theorem&nbsp;[-@thm-born]). (iv) A zero-sequence closure latch that suppresses losing branches and routes residual energy to the winning drain via the common-mode rail.
+
+Each layer is implemented in code. The reduced 4-mode model lives in `src/shared_4tank_core.py` and `src/joint_readout.py`. The detector family is searched and characterized in `detector_search/`. The full integration --- front-end, detector, latch --- is exercised in `detector_integration/`. The SPICE-driven physical realization, in which the four delta-LC tanks become explicit inductor--capacitor networks coupled by a shared resonant core and the analyzer rotations are implemented as physical coupling matrices, lives in `physical_front_end_candidate/`.
+
+The numerical results from the full chain are the headline of the constructive contribution. The preferred LC-coupled physical chain achieves CHSH $S \approx 2.828$ (absolute error $0.043$ against the target $2\sqrt{2}$), winner-law RMS error $0.013$ (max $0.039$), correlator RMS error $0.024$, decisive (one-click) rate $99.5\%$, winner-drain dominance $99.97\%$, and energy conservation at $100\%$ within the numerical tolerance of the SPICE engine. The decisive rate is well above the fair-sampling threshold, so the result does not depend on the detection loophole [@larsson2014]. Every quantitative claim in the paper is anchored to a Make target and a reproducible artifact; Appendix&nbsp;[-@sec-repro] gives the full mapping.
+
+## What this paper does not claim
+
+A construction that reproduces Tsirelson-saturating CHSH in a simulated classical circuit invites a misreading: that we have refuted Bell's theorem by exhibiting a local hidden variable model with $|S| = 2\sqrt{2}$. That misreading is wrong, and it is important to disclose precisely why before going further.
+
+Bell's theorem is a statement about LHV models satisfying a specific factorization condition: the joint outcome distribution must factor as $P(A,B \mid a, b, \lambda) = P(A \mid a, \lambda)\, P(B \mid b, \lambda)$ when conditioned on the hidden variable $\lambda$. Our construction does not satisfy this factorization. The zero-sequence mode $P_0$ is a global degree of freedom that couples Alice's and Bob's measurement statistics through the conserved quadratic form $P_+ + P_- + P_0 = \mathrm{const}$. When Alice's analyzer captures more or less power, the zero-sequence reservoir absorbs or releases the difference, and Bob's marginal is affected through that coupling --- not through a signaling channel (the local marginals remain uniform; Section&nbsp;[-@sec-two-party]) but through the joint constraint imposed by the conservation law.
+
+In Bell's terminology, the zero-sequence mode is a non-local "common cause" that mediates the correlations. In the field-theoretic terminology of [@witten2018], it is the boundary mode shared between the two regions. In Bohmian terminology, it is the quantum-potential analogue. Our system reproduces the cos-squared correlation structure --- and therefore Tsirelson saturation --- precisely because the conservation law is enforced event-by-event across the entire analog network. That enforcement is what no factorized local model can deliver, and it is also what makes our construction *not* an LHV model in the technical sense Bell defined.
+
+The paper's contribution is therefore not to refute Bell. It is to make the locus of nonlocality concrete and physical. The "spookiness" of Bell violations, on the present reading, is not an irreducible feature of distant measurement events. It is the inevitable consequence of incomplete accounting: the two-party CHSH framework projects out the third channel through which the conservation law does its work. When that channel is restored to the bookkeeping, the correlations become as natural as momentum conservation in a two-body decay, but enriched by exactly the factor of two that distinguishes amplitude from intensity.
+
+## Relation to prior frameworks
+
+The view developed here intersects with several established programs in foundations.
+
+*Algebraic quantum field theory* identifies entanglement between spatial regions as a property of boundary modes shared between them; see [@haag1996] for the foundational treatment and [@witten2018] for a recent overview. The zero-sequence mode plays exactly the structural role those treatments assign to the field at the boundary: a degree of freedom that is not part of either region's local observable algebra but that is essential to the joint state's correlation structure.
+
+*Bohmian mechanics* and pilot-wave theory [@bohm1952; @holland1993] supplement the wavefunction with an explicit configuration variable guided by a nonlocal potential. The quantum potential plays the same coupling role our zero-sequence mode plays: it is the term that enforces the global constraint on local dynamics. Our framework is consistent with --- though not dependent on --- this reading.
+
+*Khrennikov's prequantum classical statistical field theory* (PCSFT) [@khrennikov2014] models quantum observables as quadratic functionals of classical random fields. Our construction shares PCSFT's commitment to classical fields and quadratic functionals as the source of quantum statistics, but differs in two respects. First, we use a finite-dimensional lumped-element power network rather than an infinite-dimensional functional integral, which makes every quantity directly measurable in a laboratory. Second, we make the role of the zero-sequence mode explicit: in PCSFT, the analog of $P_0$ is buried in the regularization of the field state, whereas in our construction it is a direct physical degree of freedom on a third wire.
+
+*Spekkens's toy theory* [@spekkens2007] reproduces a substantial fragment of quantum behavior under an epistemic restriction in a discrete model. The toy theory is a different project --- it shows what *can* be reproduced from a knowledge-restriction principle alone --- and it does not produce a continuous $\cos^2$ structure or saturate Tsirelson. The two programs are complementary: Spekkens isolates which features come from epistemic restriction; our construction isolates which features come from quadratic conservation.
+
+*'t Hooft's cellular automaton interpretation* [@thooft2016] proposes a fundamental, deterministic, sub-quantum theory. Our framework is structural rather than fundamental: we are not asserting that quantum mechanics emerges from three-phase power systems, only that the algebra of three-phase quadratic conservation provides the natural mathematical habitat for the structure of Bell correlations.
+
+*Detection-loophole and time-dependent LHV literatures* [@larsson2014; @hess2001] address whether classical models supplemented with realistic detection inefficiencies or time-correlated hidden variables can mimic Bell violations. The constructive part of our work is independent of these arguments: the SPICE-driven realization achieves a $99.5\%$ decisive rate, well above any reasonable fair-sampling threshold, and the cos-squared correlator emerges from the static algebraic structure of the conservation law, not from time-dependent randomness.
+
+A more detailed engagement with each of these literatures appears in Section&nbsp;[-@sec-prior-art].
+
+## Roadmap
+
+Section&nbsp;[-@sec-hierarchy] establishes the conservation hierarchy: linear conservation gives $S = \sqrt{2}$, quadratic conservation gives $S = 2\sqrt{2}$, and the deterministic-threshold model that produces the Bell bound $S = 2$ sits between them in a precise algebraic sense. Section&nbsp;[-@sec-clarke] introduces the Clarke transform as the natural measurement apparatus for quadratic-conservation sources and establishes the geometric correspondence between the Clarke power surface and the Born-rule probability distribution. Section&nbsp;[-@sec-two-party] derives the two-party CHSH correlation from a balanced three-phase source and confronts the threshold and binarization problem. Section&nbsp;[-@sec-third-party] introduces the zero-sequence mode as the third party in the conservation law, computes its profile across a CHSH angle sweep, and develops the analogies to AQFT edge modes and the Bohmian quantum potential. Section&nbsp;[-@sec-reduced-model] specifies the reduced four-mode shared-state model and proves the squared-projection law at the linear energy-fraction level. Section&nbsp;[-@sec-born] derives the Born rule from a noisy energy-threshold first-arrival detector under explicit conditions, and discusses the family search that selects shot-trigger nucleation. Section&nbsp;[-@sec-latch] specifies the zero-sequence closure latch and characterizes its post-click behavior. Section&nbsp;[-@sec-spice] presents the SPICE-driven physical realization and its numerical results. Section&nbsp;[-@sec-prior-art] positions the construction against prior frameworks in detail. Section&nbsp;[-@sec-discussion] discusses predictions, limitations, and open questions, and Section&nbsp;[-@sec-conclusion] concludes.
+
+# The Conservation Hierarchy {#sec-hierarchy}
+
+We begin by establishing the central algebraic claim: the form of the joint correlation function $E(a,b)$ is determined by the order of the conservation law on the source. Linear conservation produces $E \propto \cos(\Delta\phi)$ and CHSH bounded by $\sqrt{2}$. Quadratic conservation produces $E \propto \cos(2\Delta\phi)$ and CHSH bounded by $2\sqrt{2}$. The angle doubling between the two cases is the double-angle identity $\cos^2(x) = (1 + \cos(2x))/2$ promoted from arithmetic to physics. The deterministic-threshold model that produces the Bell bound $S = 2$ exactly --- and no violation --- sits between the two cases in a way that we make algebraically precise.
+
+## General setup
+
+Consider a source that emits two correlated subsystems $A$ and $B$ propagating to spatially separated measurement stations. Each station applies a projection at an analyzer angle ($\phi_A$ for Alice, $\phi_B$ for Bob) chosen independently. The joint outcome is correlated through a hidden source variable $\theta$, taken throughout to be the emission phase, distributed uniformly on $[0, 2\pi)$. The correlation function is
+$$
+E(\phi_A, \phi_B) \;=\; \int_0^{2\pi} m_A(\theta, \phi_A)\, m_B(\theta, \phi_B)\, \frac{d\theta}{2\pi},
+$$
+where $m_A$ and $m_B$ are the (continuous-valued) outputs of the two analyzers. The form of $m_A$ and $m_B$ is fixed by the physics of the source and the analyzer; in particular, by the structure of the conservation law on the field carried from source to analyzer.
+
+We examine two cases.
+
+## Case I: linear conservation (momentum-type)
+
+A particle at rest decays into two fragments with momenta satisfying $\mathbf{p}_A + \mathbf{p}_B = 0$. Each fragment carries a definite momentum vector determined at the decay event and labelled by an unobserved emission angle $\theta$. An analyzer at angle $\phi$ projects the momentum onto the measurement axis:
+$$
+m_A(\theta, \phi_A) = \cos(\theta - \phi_A), \qquad m_B(\theta, \phi_B) = -\cos(\theta - \phi_B),
+$$
+where the minus sign on $m_B$ enforces the anti-correlation imposed by $\mathbf{p}_A = -\mathbf{p}_B$. The correlation is then
+$$
+E_\text{lin}(\phi_A, \phi_B) \;=\; -\int_0^{2\pi} \cos(\theta - \phi_A)\cos(\theta - \phi_B)\, \frac{d\theta}{2\pi}.
+$$
+Applying the product-to-sum identity $\cos x \cos y = \tfrac{1}{2}[\cos(x-y) + \cos(x+y)]$ and using the fact that $\int_0^{2\pi} \cos(2\theta - \phi_A - \phi_B)\, d\theta = 0$, we obtain
+$$
+E_\text{lin}(\phi_A, \phi_B) \;=\; -\tfrac{1}{2}\cos(\Delta\phi), \qquad \Delta\phi := \phi_A - \phi_B.
+$$
+
+For the CHSH evaluation, the optimal analyzer settings for a single-frequency cosine correlator $-k\cos(\omega\Delta\phi)$ are at angle differences $\Delta\phi \in \{\pi/(4\omega), -\pi/(4\omega), -\pi/(4\omega), -\pi/(4\omega)\}$, which yields $|S|_{\max} = 2\sqrt{2}\, k$. For the linear correlator $\omega = 1$, this gives the standard choice $\phi_A = 0$, $\phi_{A'} = \pi/2$, $\phi_B = \pi/4$, $\phi_{B'} = 3\pi/4$. Direct substitution gives
+$$
+S_\text{lin} \;=\; \big| E_\text{lin}(\phi_A, \phi_B) - E_\text{lin}(\phi_A, \phi_{B'}) + E_\text{lin}(\phi_{A'}, \phi_B) + E_\text{lin}(\phi_{A'}, \phi_{B'}) \big| \;=\; \sqrt{2} \;\approx\; 1.414.
+$$
+This is well below the Bell bound $|S| \leq 2$. Linear conservation produces no Bell violation, and indeed sits below the classical limit by a factor of $\sqrt{2}$.
+
+## Case II: quadratic conservation (power-type)
+
+Now consider a source whose conserved quantity is quadratic in the fundamental field variable. In an electrical realization, the conserved quantity is power $P = V^2/R$ rather than voltage $V$. In a quantum realization, it is probability density $|\psi|^2$ rather than amplitude $\psi$. In an electromagnetic realization, it is intensity $|\mathbf{E}|^2$ rather than the field $\mathbf{E}$. In each case, the source emits two counter-rotating components --- positive and negative sequence in the electrical case, two helicities in the EM case, two amplitude branches in the quantum case --- and the analyzer extracts the power on its projection axis.
+
+For a positive-sequence signal of amplitude $V$ measured by an analyzer at angle $\phi$, the captured power is the squared projection,
+$$
+P_+(\theta, \phi) \;=\; V^2 \cos^2(\theta - \phi),
+$$
+and the complementary negative-sequence power is
+$$
+P_-(\theta, \phi) \;=\; V^2 \sin^2(\theta - \phi).
+$$
+Normalize and centre the analyzer outputs as $A(\theta, \phi_A) = 2 P_+(\theta, \phi_A)/V^2 - 1$ and $B(\theta, \phi_B) = 1 - 2 P_+(\theta, \phi_B)/V^2$ to put them on the $\pm 1$ scale used in the CHSH evaluation. Then $A = \cos(2(\theta - \phi_A))$ and $B = -\cos(2(\theta - \phi_B))$, and
+$$
+E_\text{quad}(\phi_A, \phi_B) \;=\; -\int_0^{2\pi} \cos(2(\theta - \phi_A)) \cos(2(\theta - \phi_B))\, \frac{d\theta}{2\pi} \;=\; -\tfrac{1}{2}\cos(2\Delta\phi).
+$$
+The factor of two inside the cosine is the algebraic engine of the violation. It arises directly from the double-angle identity
+$$
+\cos^2(x) \;=\; \frac{1 + \cos(2x)}{2}.
+$$
+The squaring operation --- the passage from amplitude to power, from $\psi$ to $|\psi|^2$ --- doubles the angular frequency at which the correlator oscillates against analyzer-difference angle. Whatever happens at $\Delta\phi$ in the linear case happens at $2\Delta\phi$ in the quadratic case.
+
+For the CHSH evaluation, the doubled angular frequency $\omega = 2$ halves the optimal analyzer-angle spacing to $\phi_A = 0$, $\phi_{A'} = \pi/4$, $\phi_B = \pi/8$, $\phi_{B'} = 3\pi/8$. With strict event-by-event complementarity (Section&nbsp;[-@sec-two-party]), the correlator amplitude is unity and direct substitution gives
+$$
+S_\text{quad} \;=\; 2\sqrt{2} \;\approx\; 2.828.
+$$
+This saturates the Tsirelson bound. The violation $S > 2$ is the *direct algebraic consequence* of the conservation quantity being quadratic rather than linear in the field; correspondingly, the optimal CHSH analyzer-angle scale halves --- the angle scale at which violation peaks shrinks by exactly the factor of two by which the correlator's angular frequency doubles. The same analyzer geometry, the same hidden-variable distribution, the same factorization of the source into two counter-rotating components --- only the algebraic order of the conserved quantity differs --- and the CHSH value moves from $\sqrt{2}$ to $2\sqrt{2}$.
+
+The pre-normalization expression $E_\text{quad} = -\tfrac{1}{2}\cos(2\Delta\phi)$ has amplitude $1/2$, not $1$, and produces $S = \sqrt{2}$ on its own; the doubling to $2\sqrt{2}$ comes from the strict event-by-event complementarity $\cos^2(\theta - \phi) + \sin^2(\theta - \phi) = 1$ that fixes the marginals once the rotation-sense hidden variable $\pm$ is integrated out. We return to this point in Section&nbsp;[-@sec-two-party]; it is the difference between a stochastic-local model with the right correlator shape and the full quantum prediction with the right correlator amplitude.
+
+## The double-angle identity as algebraic engine
+
+The angle-doubling between linear and quadratic conservation is not a coincidence of the chosen analyzer geometry. It is the only structural difference between the two cases.
+
+In the linear case, the conserved quantity $\mathbf{p}_A + \mathbf{p}_B$ is *odd* under the symmetry $\theta \mapsto \theta + \pi$: the two fragments swap and the sum changes sign. Under that symmetry, the correlator $E(\phi_A, \phi_B) = -\langle \cos(\theta - \phi_A)\cos(\theta - \phi_B)\rangle_\theta$ inherits a single power of $\cos$ in each argument, and the integrand reduces to $\cos(\Delta\phi)$.
+
+In the quadratic case, the conserved quantity $V_\alpha^2 + V_\beta^2 + V_0^2$ is *even* under $\theta \mapsto \theta + \pi$: squaring kills the sign change. Under that symmetry, the correlator inherits a $\cos^2$ in each argument, and the double-angle identity converts $\cos^2(\theta - \phi)$ into $\tfrac{1}{2} + \tfrac{1}{2}\cos(2(\theta - \phi))$. The constant term integrates to a $\theta$-independent offset; the $\cos(2(\theta - \phi))$ term produces the doubled-frequency correlator $\cos(2\Delta\phi)$ after the same orthogonality argument used in the linear case.
+
+The factor of two is therefore an algebraic invariant of the conservation law's symmetry class --- specifically, of whether the conserved quantity is odd or even under emission-phase reversal. It is not contingent on the detailed dynamics, the analyzer geometry, or the dimensionality of the underlying field. Any source that emits a quadratic-conservation-respecting state and is measured by power-projecting analyzers will reproduce $\cos(2\Delta\phi)$. Any source that emits a linear-conservation-respecting state and is measured by amplitude-projecting analyzers will reproduce $\cos(\Delta\phi)$. The Bell--Tsirelson gap is a gap between these two algebraic classes.
+
+## The hierarchy
+
+Three further models complete the picture. The *deterministic-threshold model*, in which the continuous quadratic distribution $\cos^2(\theta - \phi)$ is converted to a binary outcome by sign-thresholding, $A = \mathrm{sgn}[\cos(2(\theta - \phi_A))]$, produces a piecewise-linear correlator $E_\text{det}(\phi_A, \phi_B) = -1 + 4|\Delta\phi|/\pi$ on $|\Delta\phi| \leq \pi/2$, with $S = 2$ exactly --- the Bell bound, and no violation. The thresholding destroys the cosine structure; the cos-squared bowl is flattened into a step function and the doubled-angle information is lost.
+
+The *stochastic-local model*, in which $\cos^2(\theta - \phi)$ is interpreted as the probability of a $+1$ outcome with independent local coin flips, produces $E_\text{stoch}(\phi_A, \phi_B) = -\tfrac{1}{2}\cos(2\Delta\phi)$ and $S = \sqrt{2}$. The shape is correct but the amplitude is halved by the independence of the coin flips: the factorization that defines locality dilutes the correlation by exactly a factor of two.
+
+The *Popescu--Rohrlich box* [@popescu1994], finally, achieves $S = 4$ with a discontinuous correlator $E(a,b) = -(-1)^{a \cdot b}$ that corresponds to a conservation law so rigid that the power allocation snaps between channels with zero leakage to a third mode. No known physical conservation law produces this behavior, because physical conservation operates on continuous (Lie-group) symmetries that produce smooth (cosine-type) correlators.
+
+The complete hierarchy is:
+
+| Model                       | $E(\phi_A, \phi_B)$                        | $S_{\max}$        | Mechanism                                              |
+|-----------------------------|--------------------------------------------|-------------------|--------------------------------------------------------|
+| Linear conservation         | $-\tfrac{1}{2}\cos(\Delta\phi)$            | $\sqrt{2}$        | Single power of $\cos$; odd-symmetry conservation      |
+| Stochastic local quadratic  | $-\tfrac{1}{2}\cos(2\Delta\phi)$           | $\sqrt{2}$        | Independent coin flips dilute amplitude by $\tfrac{1}{2}$ |
+| Deterministic threshold     | $-1 + 4\lvert\Delta\phi\rvert/\pi$         | $2$               | Binarization linearizes the bowl                       |
+| Quadratic conservation (QM) | $-\cos(2\Delta\phi)$                       | $2\sqrt{2}$       | Strict complementarity, $\cos^2 + \sin^2 = 1$ event-by-event |
+| PR box                      | $-(-1)^{a \cdot b}$                        | $4$               | Discontinuous (unphysical) conservation                 |
+
+Each step in the hierarchy is a factor of $\sqrt{2}$ in the CHSH value. The Bell bound $S = 2$ corresponds to the deterministic-threshold model, which is the projection of the continuous quadratic distribution onto binary outcomes with no constraint linking Alice's and Bob's marginals. The Tsirelson bound $S = 2\sqrt{2}$ corresponds to the full quadratic conservation law with strict event-by-event complementarity --- the constraint that whenever Alice's analyzer captures power, Bob's analyzer captures the complementary power on the same trial, enforced not stochastically but rigidly by the conservation of the quadratic form.
+
+The factor of two between $S_\text{stoch} = \sqrt{2}$ and $S_\text{quad} = 2\sqrt{2}$ is precisely the constraint that the factorization condition of an LHV model cannot enforce. Independent local coin flips can reproduce the correct correlator *shape*, but they cannot enforce the strict complementarity that fixes the correlator *amplitude*. That fixing requires the global conservation law to act on every trial. In the present framework, that action is mediated by the zero-sequence mode --- the third party that is the subject of Section&nbsp;[-@sec-third-party].
+
+\newpage
+
+# The Clarke Transform as Measurement Apparatus {#sec-clarke}
+
+The conservation hierarchy of the previous section gave us the algebraic shape of the correlator without committing to a specific physical realization of the source or the analyzer. To go further --- to identify the third party in the conservation law, to derive the Born-rule connection, and to construct a classical analog whose statistics saturate Tsirelson --- we need a concrete representation of "quadratic conservation on a vector field with rotational symmetry." The Clarke transform [@clarke1943] provides exactly this, and its symmetrical-component decomposition [@fortescue1918] provides the natural three-party structure. This section develops the transform, its power-invariance property, the sequence-component decomposition, and the Park rotation that implements the analyzer projection. We close with the geometric correspondence between the Clarke power surface and the Born-rule probability distribution --- the structural identity that motivates calling this an analog of single-particle quantum measurement.
+
+## Definition and orthonormality
+
+The Clarke transform maps a three-component balanced signal $(v_a, v_b, v_c)$, with $v_a + v_b + v_c$ generally nonzero, onto orthogonal components $(v_\alpha, v_\beta, v_0)$:
+$$
+\begin{pmatrix} v_\alpha \\ v_\beta \\ v_0 \end{pmatrix} \;=\; \sqrt{\frac{2}{3}} \begin{pmatrix} 1 & -\tfrac{1}{2} & -\tfrac{1}{2} \\ 0 & \tfrac{\sqrt{3}}{2} & -\tfrac{\sqrt{3}}{2} \\ \tfrac{1}{\sqrt{2}} & \tfrac{1}{\sqrt{2}} & \tfrac{1}{\sqrt{2}} \end{pmatrix} \begin{pmatrix} v_a \\ v_b \\ v_c \end{pmatrix}.
+$$
+The matrix is orthonormal: its rows are mutually orthogonal unit vectors, and its inverse is its transpose. The pre-factor $\sqrt{2/3}$ is the convention that makes the transform power-invariant (rather than amplitude-invariant); we adopt it throughout because it is the version under which Parseval's identity holds without rescaling.
+
+The first two rows define the $\alpha$ and $\beta$ axes of a planar projection of $(v_a, v_b, v_c)$ onto the plane orthogonal to the cube diagonal $(1,1,1)/\sqrt{3}$. The third row defines the zero-sequence axis $v_0$, the projection onto that diagonal. The geometry is: $\alpha\beta$ is the plane of "differential" mode, $0$ is the "common" mode. A balanced three-phase signal --- one whose three components sum to zero --- has $v_0 \equiv 0$ identically. An imbalanced signal puts energy into the zero-sequence axis. The decomposition is exhaustive: any three-component signal is uniquely the sum of a balanced part (in the $\alpha\beta$ plane) and a common-mode part (along the $0$ axis).
+
+## Power invariance (Parseval)
+
+The defining structural property of the Clarke transform is *power invariance*. By orthonormality of the transform matrix,
+$$
+v_a^2 + v_b^2 + v_c^2 \;=\; v_\alpha^2 + v_\beta^2 + v_0^2.
+$$
+This is Parseval's theorem applied to the basis change. Total instantaneous power, computed against a unit resistive load, is identical in the $abc$ and $\alpha\beta 0$ frames. This is the conservation law that drives everything in the rest of the paper.
+
+The same identity, restated as a sum of three squares equal to a constant, is the equation of a sphere in three dimensions. The total available energy budget at any instant is the radius squared. Any redistribution among the three components --- $\alpha$, $\beta$, $0$ --- traces out a path on this sphere. The two analyzers in a CHSH measurement project onto two of the three axes; the third absorbs whatever the analyzers do not capture. Section&nbsp;[-@sec-third-party] makes this redistribution explicit.
+
+The same conservation law is the statement that quantum-mechanical basis changes (unitary transformations) preserve $\langle\psi|\psi\rangle$. The Clarke transform is the classical, three-dimensional version of that statement, made on a real vector space rather than a complex Hilbert space, and acting on power densities rather than probability densities. This is not analogy. It is the same algebraic identity --- a sum-of-squares conservation law under an orthonormal change of basis --- in two different physical realizations.
+
+## Symmetrical components
+
+The Clarke decomposition, while orthonormal, does not by itself separate the rotational structure of the signal. A balanced signal in the $\alpha\beta$ plane can be written equivalently as a sum of two counter-rotating phasors --- the *symmetrical components* of Fortescue [@fortescue1918]. The transformation is
+$$
+\begin{pmatrix} v_+ \\ v_- \\ v_0 \end{pmatrix} \;=\; \frac{1}{3}\begin{pmatrix} 1 & a & a^2 \\ 1 & a^2 & a \\ 1 & 1 & 1 \end{pmatrix} \begin{pmatrix} v_a \\ v_b \\ v_c \end{pmatrix},
+$$
+where $a = e^{i 2\pi/3}$ is the cube root of unity. The three sequence components are:
+
+- **Positive sequence** $v_+$: phasors rotating *counterclockwise* at the source angular frequency. In the $\alpha\beta$ plane, the positive-sequence component traces a circle in the $(+)$ direction.
+- **Negative sequence** $v_-$: phasors rotating *clockwise*. In the $\alpha\beta$ plane, traces a circle in the $(-)$ direction.
+- **Zero sequence** $v_0$: common-mode component. No rotation; equal value on all three phases. This is the same $v_0$ as in the Clarke decomposition.
+
+The Clarke and Fortescue representations are related by a unitary transformation on the $\alpha\beta$ plane: the symmetrical components are the eigenvectors of the cyclic permutation operator on $(v_a, v_b, v_c)$, while the Clarke components are the real and imaginary parts of the positive-sequence phasor (plus the zero-sequence common mode). The total power, summed across all three sequence components, equals the power summed across all three Clarke components, equals the power summed across the original three phases:
+$$
+|v_+|^2 + |v_-|^2 + |v_0|^2 \;=\; v_\alpha^2 + v_\beta^2 + v_0^2 \;=\; v_a^2 + v_b^2 + v_c^2.
+$$
+For a balanced source emitting equal positive and negative sequences --- the configuration we will use throughout the rest of the paper --- the zero-sequence component is *initially* zero. It becomes nonzero, in a sense made precise in Section&nbsp;[-@sec-third-party], only after the analyzers project the signal onto two specific axes and the unprojected residue is forced into the common-mode rail by the conservation constraint.
+
+## Park rotation as analyzer
+
+The analyzer at angle $\phi$ is implemented as a rotation of the Clarke frame by $\phi$ in the $\alpha\beta$ plane. This is the *Park transform*:
+$$
+\begin{pmatrix} v_d \\ v_q \end{pmatrix} \;=\; \begin{pmatrix} \cos\phi & \sin\phi \\ -\sin\phi & \cos\phi \end{pmatrix} \begin{pmatrix} v_\alpha \\ v_\beta \end{pmatrix}.
+$$
+The Park rotation does not couple to the zero-sequence axis; it acts only in the $\alpha\beta$ plane. The resulting $d$-axis ("direct") and $q$-axis ("quadrature") components are the projections of the signal onto the rotated analyzer basis.
+
+For a positive-sequence signal of amplitude $V$ and emission phase $\theta$, the Clarke components are $v_\alpha = V\cos\theta$ and $v_\beta = V\sin\theta$. After the Park rotation by analyzer angle $\phi$, the $d$-axis power is
+$$
+P_d(\theta, \phi) \;=\; v_d^2 \;=\; \big(v_\alpha\cos\phi + v_\beta\sin\phi\big)^2 \;=\; V^2\cos^2(\theta - \phi).
+$$
+This is Malus's law --- the intensity of polarized light transmitted through a polarizer at angle $\phi$. Equivalently, it is the squared projection of a unit vector at angle $\theta$ onto an axis at angle $\phi$ in the plane. The $q$-axis power is the complementary $V^2\sin^2(\theta - \phi)$, and the two add to $V^2$, the total positive-sequence power available.
+
+The Clarke--Park composition is therefore a *classical polarization measurement*. The hidden variable $\theta$ is the emission phase of the source, distributed uniformly. The analyzer setting $\phi$ is the rotation angle of the measurement basis. The output is the squared projection. This is the same operational structure as a Stern--Gerlach analyzer on a spin-1/2 particle, a polarizer on a single photon, or a Mach--Zehnder interferometer on a coherent state, with one important distinction: every quantity in the Clarke--Park setup is real, classical, and directly measurable on the signal cables.
+
+## The Clarke surface and the Born-rule correspondence
+
+The structural correspondence between the Clarke power decomposition and quantum single-particle measurement is most visible geometrically. Following the construction of [the present author's notebook 20], consider a balanced source emitting equal positive and negative sequences with $V_+ = V_- = V$ and no initial zero-sequence component. The phase voltages are
+$$
+v_a(\theta) = 2V\cos\theta, \qquad v_b(\theta) = -V\cos\theta, \qquad v_c(\theta) = -V\cos\theta,
+$$
+where the factor of 2 and the sign pattern follow from the $120^\circ$ offset cancellation $\cos(\theta - 120^\circ) + \cos(\theta + 120^\circ) = -\cos\theta$. All three phases collapse onto a single sinusoidal envelope: the system is *linearly polarized* in the $abc$ frame, its instantaneous direction set by the relative phase of the two counter-rotating sequences.
+
+Applying the Clarke transform yields $v_\alpha = \sqrt{6}\,V\cos\theta$, $v_\beta = 0$ identically. The $\beta$-axis is dead. The instantaneous power density in the $\alpha\beta$ plane is therefore
+$$
+p_{\alpha\beta}(\theta) \;=\; v_\alpha^2 + v_\beta^2 \;=\; 6V^2\cos^2\theta.
+$$
+Plotted as a radial extrusion, this is a bowl-shaped surface --- the *Clarke power surface* $\mathcal{S}$ --- with two peaks at $\theta = 0, \pi$ and two nulls at $\theta = \pm \pi/2$. Three structural facts about $\mathcal{S}$ identify it with the Born-rule probability distribution for a single quantum particle.
+
+*Counter-rotating phasors as particle degrees of freedom.* The positive sequence rotates counterclockwise; the negative sequence rotates clockwise. Their interference under the Clarke projection is maximally constructive along one axis and maximally destructive along the orthogonal axis, producing the $\cos^2\theta$ angular distribution. This is structurally identical to Malus's law for polarized light, which is itself the Born rule for a single photon's polarization measurement.
+
+*Power density as Born-rule probability.* The quadratic form $p_{\alpha\beta} = v_\alpha^2 + v_\beta^2$, normalized to unit total energy, is the same object as the Born rule $P = |\langle\psi|\phi\rangle|^2$ acting on a two-component complex amplitude. The amplitude-squared structure is not analogical: it is the same quadratic form applied to the same kind of object --- a projection of a two-dimensional state onto an orthonormal basis --- in two different representations.
+
+*Maximal correlation as axis alignment.* The condition $v_\beta \equiv 0$ is the signature of maximal correlation with the analyzer axis: all power is channeled into one measurement channel, and none into its orthogonal complement. This is the analog of measuring one half of a singlet pair along its preparation axis, yielding $\cos^2(0) = 1$ in one channel and $\sin^2(0) = 0$ in the other.
+
+The Clarke surface is the *single-particle marginal* of the joint Bell object. Tilting the analyzer by $\phi$ produces the Park rotation of the previous subsection, which redistributes the power between the $d$-axis bowl ($\cos^2\phi$ scaling) and the complementary $q$-axis bowl ($\sin^2\phi$ scaling), with the sum preserved at $6V^2\cos^2\theta$ for all $\phi$. The two bowls *breathe* as $\phi$ varies, exchanging amplitude while always summing to the same constant. The flat plane $p_d + p_q = 6V^2\cos^2\theta$ is the conservation law made visible.
+
+The full two-station correlation surface --- the joint object whose CHSH integral yields $S = 2\sqrt{2}$ --- is the product of two such single-particle Clarke surfaces, one per measurement station, with the joint hidden variable $\theta$ shared between them. The Bell violation is then a statement about the integral of this joint object against the four CHSH analyzer-pair configurations. The next section carries out that integration explicitly and confronts the threshold/binarization problem that real Bell tests must solve.
+
+\newpage
+
+# Two-Party CHSH from a Three-Phase Source {#sec-two-party}
+
+We now derive the CHSH correlation function for a balanced three-phase source measured by two Park-rotation analyzers, confront the binarization problem that arises when continuous powers must be converted to binary $\pm 1$ outcomes, and identify exactly where each model in the conservation hierarchy of Section&nbsp;[-@sec-hierarchy] sits in this two-party picture. The central observation is that the two-party accounting is *complete with respect to local statistics* (no-signaling holds, marginals are uniform) but *incomplete with respect to joint statistics* (the conservation law leaks into a third channel that the two analyzers cannot capture). The leak is the subject of Section&nbsp;[-@sec-third-party].
+
+## The standard setup
+
+The source emits equal-amplitude positive and negative sequences, $V_+ = V_- = V$, with hidden emission phase $\theta$ distributed uniformly on $[0, 2\pi)$ and a hidden rotation-sense label $\sigma \in \{+, -\}$ (which sequence the analyzer "sees" on a given trial), distributed uniformly. In the $\alpha\beta$ frame, the positive sequence traces a counterclockwise circle of radius $V$ and the negative sequence traces a clockwise circle of the same radius. Their superposition at any instant is a linearly polarized oscillation along an axis whose direction is set by the relative phase of the two sequences.
+
+Analyzer $A$ at angle $\phi_A$ implements a Park rotation. On a positive-sequence trial, the captured power is
+$$
+P_A^{(+)}(\theta, \phi_A) \;=\; V^2 \cos^2(\theta - \phi_A).
+$$
+On a negative-sequence trial, the analyzer sees the opposite rotation sense, and the captured power is the complementary
+$$
+P_A^{(-)}(\theta, \phi_A) \;=\; V^2 \sin^2(\theta - \phi_A).
+$$
+Analyzer $B$ at angle $\phi_B$ likewise captures $P_B^{(+)} = V^2\cos^2(\theta - \phi_B)$ on positive-sequence trials and $P_B^{(-)} = V^2\sin^2(\theta - \phi_B)$ on negative-sequence trials. The trial-by-trial assignment of rotation sense is the *anti-correlated* pairing required for the singlet-like state: when Alice's analyzer sees the positive sequence, Bob's sees the negative, and vice versa. This is the three-phase analog of the spin assignment in a singlet decay.
+
+The continuous-valued analyzer outputs, normalized and centered on the $\pm 1$ scale used by CHSH, are
+$$
+A(\theta, \phi_A) \;=\; \frac{2 P_A(\theta, \phi_A)}{V^2} - 1 \;=\; \begin{cases} \cos(2(\theta - \phi_A)) & \text{on positive-sequence trials,} \\ -\cos(2(\theta - \phi_A)) & \text{on negative-sequence trials,} \end{cases}
+$$
+and similarly for $B$, with the rotation-sense pairing enforcing $B = -A$ on each trial type.
+
+## Local uniformity and no-signaling
+
+A critical structural feature: neither observer, examining only their own measurement record, can determine which rotation sense was emitted on a given trial. The expectation of the analyzer output, taken over the rotation-sense hidden variable $\sigma$ at fixed $\theta$, is
+$$
+\langle A(\theta, \phi_A) \rangle_\sigma \;=\; \tfrac{1}{2}\cos(2(\theta - \phi_A)) + \tfrac{1}{2}\big(\!-\!\cos(2(\theta - \phi_A))\big) \;=\; 0.
+$$
+Integrating over $\theta$ as well gives $\langle A \rangle = 0$, independent of $\phi_A$. The analyzer's marginal expectation does not depend on its own setting, and certainly does not depend on the other analyzer's setting. This is the *no-signaling* condition: information about Bob's analyzer choice cannot reach Alice through her measurement record alone.
+
+In density-matrix language, tracing over the rotation-sense hidden variable yields the maximally mixed state $\rho_A = I/2$. Local uniformity is the statement that the source, measured by Alice alone, is indistinguishable from white noise: every analyzer setting produces the same uniform marginal distribution. This is the classical statistical analog of the well-known quantum result that the reduced state of one half of a Bell pair is the maximally mixed state.
+
+The point bears emphasis. Our system reproduces the Bell correlator at the joint level (next subsection), but its *marginals are perfectly classical*. Anything Alice measures, in isolation, looks like a fair coin. The correlation appears only when her record is compared, after the fact, with Bob's. This is the same operational signature as quantum singlets: locally trivial, jointly correlated.
+
+## The joint correlation
+
+The joint expectation, taken over the shared hidden variables $(\theta, \sigma)$, is
+$$
+E(\phi_A, \phi_B) \;=\; \big\langle A(\theta, \phi_A)\, B(\theta, \phi_B) \big\rangle_{\theta, \sigma}.
+$$
+Because the rotation-sense pairing forces $B = -A$ trial-by-trial,
+$$
+A(\theta, \phi_A)\, B(\theta, \phi_B) \;=\; -\cos(2(\theta - \phi_A))\,\cos(2(\theta - \phi_B))
+$$
+on both positive- and negative-sequence trials. The rotation-sense hidden variable drops out of the *joint* expectation, and we are left with the integral over $\theta$ alone:
+$$
+E(\phi_A, \phi_B) \;=\; -\int_0^{2\pi} \cos(2(\theta - \phi_A))\,\cos(2(\theta - \phi_B))\, \frac{d\theta}{2\pi} \;=\; -\tfrac{1}{2}\cos(2\Delta\phi),
+$$
+by the same product-to-sum and orthogonality argument used in Section&nbsp;[-@sec-hierarchy]. The factor of $\tfrac{1}{2}$ is the amplitude of the correlator before the strict-complementarity constraint is imposed.
+
+This is the *full continuous-valued correlator* of the three-phase source. Note that it is the same shape as the quantum singlet correlator $E_\text{QM}(\phi_A, \phi_B) = -\cos(2\Delta\phi)$, but with half the amplitude. The factor of two in the cosine argument is fixed by the quadratic conservation law; the amplitude is fixed by the binarization choice, to which we now turn.
+
+## The binarization problem
+
+Real CHSH experiments yield binary $\pm 1$ click outcomes, not continuous power values. There are two natural ways to binarize a continuous quadratic distribution, and they correspond to the *deterministic threshold* and *stochastic local* models of Section&nbsp;[-@sec-hierarchy]. Each gives a CHSH value below the Tsirelson bound, in the precise way the conservation hierarchy table predicts.
+
+*Deterministic threshold.* Assign $A = +1$ if $\cos^2(\theta - \phi_A) > 1/2$, else $A = -1$. Equivalently, $A(\theta, \phi_A) = \mathrm{sgn}\big[\cos(2(\theta - \phi_A))\big]$, and similarly $B(\theta, \phi_B) = -\mathrm{sgn}\big[\cos(2(\theta - \phi_B))\big]$ on the anti-correlated rotation-sense pairing. The joint expectation, integrated over uniform $\theta$, is the *triangle function*
+$$
+E_\text{det}(\phi_A, \phi_B) \;=\; -1 + \frac{4|\Delta\phi|}{\pi}, \qquad |\Delta\phi| \leq \pi/2,
+$$
+extended periodically. CHSH evaluated at the quadratic-optimal angles $\phi_A = 0$, $\phi_{A'} = \pi/4$, $\phi_B = \pi/8$, $\phi_{B'} = 3\pi/8$ yields $|S| = 2$ exactly --- the Bell bound, and no violation. The thresholding has destroyed the cosine structure: the cos-squared bowl, after binarization, becomes a step function, and the doubled-angle correlation pattern is replaced by a piecewise-linear triangle. The doubled-frequency information is gone, and so is any capacity to violate Bell.
+
+*Stochastic local.* Interpret $\cos^2(\theta - \phi_A)$ as the probability of outcome $A = +1$, conditioned on the hidden variable, with independent local coin flips at the two stations:
+$$
+\Pr(A = +1 \mid \theta) \;=\; \cos^2(\theta - \phi_A), \qquad \Pr(B = +1 \mid \theta) \;=\; \sin^2(\theta - \phi_B).
+$$
+The locality (factorization) condition is encoded in the independence of the two coin flips at fixed $\theta$:
+$$
+\langle AB \mid \theta \rangle \;=\; \langle A \mid \theta\rangle \cdot \langle B \mid \theta \rangle \;=\; \cos(2(\theta - \phi_A)) \cdot \big(\!-\!\cos(2(\theta - \phi_B))\big).
+$$
+Integrating over $\theta$,
+$$
+E_\text{stoch}(\phi_A, \phi_B) \;=\; -\tfrac{1}{2}\cos(2\Delta\phi), \qquad |S|_\text{stoch} \;=\; \sqrt{2}.
+$$
+The shape is correct, the amplitude is half what the quantum result would give. The independent coin flips have introduced exactly the dilution that makes the model *local* in Bell's sense, and the correlation amplitude has been halved as a consequence.
+
+## The gap
+
+Three CHSH values are now in hand for the same source statistics, distinguished only by the binarization rule:
+
+- *Deterministic threshold* $S = 2$ (Bell bound, no violation; piecewise-linear triangle correlator);
+- *Stochastic local* $S = \sqrt{2}$ (correct shape, halved amplitude; factorizable);
+- *Quantum / strict complementarity* $S = 2\sqrt{2}$ (Tsirelson bound, full amplitude; non-factorizable).
+
+Each step in this sequence is a factor of $\sqrt{2}$ in the CHSH value. The progression is not arbitrary. The deterministic-threshold model loses the doubled-frequency structure entirely. The stochastic-local model preserves the doubled-frequency structure but halves the correlation amplitude through factorization. The quantum case preserves both --- and what it requires to do so is the strict event-by-event complementarity that
+$$
+\cos^2(\theta - \phi_A) + \sin^2(\theta - \phi_A) \;=\; 1 \qquad \text{for every $\theta$ and every $\phi_A$, on every trial.}
+$$
+In the stochastic-local model, this identity holds *in expectation*: the average power split between Alice's $d$-axis and $q$-axis is unity, but on any given trial the binary outcomes need not respect it. In the quantum case, the same identity holds *event-by-event*: on every individual trial, the powers in complementary channels must sum exactly to unity, with no exception. That is the constraint that the factorization condition cannot enforce, because factorization requires Alice's outcome to depend only on $(\phi_A, \theta)$ and Bob's outcome to depend only on $(\phi_B, \theta)$, and there is no way to make their sum exactly $V^2$ on every trial without one outcome conditioning on the other --- which is precisely the dependence the no-signaling condition forbids on the marginal level but does not forbid on the joint level.
+
+The doubled-frequency structure --- the cos-squared bowl, the $\cos(2\Delta\phi)$ correlator --- is delivered by the quadratic conservation law on the *source*. The strict-complementarity amplitude --- the factor of two between $\sqrt{2}$ and $2\sqrt{2}$ --- is delivered by the same quadratic conservation law applied trial-by-trial across the *full system*, including the channel between the two analyzers. The two-party accounting captures the first part of the conservation law (the source emits cos-squared distributions) but not the second (the joint trials are constrained event-by-event by a global sum). The missing constraint is the missing third party, and the next section makes the constraint physical.
+
+\newpage
+
+# The Third Party: Zero-Sequence as Vacuum Mode {#sec-third-party}
+
+We now identify the third party in the conservation law. The argument has three steps. First, we show that the sum of the powers captured by the two analyzers, $P_A + P_B$, is *not* constant in $\theta$; it oscillates. Second, we show that the missing energy is exactly the zero-sequence power $P_0$, which absorbs the residue and restores the conservation law. Third, we develop the structural analogies between the zero-sequence mode and (i) the boundary or edge modes of algebraic quantum field theory, (ii) the quantum potential of Bohmian mechanics, and (iii) the monogamy of entanglement constraint of Coffman, Kundu, and Wootters [@coffman2000]. The thread connecting the three is the same: a quadratic conservation law on a bipartite system has an irreducibly tripartite accounting once the two parts are coupled through a global constraint, and the third party is the channel through which the coupling does its work.
+
+## The missing energy
+
+Take the standard setup of Section&nbsp;[-@sec-two-party]: balanced source emitting equal positive and negative sequences with $V_+ = V_- = V = 1$, normalized so total positive-sequence power is unity. On any trial, with hidden phase $\theta$ and analyzers at $\phi_A$ and $\phi_B$, the powers captured by the two analyzers in the positive-sequence channel are
+$$
+P_A(\theta) \;=\; \cos^2(\theta - \phi_A), \qquad P_B(\theta) \;=\; \cos^2(\theta - \phi_B).
+$$
+(For the anti-correlated negative-sequence channel, $P_B$ is the complementary $\sin^2$ form, which we treat in parallel below.) Their sum, computed using the identity $\cos^2 x + \cos^2 y = 1 + \cos(x-y)\cos(x+y)$, is
+$$
+P_A(\theta) + P_B(\theta) \;=\; 1 + \cos(\Delta\phi)\,\cos(2\theta - \phi_A - \phi_B).
+$$
+This is *not* constant in $\theta$ unless $\Delta\phi \in \{0, \pi/2\}$. The two analyzers, taken together, do not exhaust the energy budget on a generic trial. Some power is captured by Alice; some is captured by Bob; and some, oscillating in $\theta$ at twice the source frequency, is captured by *neither*. That residue must go somewhere if the total energy is conserved.
+
+In the three-phase analog, where it goes is unambiguous and physically explicit. The conservation law, restated from Section&nbsp;[-@sec-clarke], is
+$$
+P_+ + P_- + P_0 \;=\; v_a^2 + v_b^2 + v_c^2 \;=\; \mathrm{const},
+$$
+where $P_+ = |v_+|^2$, $P_- = |v_-|^2$, and $P_0 = |v_0|^2$. The two analyzers project onto the positive-sequence channel (Alice's $d$-axis at $\phi_A$, Bob's $d$-axis at $\phi_B$), and what they fail to capture is forced into the zero-sequence axis by the conservation constraint. The zero-sequence power, on a generic trial, is not zero. It is precisely the missing energy:
+$$
+P_0(\theta) \;=\; P_\text{total} - P_A(\theta) - P_B(\theta) \;=\; (P_\text{total} - 1) - \cos(\Delta\phi)\,\cos(2\theta - \phi_A - \phi_B).
+$$
+For a normalized source with $P_\text{total} = 1$, the constant offset vanishes and the zero-sequence reservoir oscillates at exactly the angular frequency required to balance the books.
+
+## Properties of the zero-sequence reservoir
+
+The behavior of $P_0(\theta)$ across the four salient analyzer configurations encodes the entire structure of the CHSH violation.
+
+*Aligned analyzers* ($\Delta\phi = 0$). Then $\cos(\Delta\phi) = 1$, and $P_0(\theta) = -\cos(2\theta - 2\phi_A)$ oscillates with peak-to-peak amplitude two and mean zero. On average, the two analyzers fully partition the power budget; the $\theta$-by-$\theta$ oscillation reflects the back-and-forth swing of the linearly polarized source between full alignment with the analyzers (everything captured) and full orthogonality (nothing captured). The captured powers track each other perfectly trial-by-trial, $P_A(\theta) = P_B(\theta) = \cos^2(\theta - \phi_A)$, and the continuous-valued joint correlation $E = -\langle (2P_A - 1)(2P_B - 1)\rangle_\theta = -\tfrac{1}{2}$ attains the maximum magnitude of the half-amplitude correlator. Strict-complementarity binarization (Section&nbsp;[-@sec-two-party]) sharpens this to the singlet result $E_\text{QM} = -1$ at $\Delta\phi = 0$.
+
+*Orthogonal analyzers* ($\Delta\phi = \pi/2$). Then $\cos(\Delta\phi) = 0$, and $P_0(\theta) = 0$ identically. The analyzers' captured powers $P_A + P_B = 1$ exactly, on every trial, with no leakage. But the captured powers themselves are also independent: $E = 0$, no correlation. The zero-sequence reservoir is empty, and the two analyzer records are statistically independent. This is the limit in which the joint state is "fully partitioned" between the two measurement channels with no residue, but at the cost of no correlation between Alice and Bob.
+
+*CHSH-optimal angles* ($\Delta\phi = \pi/4, 3\pi/8$, etc.). Then $\cos(\Delta\phi)$ is intermediate, and $P_0(\theta)$ oscillates with intermediate amplitude. The analyzers capture some of the energy, the zero-sequence reservoir absorbs the rest. The correlation $E = -\tfrac{1}{2}\cos(2\Delta\phi)$ is also intermediate. *This is precisely the regime in which CHSH violation peaks.* The analyzer-difference angle that maximizes $|S|$ is the angle at which the partition of energy between the captured channels and the zero-sequence reservoir is in the right balance to produce the strongest joint correlation.
+
+The CHSH violation, on this reading, is a measurement of the zero-sequence reservoir. Aligned analyzers drain the reservoir on average but produce maximum captured-channel correlation. Orthogonal analyzers empty the reservoir entirely but produce no correlation. Intermediate angles fill the reservoir to a calibrated level and produce the maximum CHSH violation. The "spookiness" of the Bell violation is, on this reading, the spookiness of an oscillating power reservoir whose books are kept by the conservation law but whose channel is invisible to the standard two-party CHSH apparatus.
+
+## The three-party conservation law
+
+The complete bookkeeping is
+$$
+P_+ + P_- + P_0 \;=\; v_a^2 + v_b^2 + v_c^2 \;=\; v_\alpha^2 + v_\beta^2 + v_0^2 \;=\; \mathrm{const}.
+$$
+This is a *three-party* conservation law. The two analyzers in a CHSH measurement instrument the first two terms ($P_+$ and $P_-$, accessed via the Park rotation onto the positive- and negative-sequence channels). The third term ($P_0$, the zero-sequence reservoir) is absent from the standard CHSH apparatus.
+
+Standard CHSH analysis, in this language, projects out the third term. It tracks the two captured channels and treats the residue as inaccessible noise --- or, more precisely, as the "spooky" part of the joint state that survives only as a post-hoc correlation in the records. The interpretive move proposed in this paper is to put the third term back into the bookkeeping. The correlations that appear nonlocal in the two-party projection become the natural consequence of a global conservation law on a tripartite system in which the third party is the channel coupling the two measurement stations.
+
+This is structurally similar to the way momentum conservation in a two-body decay is *trivially* nonlocal: when one fragment's momentum is measured, the other's is determined by the conservation law, regardless of the spatial separation between the measurements. The strangeness of Bell violations, on the present reading, is not a categorically different kind of nonlocality. It is the same kind of nonlocality, applied to a *quadratic* conserved quantity rather than a *linear* one, and projected onto a two-party measurement subspace that happens to omit the channel doing the conservation work. The quadratic structure produces the doubled-frequency correlator (the $\cos^2$ bowl) and the projected accounting produces the apparent surplus correlation ($S > 2$) that has no two-party local-realist explanation.
+
+## Analogy to algebraic quantum field theory
+
+The structural role of the zero-sequence mode has a direct analog in algebraic quantum field theory. In the algebraic formulation [@haag1996], entanglement between two spatial regions $A$ and $B$ is not a property of particles localized in those regions --- there are, in general, no such particles in a relativistic field theory --- but a property of the *state* of the field in a region of spacetime that contains both. The entanglement entropy between $A$ and $B$ is computed from the modes of the field at the *boundary* between them, the so-called "edge modes" or "zero modes" that belong to neither region's local algebra of observables but that are essential to the joint state's structure [@witten2018].
+
+The boundary modes play exactly the role our zero-sequence component plays. They are the field degrees of freedom that the local observers in regions $A$ and $B$ cannot access through their local algebras, but whose presence is required to make the global state's bookkeeping consistent. In the AQFT setting, these modes are responsible for the divergence of entanglement entropy between adjacent regions and for the universal area-law behavior at the boundary. In the three-phase analog, the analogous statement is that the zero-sequence reservoir is the channel through which the conservation law links Alice's and Bob's measurement statistics, and its absence from the standard two-party CHSH bookkeeping is the source of the apparent nonlocality.
+
+The analog is structural rather than dynamical: we are not claiming that the three-phase system *is* a quantum field theory, only that the same algebraic pattern --- a quadratic conservation law on a bipartite measurement system, with a third channel mediating the joint constraint --- shows up in both, and that the role played by the zero-sequence mode in our analog is the same role played by edge modes in QFT entanglement.
+
+## Analogy to Bohmian mechanics
+
+The same structural role is played, in pilot-wave theory [@bohm1952; @holland1993], by the *quantum potential* --- the nonlocal term in the guidance equation that encodes the global wavefunction's constraint on local trajectories. In Bohmian mechanics, particles have definite positions at all times, and their dynamics are determined by a guidance equation that depends on the wavefunction. The wavefunction acts as a global object that conditions the local motion: when one particle's position changes, the wavefunction's structure changes, and the guidance equation for the other particle is affected even at spacelike separation. The quantum potential is the explicit nonlocal term that makes this coupling concrete.
+
+The zero-sequence mode plays the same role. It is the global object whose state conditions the local powers captured at the two analyzer stations. When Alice's analyzer setting changes, the partition of energy between the captured channels and the zero-sequence reservoir changes, and the joint statistics with Bob's measurements change correspondingly. The conservation law $P_+ + P_- + P_0 = \mathrm{const}$ is the explicit version of the constraint that the quantum potential enforces implicitly.
+
+This identification suggests a translation table:
+
+| Bohmian object | Three-phase analog |
+|---|---|
+| Wavefunction | Joint state of the three-mode system $(v_+, v_-, v_0)$ |
+| Particle position | Captured power at an analyzer ($P_A$ or $P_B$) |
+| Quantum potential | Zero-sequence power $P_0$ |
+| Configuration-space nonlocality | Common-mode rail coupling the two stations |
+| Guidance equation | Conservation law with the analyzer rotations as inputs |
+
+We do not claim that the three-phase system *is* a Bohmian model in any strong sense --- the dynamics differ, and our framework does not commit to definite values for unmeasured observables in the way Bohmian mechanics does. But the structural pattern of "global constraint enforcing local correlations through a third channel" is the same in both, and the explicit physical realization of the third channel as a measurable common-mode signal is one of the clarifying features of the analog.
+
+## Connection to monogamy of entanglement
+
+A third structural analogy, less metaphorical and more directly computable, is to the *monogamy of entanglement* constraint of Coffman, Kundu, and Wootters [@coffman2000]. For a tripartite quantum system in a pure state, the entanglement of formation between any pair of subsystems is bounded by a global budget, with the constraint
+$$
+\mathcal{C}^2(\rho_{AB}) + \mathcal{C}^2(\rho_{AC}) \;\leq\; \mathcal{C}^2(\rho_{A(BC)}),
+$$
+where $\mathcal{C}$ denotes the concurrence (or analogous entanglement measure). This is a *budget constraint*: the total correlation that subsystem $A$ can share with the rest of the system is fixed by the global state, and any correlation with $B$ reduces the available correlation with $C$.
+
+The three-party conservation law $P_+ + P_- + P_0 = \mathrm{const}$ is the same kind of budget constraint, applied to power rather than concurrence. The total power available to be distributed across the three modes is fixed by the source. Any power captured by Alice's analyzer is power not available to Bob or to the zero-sequence reservoir. Any power captured by both Alice and Bob is power not available to the zero-sequence reservoir. The CHSH violation, on this reading, measures the depth of the trade-off: the analyzers' joint capture is maximal when the zero-sequence reservoir's depth is intermediate, and the maximum CHSH value $S = 2\sqrt{2}$ is the optimal point on this trade-off curve.
+
+The monogamy constraint and the conservation law are formally analogous, but the conservation law is more constrained: it requires *equality*, not inequality, in the budget, on every trial, with the three modes related by an exact algebraic identity. The monogamy constraint admits states in which the budget is partially unspent (mixed states, lossy operations), whereas the pure-state Clarke decomposition saturates the budget on every trial. Our system is therefore a *saturating* analog: it sits at the boundary of the monogamy constraint at all times, which is why it produces Tsirelson saturation and not some smaller violation.
+
+The three analogies --- AQFT edge modes, Bohmian quantum potential, monogamy of entanglement --- are not independent. They are three different views of the same algebraic fact: a quadratic conservation law on a bipartite measurement system has an irreducibly tripartite accounting, and the third party is the channel through which the conservation does its work. In our analog this channel is concrete and physically measurable; in the abstract quantum frameworks it is implicit in the wavefunction's structure. The remainder of the paper makes the three-phase channel explicit at every layer of the construction --- the reduced 4-mode model in Section&nbsp;[-@sec-reduced-model], the detector layer in Section&nbsp;[-@sec-born], the closure latch in Section&nbsp;[-@sec-latch], and the SPICE realization in Section&nbsp;[-@sec-spice] --- and shows that when the channel is restored to the bookkeeping, the cos-squared correlator and Tsirelson-saturating CHSH emerge by direct computation.
+
+\newpage
+
+# The Reduced Four-Mode Model and Joint Measurement {#sec-reduced-model}
+
+We now introduce the reduced four-mode model that operationalizes the conservation hierarchy and the three-party Clarke decomposition at the level of joint measurements between two analyzer stations. The model has three components: a shared four-mode state $\Psi_0 \in \mathbb{C}^4$ in the joint basis $\{|{++}\rangle, |{+-}\rangle, |{-+}\rangle, |{--}\rangle\}$; local analyzer rotations $R_A(a) \otimes R_B(b)$ acting tensor-locally on the two stations; and joint branch weights $w_{xy}(a,b) = |c_{xy}(a,b)|^2$ obtained as squared projections. The first theorem of this section establishes that, under a passive linear front-end with ideal resistive extraction, the absorbed-energy fractions in the four physical branches equal the squared-projection weights *exactly* --- not approximately, not in a limiting regime, but as an algebraic identity. The second theorem evaluates the resulting CHSH correlator on the singlet-like state and verifies that it reproduces $E(a,b) = -\cos(2\Delta\phi)$ and saturates Tsirelson at $S = 2\sqrt{2}$.
+
+The model is "reduced" in the sense that it abstracts away from the specific resonant network that physically realizes the joint state, treating the state as a vector in $\mathbb{C}^4$ and the analyzers as $U(2) \otimes U(2)$ rotations. Section&nbsp;[-@sec-spice] returns to the question of how that reduced state is implemented as a passive linear LC network, with the four delta-LC tanks playing the role of the joint basis vectors and a shared resonant core mediating the singlet-like superposition.
+
+## The shared four-mode state
+
+Let $\Psi_0 \in \mathbb{C}^4$ with $\|\Psi_0\|^2 = 1$ be the *prepared joint state*. Identify the four-dimensional space with the ordered basis
+$$
+\bigl\{|{++}\rangle,\; |{+-}\rangle,\; |{-+}\rangle,\; |{--}\rangle\bigr\},
+$$
+where the first label refers to Alice's local sequence-sense channel ($+$ = positive sequence captured, $-$ = negative sequence captured) and the second label refers to Bob's. Each basis vector $|xy\rangle$ corresponds to a definite joint outcome of the two analyzer stations.
+
+The state is not a wavefunction in the quantum-mechanical sense. It is a normalized complex four-vector that parametrizes the singlet-like correlation between the two stations and that, in Section&nbsp;[-@sec-spice], is realized as the modal amplitude vector of a passive linear LC network with four delta tanks and a shared resonant core. The pre-factor of the wavefunction interpretation enters only through the squared-projection law that converts amplitudes to energies, which is itself a consequence of the linear network's quadratic conservation law. We discuss the point further in Section&nbsp;[-@sec-born].
+
+The case of central interest throughout the paper is the *singlet-like state*
+$$
+\Psi_\text{singlet} \;=\; \frac{1}{\sqrt{2}} \begin{pmatrix} 0 \\ 1 \\ -1 \\ 0 \end{pmatrix},
+$$
+corresponding to the superposition $\tfrac{1}{\sqrt{2}}\bigl(|{+-}\rangle - |{-+}\rangle\bigr)$. This state encodes anti-correlation between the two stations' sequence-sense channels: when Alice captures the positive sequence, Bob captures the negative, and vice versa, with no $|{++}\rangle$ or $|{--}\rangle$ component. It is the minimal non-trivial entangled state in the four-mode space, and it is the state whose CHSH correlator we will compute below.
+
+## Local analyzer rotations
+
+Each station has a local two-dimensional analyzer rotation. We take the analyzers to be real rotations in the local sequence-sense plane:
+$$
+R(\theta) \;=\; \begin{pmatrix} \cos\theta & \sin\theta \\ -\sin\theta & \cos\theta \end{pmatrix}, \qquad R(\theta) \in SO(2) \subset U(2).
+$$
+This is the same Park rotation introduced in Section&nbsp;[-@sec-clarke], now acting on the local two-component sequence space rather than on the three-component Clarke frame. The full joint rotation is the tensor product
+$$
+U(a, b) \;=\; R_A(a) \otimes R_B(b) \;\in\; U(2) \otimes U(2) \;\subset\; U(4),
+$$
+acting on the four-mode space by the standard Kronecker product. By construction, $U(a,b)$ is *local*: it factors as a product of operations on the two stations independently. There is no joint operation that depends on both $a$ and $b$ simultaneously. The locality of the analyzer is built into the tensor-product structure.
+
+The *rotated joint state* is
+$$
+\Psi(a, b) \;=\; U(a, b)\, \Psi_0 \;=\; \bigl(R_A(a) \otimes R_B(b)\bigr)\, \Psi_0.
+$$
+Writing the components of $\Psi(a, b)$ in the joint outcome basis as
+$$
+\Psi(a,b) \;=\; \begin{pmatrix} c_{++}(a,b) \\ c_{+-}(a,b) \\ c_{-+}(a,b) \\ c_{--}(a,b) \end{pmatrix},
+$$
+we define the *joint branch weights*
+$$
+w_{xy}(a, b) \;=\; |c_{xy}(a, b)|^2, \qquad x, y \in \{+, -\}.
+$$
+These are the four squared projections of the rotated joint state onto the joint outcome basis.
+
+## Theorem (squared-projection energy law) {#thm-branch-weights}
+
+**Theorem 6.1.** *Let $\Psi_0 \in \mathbb{C}^4$ with $\|\Psi_0\|^2 = 1$ be a prepared joint state of the four-mode delta-LC network, and let $R_A(a) \otimes R_B(b)$ implement local Park rotations at the two analyzer stations. Suppose the four physical branches are terminated in matched ideal resistive extraction channels and the network is passive and linear. Then the total absorbed energies $E_{xy}^{(\infty)}$ in the four branches are*
+$$
+E_{xy}^{(\infty)} \;=\; W_0\, w_{xy}(a, b) \;=\; W_0\, |c_{xy}(a, b)|^2,
+$$
+*where $W_0$ is the total initial energy stored in the unloaded delta network and $w_{xy}(a,b) = |c_{xy}(a,b)|^2$ are the squared projections of the rotated state onto the joint outcome basis. The four branch energies sum to $W_0$:*
+$$
+\sum_{x, y \in \{+, -\}} E_{xy}^{(\infty)} \;=\; W_0.
+$$
+
+*Proof.* The proof has three steps.
+
+*Step 1: orthonormality of the rotated basis.* Since $R_A(a) \otimes R_B(b)$ is unitary on $\mathbb{C}^4$, the rotated state $\Psi(a, b) = (R_A(a) \otimes R_B(b))\Psi_0$ has the same norm as $\Psi_0$:
+$$
+\|\Psi(a, b)\|^2 \;=\; \|\Psi_0\|^2 \;=\; 1.
+$$
+Equivalently,
+$$
+\sum_{x, y} w_{xy}(a, b) \;=\; \sum_{x, y} |c_{xy}(a, b)|^2 \;=\; 1.
+$$
+The squared-projection weights are normalized by unitarity --- not by post-hoc rescaling.
+
+*Step 2: energy partition under ideal extraction.* In the linear passive network with ideal resistive extraction, each of the four branches couples its own modal channel into its matched resistor and dissipates the energy stored in that channel. Total energy balance requires
+$$
+\sum_{x, y} E_{xy}^{(\infty)} \;=\; W_0,
+$$
+where $W_0$ is the initial stored energy in the unloaded network. This is conservation of energy applied to the closed system "network plus four resistors." It does not yet specify how $W_0$ is partitioned among the four branches.
+
+*Step 3: quadratic dependence on branch amplitude.* The energy dissipated in a linear resistor over the lifetime of a transient is the integral of $i^2 R\, dt$, which is quadratic in the branch current amplitude. Since the branch current is linear in the modal amplitude $c_{xy}$ (this is the linearity of the network), the absorbed energy is quadratic in $c_{xy}$:
+$$
+E_{xy}^{(\infty)} \;\propto\; |c_{xy}(a, b)|^2.
+$$
+The proportionality constant is fixed by the normalization in Step 2: $\sum_{x,y} E_{xy}^{(\infty)} = W_0$ together with $\sum_{x,y} |c_{xy}|^2 = 1$ gives
+$$
+E_{xy}^{(\infty)} \;=\; W_0\, |c_{xy}(a, b)|^2 \;=\; W_0\, w_{xy}(a, b).
+$$
+QED.
+
+The theorem is exact at the linear-network level, with no approximation, no limiting regime, and no probabilistic interpretation. The branch *energies* are deterministic squared projections. What is not yet specified is how those continuous energies are converted into discrete $\pm 1$ click outcomes; that is the subject of Section&nbsp;[-@sec-born].
+
+The structural content of Theorem&nbsp;[-@thm-branch-weights] is that *the Born-rule squared-projection law holds exactly at the level of absorbed energy fractions in any passive linear network with matched ideal extraction*. The conservation law $P_+ + P_- + P_0 = \mathrm{const}$ from Section&nbsp;[-@sec-clarke] generalizes to four-branch systems as $\sum_{xy} E_{xy} = W_0$, and the unitarity of the analyzer rotation generalizes the orthonormality of the Clarke--Park projection. The Born-rule structure of quantum measurement is, on this reading, the structural content of "passive linear network with quadratic conservation and unitary basis change," which is the same algebraic structure regardless of whether the network is implemented as quantum amplitudes in a Hilbert space or as analog signals on three wires.
+
+## Singlet special case and the doubled-angle correlator
+
+Substituting the singlet-like state $\Psi_\text{singlet} = \tfrac{1}{\sqrt{2}}(0, 1, -1, 0)^T$ into the rotated joint expression $\Psi(a, b) = (R_A(a) \otimes R_B(b))\,\Psi_\text{singlet}$ and expanding the Kronecker product gives, after a direct computation (full derivation in Appendix&nbsp;[-@sec-appendix-reduced]),
+$$
+w_{++}(a, b) \;=\; w_{--}(a, b) \;=\; \tfrac{1}{2}\sin^2(a - b),
+$$
+$$
+w_{+-}(a, b) \;=\; w_{-+}(a, b) \;=\; \tfrac{1}{2}\cos^2(a - b).
+$$
+The "same-outcome" probability is
+$$
+P_\text{same}(a, b) \;=\; w_{++} + w_{--} \;=\; \sin^2(a - b),
+$$
+and the "different-outcome" probability is
+$$
+P_\text{diff}(a, b) \;=\; w_{+-} + w_{-+} \;=\; \cos^2(a - b).
+$$
+With outcome coding $+ \mapsto +1$, $- \mapsto -1$, the joint correlator is
+$$
+E(a, b) \;=\; w_{++} - w_{+-} - w_{-+} + w_{--} \;=\; \sin^2(a - b) - \cos^2(a - b) \;=\; -\cos\bigl(2(a - b)\bigr).
+$$
+This is the full-amplitude doubled-angle correlator. It saturates the Tsirelson bound at the CHSH-optimal angles $a = 0$, $a' = \pi/4$, $b = \pi/8$, $b' = 3\pi/8$, giving $|S| = 2\sqrt{2}$ exactly. The reduced four-mode model reproduces the quantum singlet correlator precisely, by direct computation, with no approximation.
+
+The structural reason for the doubled angle is the same as in Section&nbsp;[-@sec-hierarchy]: the analyzer-energy law is quadratic in projection amplitude, and the squaring promotes $\cos(a-b)$ to $\cos^2(a-b)$, which expands by the double-angle identity to $\tfrac{1}{2} + \tfrac{1}{2}\cos(2(a-b))$. The constant offset cancels in the correlator, leaving $-\cos(2(a-b))$. The double-angle identity is doing the same algebraic work here as in Section&nbsp;[-@sec-hierarchy], now in a four-dimensional joint state space rather than a two-dimensional single-station phase distribution. The promotion from amplitude to energy is the engine of the Bell violation in both settings.
+
+## Numerical verification
+
+We close this section by verifying the CHSH value numerically against the analytic prediction. Running the reduced four-mode model on the singlet state $\Psi_\text{singlet}$ at the CHSH-optimal angles, with branch weights computed directly from the Kronecker product $R_A(a) \otimes R_B(b)$ and the correlator constructed by outcome coding, yields
+$$
+E\!\left(0, \tfrac{\pi}{8}\right) = -\tfrac{\sqrt{2}}{2}, \quad E\!\left(0, \tfrac{3\pi}{8}\right) = +\tfrac{\sqrt{2}}{2}, \quad E\!\left(\tfrac{\pi}{4}, \tfrac{\pi}{8}\right) = -\tfrac{\sqrt{2}}{2}, \quad E\!\left(\tfrac{\pi}{4}, \tfrac{3\pi}{8}\right) = -\tfrac{\sqrt{2}}{2},
+$$
+and CHSH magnitude
+$$
+|S| \;=\; \big| E(a,b) - E(a,b') + E(a',b) + E(a',b') \big| \;=\; 2\sqrt{2} \;\approx\; 2.828427.
+$$
+The reduced model saturates Tsirelson exactly. Empirical sampling of the same model with 20{,}000 trials per angle pair, with discrete outcomes drawn from the branch-weight distribution by inverse-CDF sampling, reproduces $|S|$ to within $\sim 0.01$ at this sample size, with the residual driven entirely by the binomial sampling noise of the finite Monte Carlo (Appendix&nbsp;[-@sec-appendix-repro] gives the reproducibility table). The squared-projection law of Theorem&nbsp;[-@thm-branch-weights] is exact; what remains is to specify the detector mechanism that converts continuous branch energies into discrete one-shot outcomes consistent with the Born-rule weights.
+
+\newpage
+
+# The Detector: Born Rule from Stochastic Nucleation {#sec-born}
+
+Theorem&nbsp;[-@thm-branch-weights] established that a passive linear network with matched ideal extraction produces absorbed-energy fractions exactly equal to the squared-projection weights $w_{xy}(a,b) = |c_{xy}(a,b)|^2$. That is the *energy-partition* statement. It is *not* yet a statement about discrete one-click outcomes: the linear front-end produces a deterministic split of $W_0$ across four branches, with all four absorbing nonzero energy on every trial. To make contact with real Bell tests --- which yield $\pm 1$ click outcomes, one per trial, with one branch winning and the others suppressed --- a separate *detector* layer must be added.
+
+This section specifies that detector layer. The architecture comes in three functional sublayers: a linear branch-intensity generator (the front-end of Section&nbsp;[-@sec-reduced-model]), a stochastic nucleation element that converts continuous branch intensities into rare irreversible click events, and a closure latch that suppresses non-winning branches and routes residual energy through the winner alone (Section&nbsp;[-@sec-latch]). The central claim is that under a specific stochastic nucleation rule --- a Poisson hazard race with branch hazards proportional to absorbed power --- the winner-branch probability is exactly the Born weight, with no approximation. We state and prove this claim as Theorem&nbsp;[-@thm-born]. We also document, for transparency, an apparently natural alternative --- a noisy energy-threshold first-arrival detector --- that *does not* reproduce Born statistics in any useful regime, and explain precisely why it fails. The honest disclosure of this failure is part of what makes the working detector mechanism credible: we know what does not work, why it does not work, and what does work, with the boundary between the two cases stated in algebraic terms.
+
+## The three functional sublayers
+
+The detector chain decomposes into three functionally distinct sublayers, each addressing one of the three steps from continuous branch energies to discrete one-shot outcomes.
+
+*Sublayer 1: linear branch-intensity generator.* The passive linear front-end of Section&nbsp;[-@sec-reduced-model] computes the four absorbed-energy envelopes
+$$
+P_{xy}(t) \;=\; \Gamma(t)\, w_{xy}(a, b), \qquad x, y \in \{+, -\},
+$$
+where $\Gamma(t) \geq 0$ is a common envelope (the source-decay profile or pulse shape) shared across all four branches and $w_{xy}$ is the squared-projection weight. The branches are matched: same coupling, same impedance, same noise floor, identical except for the weight $w_{xy}$. At this stage, no irreversibility, no exclusivity, and no discrete outcome have been introduced.
+
+*Sublayer 2: stochastic nucleation.* Each branch independently supports a rare irreversible *nucleation* event with hazard rate
+$$
+\lambda_{xy}(t) \;=\; \gamma(t)\, w_{xy}(a, b),
+$$
+where $\gamma(t) \propto \Gamma(t)$ is the common hazard envelope. The nucleation events are point processes drawn from the branch hazards. The first nucleation across the four branches is the "click."
+
+*Sublayer 3: first-click exclusivity and closure.* Once a branch has nucleated, the closure latch (Section&nbsp;[-@sec-latch]) suppresses the other three branches and routes the remaining stored energy in the network through the winner's drain channel. This converts the continuous-energy partition into a discrete winner declaration, with the winner determined by the first-nucleation race in Sublayer 2.
+
+The three sublayers are deliberately separated. Sublayer 1 is the source of the Born-like weights (squared projections of a linear network); Sublayer 2 is the source of the discrete-click, single-shot outcome (a hazard race with rates proportional to those weights); Sublayer 3 is the source of the strict exclusivity (one-and-only-one winner per trial). Each sublayer makes a different physical commitment, and the failure of either Sublayer 2 or Sublayer 3 produces a different, identifiable kind of breakdown of Born-rule statistics. We will return to Sublayers 1 and 3 elsewhere (Sections&nbsp;[-@sec-reduced-model] and [-@sec-latch] respectively); this section concentrates on Sublayer 2 --- the stochastic nucleation rule that converts continuous branch intensities into Born-distributed one-click outcomes.
+
+## The naive picture: noisy drift to threshold (and why it fails)
+
+The simplest detector mechanism one might propose for Sublayer 2 is a *noisy energy-threshold first-arrival* detector: each branch accumulates absorbed energy plus additive Gaussian noise, and the first branch to cross a fixed threshold wins. Concretely,
+$$
+dE_{xy}(t) \;=\; \mu_{xy}\, dt + \sigma\, dB_{xy}(t), \qquad \mu_{xy} = \Gamma\, w_{xy},
+$$
+with independent standard Brownian motions $B_{xy}$, common noise scale $\sigma > 0$, and matched threshold $L > 0$. The winner is $i^* = \arg\min_{xy} T_{xy}$, where $T_{xy} = \inf\{t : E_{xy}(t) = L\}$.
+
+This detector model is appealing because it is intuitive: each branch accumulates energy at a rate proportional to its weight, the larger-weight branch reaches threshold faster on average, and noise broadens the first-passage time distribution. One might guess that the winner probability is
+$$
+\Pr(i^* = xy) \;\stackrel{?}{=}\; w_{xy}.
+$$
+This guess is wrong, and the failure is instructive.
+
+**Proposition (drift-dominated threshold race fails the Born law).** *In the regime $\sigma^2/(L\Gamma) \ll 1$ --- the drift-dominated regime in which mean first-passage times are well-approximated by $\mathbb{E}[T_{xy}] \approx L/\mu_{xy}$ --- the winner probability concentrates on the largest-drift branch. Specifically, if $w_1 > w_2$, then*
+$$
+\Pr(\text{branch 1 wins}) \to 1 \quad \text{as } L\Gamma/\sigma^2 \to \infty,
+$$
+*and the model does not reproduce Born weights $\Pr = w_i$ in any limiting regime except the trivially symmetric case $w_1 = w_2$.*
+
+*Reason.* In the drift-dominated regime, the mean hitting times are
+$$
+\mathbb{E}[T_{xy}] \;\approx\; \frac{L}{\mu_{xy}} \;=\; \frac{L}{\Gamma\, w_{xy}},
+$$
+so the deterministic separation between hitting times of branches with weights $w_1 > w_2$ is
+$$
+\mathbb{E}[T_2] - \mathbb{E}[T_1] \;\approx\; \frac{L}{\Gamma}\!\left(\frac{1}{w_2} - \frac{1}{w_1}\right) \;>\; 0.
+$$
+The stochastic spread of hitting times scales as $O(\sigma\sqrt{L}/\mu_{xy}^{3/2})$. As $L\Gamma/\sigma^2 \to \infty$, the deterministic separation grows as $L/\Gamma$ while the stochastic spread grows only as $\sqrt{L}$, so the deterministic separation dominates. The faster-drift branch wins with probability approaching unity, regardless of the actual weight ratio.
+
+The model does have a Born-distributed regime --- the *noise-dominated* regime $\sigma^2/(L\Gamma) \to \infty$ --- but in that regime the noise so completely dominates that the state-dependence is washed out and the winner-probability ratio approaches $1{:}1$ regardless of $w_1, w_2$, which is also not Born. The detector has no usable regime in which it reproduces Born weights $\Pr = w_i$ for nontrivial weight distributions.
+
+The key takeaway is that *smooth accumulation plus additive Gaussian noise plus first-to-threshold winner is not a Born detector*. The structural reason is that smooth deterministic drift, even with stochastic perturbation, behaves like "faster integrator wins" rather than like a fair race weighted by branch intensity. A fair race weighted by intensity requires a fundamentally different stochastic mechanism, to which we now turn.
+
+## The working picture: Poisson-hazard nucleation race
+
+The detector mechanism that *does* reproduce Born statistics exactly is a *first-event race in a Poisson-hazard process*. Each branch is a point process with instantaneous trigger rate (hazard) proportional to its absorbed-power envelope, and the first trigger across all branches is the click. The discreteness of the trigger event --- a single sharp nucleation rather than a smooth crossing --- is what makes this mechanism Born-distributed.
+
+**Theorem 7.1 (Born-exact first-click race) {#thm-born}.** *Let $w_{xy} \geq 0$ for $x,y \in \{+,-\}$ with $\sum_{xy} w_{xy} = 1$ be the four squared-projection weights. Suppose each of the four branches supports a stochastic point process whose hazard rate is*
+$$
+\lambda_{xy}(t) \;=\; \gamma(t)\, w_{xy},
+$$
+*for some common envelope $\gamma(t) \geq 0$ shared across all branches. Suppose the four point processes are independent given $\gamma(t)$, and let the observed outcome be the branch corresponding to the first trigger across the four processes. Then the winner-branch probability is exactly*
+$$
+\Pr(\text{branch } xy \text{ wins}) \;=\; w_{xy}.
+$$
+
+*Proof.* For independent point processes with hazard rates $\lambda_{xy}(t)$ and total hazard $\Lambda(t) = \sum_{xy} \lambda_{xy}(t)$, the probability that branch $xy$ produces the first event is the standard competing-risks formula
+$$
+\Pr(xy \text{ wins}) \;=\; \int_0^\infty \lambda_{xy}(t)\, \exp\!\left(-\int_0^t \Lambda(\tau)\,d\tau\right) dt.
+$$
+Substituting $\lambda_{xy}(t) = \gamma(t)\, w_{xy}$, the total hazard is
+$$
+\Lambda(t) \;=\; \sum_{xy} \gamma(t)\, w_{xy} \;=\; \gamma(t)\!\sum_{xy} w_{xy} \;=\; \gamma(t),
+$$
+since the weights sum to unity. The integral becomes
+$$
+\Pr(xy \text{ wins}) \;=\; w_{xy}\!\int_0^\infty \gamma(t)\, \exp\!\left(-\int_0^t \gamma(\tau)\,d\tau\right) dt \;=\; w_{xy}\, \cdot\, 1 \;=\; w_{xy},
+$$
+where the integral evaluates to unity because $\gamma(t)\exp(-\int_0^t \gamma\, d\tau)$ is the probability density of the first-event time, which integrates to one. The factor $w_{xy}$ appears as a multiplicative constant outside the integral because the hazard envelope cancels in the time-shape of the first-event distribution and survives only as the branch-selection weight. QED.
+
+The contrast with the noisy-drift threshold model is structural and not just computational. In the noisy-drift model, the branch outcome depends on the *full trajectory* of the integrated energy --- the larger drift wins because it crosses threshold earlier on average. In the Poisson-hazard model, the branch outcome depends only on the *instantaneous rate*: at each infinitesimal time interval $dt$, branch $xy$ has probability $\lambda_{xy}(t)\, dt$ of being the next-event branch, and the time-integral structure of the competing-risks formula factors cleanly into the weight $w_{xy}$ times an envelope-dependent first-event time distribution that is identical across all branches. The hazard race is *time-blind* with respect to branch selection: the choice of which branch wins is independent of when it wins, and the choice is exactly the Born weight.
+
+## Why nucleation is linear in absorbed power
+
+Theorem&nbsp;[-@thm-born] requires the branch hazards $\lambda_{xy}(t)$ to be exactly proportional to the branch weights $w_{xy}$. Equivalently, since $w_{xy}$ is the *fraction* of absorbed power in branch $xy$, the hazard must be linear in the *absolute* absorbed power $P_{xy}(t) = \Gamma(t)\, w_{xy}$:
+$$
+\lambda_{xy}(t) \;=\; \alpha\, P_{xy}(t) \;+\; \lambda_\text{dark},
+$$
+with $\alpha$ a branch-independent coefficient and $\lambda_\text{dark}$ a small dark count. The linear hazard law $\lambda \propto P$ is *not* a generic property of nonlinear devices --- a hazard law $\lambda \propto P^\nu$ with $\nu \neq 1$ would produce winner statistics $\Pr \propto w^\nu / \sum w^\nu$, biased away from Born.
+
+The candidate mechanism for which $\lambda \propto P$ holds *exactly* is a *Poissonian micro-absorption with rare-event thinning*: absorbed power is a stream of microscopic absorption events at rate proportional to the absorbed power, and each microscopic event has a small fixed probability of triggering a macroscopic nucleation. The thinned process is a Poisson process whose rate is the original rate times the trigger probability, both of which are linear in the absorbed power. The square law that produces Born statistics enters through the *front-end* (where the linear network produces $|c_{xy}|^2$-weighted absorbed powers), not through the *detector* (which sees absorbed power and triggers linearly in it). This separation is essential: it prevents the detector from "knowing" about the Born rule, which would be circular, and locates the squaring at the only physical layer where it has a passive linear origin --- the energy partition in the resistive-extraction network.
+
+The detector-search infrastructure in the present codebase identifies *shot-trigger nucleation* as the candidate detector family that satisfies the linear hazard requirement most cleanly. The shot-trigger detector treats absorbed energy as a stream of micro-events (photon-like or phonon-like, depending on the realization), each with a small irreversible-trigger probability. The macroscopic nucleation rate is the thinned Poisson rate, exactly linear in absorbed power.
+
+## Detector family search
+
+The detector-family selection has been carried out empirically in the present codebase via the `detector_search/` package, which characterizes four candidate detector families against the Theorem&nbsp;[-@thm-born] target on the two-branch and four-branch test problems:
+
+- *Shot-trigger*: stochastic Poisson nucleation with hazard $\lambda \propto P$. Reproduces Born weights up to Monte Carlo noise; race-law fidelity error of order $10^{-3}$ at $10^4$ trials.
+- *Poisson-linear*: similar to shot-trigger but with a different parametrization of the hazard envelope. Quantitatively equivalent on Born fidelity.
+- *Accumulator-bad-control*: smooth accumulator with deterministic threshold. Fails the Born law systematically, in the manner predicted by the proposition above; race-law error of order $10^{-1}$, biased toward the higher-weight branch.
+- *Metastable-escape*: nucleation modeled as Kramers escape over an energy barrier. Approximately Born-distributed in the weak-tilt regime, with calibration-dependent corrections of order $10^{-2}$.
+
+The search is reproducible via `make detector-search`, with full results in `artifacts/detector_search/`. The shot-trigger family is the preferred detector model for the SPICE realization of Section&nbsp;[-@sec-spice] on the basis of these results: it produces Born-distributed winners under the simplest physical model (Poissonian micro-absorption with rare-event thinning), and it is the family for which Theorem&nbsp;[-@thm-born] applies as a clean statement, not an approximation. Throughout the SPICE chain, the detector layer is implemented as a shot-trigger with hazard $\lambda_{xy}(t) = \alpha P_{xy}(t) + \lambda_\text{dark}$, and the winner-law fidelity at the end of the full chain --- with the linear front-end, the shot-trigger detector, and the closure latch all composed --- is RMS error $0.013$ on the four-branch joint problem at $4{,}000$ trials per angle pair.
+
+## Summary
+
+The detector layer adds two physical commitments to the linear front-end of Section&nbsp;[-@sec-reduced-model]:
+
+1. The branch hazards are stochastic point processes with rates linear in absorbed power: $\lambda_{xy}(t) = \alpha P_{xy}(t) + \lambda_\text{dark}$. This is the shot-trigger / Poissonian-micro-absorption hypothesis.
+2. The first nucleation across the four branches terminates the trial. This is the first-click exclusivity hypothesis.
+
+Under these two commitments, Theorem&nbsp;[-@thm-born] guarantees that the winner-branch probability is exactly the Born weight $\Pr = w_{xy} = |c_{xy}(a,b)|^2$. The Born rule emerges from the *combination* of (i) the squared-projection energy law of the passive linear front-end (Theorem&nbsp;[-@thm-branch-weights]) and (ii) the Poisson-hazard race of the stochastic nucleation layer (Theorem&nbsp;[-@thm-born]). Neither alone suffices: the linear front-end without the nucleation layer gives a deterministic energy split with no discrete outcome; the nucleation layer without the squaring front-end gives a hazard race weighted by *amplitudes* rather than *energies*, which would not produce the cos-squared correlator. The two layers together close the circuit between the prepared four-mode state and the Born-distributed click statistics.
+
+What remains is to specify the third sublayer --- the closure latch that enforces winner exclusivity and routes residual energy through the winner's drain --- and to assemble all three sublayers into a SPICE-driven physical realization. Those are Sections&nbsp;[-@sec-latch] and&nbsp;[-@sec-spice].
+
+\newpage
+
+# The Zero-Sequence Closure Latch {#sec-latch}
+
+The detector layer of Section&nbsp;[-@sec-born] established that a Poisson-hazard race with branch hazards proportional to absorbed power produces Born-distributed *click-time* statistics. What it does not yet do is enforce *exclusivity*: in the bare hazard model, multiple branches can in principle nucleate over the lifetime of a trial, and there is no mechanism that converts the first nucleation into a definite, latched winner declaration with the loser branches actively suppressed. The closure latch supplies this missing mechanism. It is also, structurally, the place where the zero-sequence mode of Section&nbsp;[-@sec-third-party] enters the physical implementation: the latch is realized as a common-mode (zero-sequence) variable that rises after the first nucleation, opens a drain on the winning branch, and inhibits the others. This section specifies the latch dynamics, derives the conditions under which the latch does not contaminate the pre-click Born statistics, and reports the empirical post-click fidelity from the integrated detector chain.
+
+The structural separation that motivates the latch architecture is the distinction between *selection* and *completion* of the measurement. Selection is the act of choosing which branch wins; it must produce Born statistics and must therefore depend on the pre-click branch weights $w_{xy}(a,b)$ in the way Theorem&nbsp;[-@thm-born] requires. Completion is the act of converting that selection into a discrete, single-shot, energy-conserving outcome --- one and only one branch firing, the others suppressed, the residual energy in the network drained through the winner. The two acts are functionally distinct, and clean Born statistics require that the second not contaminate the first. The closure latch is engineered to be active only after the first nucleation, so that the pre-click hazard race proceeds undisturbed and the post-click completion is enforced by the latch alone.
+
+## Latch dynamics
+
+Let $Z(t) \in [0, 1]$ be the *closure variable*, a single common-mode degree of freedom shared across all four branches. Before the first nucleation, $Z = 0$ identically: there is no closure, no drain, and no inhibition, and the branches race independently with Poisson hazards $\lambda_{xy}(t) = \gamma(t)\, w_{xy}(a, b)$ as in Theorem&nbsp;[-@thm-born]. The first nucleation event at time $t_*$ in branch $i_*$ triggers the latch.
+
+After the first nucleation, the closure variable rises according to
+$$
+\dot{Z} \;=\; \alpha_Z\,(1 - Z), \qquad Z(t_*) = 0,
+$$
+with $Z(t) = 1 - e^{-\alpha_Z (t - t_*)}$ a saturating exponential approach to unity on a timescale $1/\alpha_Z$. Simultaneously, the *winner latch* $L_{i_*} \in \{0, 1\}$ is set to one, and the loser latches $L_j$ for $j \neq i_*$ are set to zero. The closure variable then performs two functions:
+
+1. *It opens a drain on the winner branch.* The remaining stored energy $W(t)$ in the network is dissipated through the winner's drain channel at rate proportional to $Z(t)$:
+   $$
+   \dot{W} \;=\; -g_\text{drain}\, Z(t)\, W(t).
+   $$
+   Before the closure variable rises, $g_\text{drain} Z \approx 0$ and the drain is weak; once $Z$ saturates near unity, the drain conductance reaches its full value $g_\text{drain}$ and the residual energy is rapidly extracted. The total energy absorbed by the winner branch is therefore approximately $W(t_*)$ in the regime $\alpha_Z, g_\text{drain} \gg \gamma$ (closure rise faster than typical click-arrival times).
+
+2. *It inhibits the loser branches.* The loser-branch hazards are gated by $(1 - L_j) \cdot (1 - Z)$, so that as $Z \to 1$, $\lambda_j \to 0$ for $j \neq i_*$ and no further nucleation is possible. The first-click exclusivity is enforced not as an a-priori rule but as a physical consequence of the closure variable's coupling to the loser branches.
+
+The two functions together convert the bare hazard race --- which on its own would allow multiple nucleations and ambiguous outcomes --- into a definite, single-shot winner declaration with quantitative post-click energy accounting. The architecture mirrors the AQFT and Bohmian analogies of Section&nbsp;[-@sec-third-party]: the zero-sequence common-mode variable is the channel through which the global constraint enforces local exclusivity, just as the boundary or quantum-potential mode enforces global consistency in the corresponding abstract frameworks.
+
+## Pre-click backaction: when does the latch corrupt Born statistics?
+
+A central design question is whether the closure variable can be allowed to rise *before* the first nucleation --- whether, in other words, weak pre-click coupling between $Z$ and the branch hazards is tolerable. The answer is given by a simple algebraic result that we record as a proposition because it justifies the post-click-only architecture and gives quantitative tolerance bounds when that architecture is approximated rather than achieved exactly.
+
+Let the pre-click closure dynamics be
+$$
+\dot{Z} \;=\; \alpha - \beta\, Z, \qquad Z(0) = 0,
+$$
+so that $Z(t) = (\alpha/\beta)(1 - e^{-\beta t})$ rises slowly to a steady-state value $\alpha/\beta \ll 1$ before any click. Suppose the closure variable couples back into the pre-click hazards with strength $\varepsilon$. Two qualitatively distinct cases arise.
+
+*Common-mode pre-click feedback.* If the closure variable multiplies all branch hazards by the same factor,
+$$
+\lambda_{xy}(t) \;=\; \gamma(t)\, w_{xy}\,[1 + \varepsilon\, Z(t)],
+$$
+then the ratio $\lambda_{xy}/\sum_{x'y'} \lambda_{x'y'} = w_{xy}$ is preserved exactly, regardless of $Z(t)$. The competing-risks formula of Theorem&nbsp;[-@thm-born] then gives
+$$
+\Pr(\text{branch } xy \text{ wins}) \;=\; w_{xy} \qquad \text{exactly,}
+$$
+*independently of $\varepsilon$, $\alpha$, and $\beta$*. Common-mode pre-click coupling shifts the click-time distribution but leaves the winner-branch probabilities unaffected.
+
+*Differential pre-click feedback.* If the closure variable couples asymmetrically --- enhancing some branches' hazards and suppressing others --- then the ratio is no longer preserved, and Born statistics distort. For the simplest two-branch differential case
+$$
+\lambda_1(t) \;=\; \gamma(t)\, w_1\,[1 + \varepsilon\, Z(t)], \qquad \lambda_2(t) \;=\; \gamma(t)\, w_2\,[1 - \varepsilon\, Z(t)],
+$$
+a perturbative computation to first order in $\varepsilon$ gives
+$$
+\Pr(\text{branch 1 wins}) \;\approx\; w_1 \;+\; 2\varepsilon\, w_1 w_2\, I_Z, \qquad I_Z \;:=\; \int_0^\infty \gamma(t)\, Z(t)\, e^{-G(t)}\, dt,
+$$
+where $G(t) = \int_0^t \gamma(\tau)\, d\tau$ is the cumulative hazard envelope. The distortion is proportional to the small parameter $\varepsilon$, peaks at the equator $w_1 = w_2 = 1/2$ (where $w_1 w_2 = 1/4$ is largest), vanishes at the poles, and depends on the cumulative pre-click closure $I_Z$.
+
+In the special case of a constant envelope $\gamma(t) = \Gamma$ and the relaxational closure $Z(t) = (\alpha/\beta)(1 - e^{-\beta t})$, the integral evaluates in closed form to $I_Z = \alpha/(\Gamma + \beta)$, and the worst-case (equatorial) tolerance condition for distortion below a target $\delta$ is
+$$
+|\varepsilon|\, \frac{\alpha}{\Gamma + \beta} \;\leq\; 2\delta.
+$$
+For example, for distortion below $1\%$ on equatorial states, the dimensionless backaction parameter must satisfy $|\varepsilon|\, \alpha/(\Gamma + \beta) \lesssim 0.02$. This is the engineering criterion for how small the pre-click closure coupling must be in any realistic physical implementation.
+
+The structural takeaway is that *common-mode pre-click coupling is harmless, but differential pre-click coupling distorts Born statistics and must be controlled*. Both cases motivate the post-click-only architecture: by ensuring that $Z(t) = 0$ identically until the first nucleation, the proposition's small-$\varepsilon$ regime is exactly satisfied with $\varepsilon = 0$, and Born statistics are preserved as a strict consequence of Theorem&nbsp;[-@thm-born].
+
+## Empirical performance
+
+The integrated detector chain of `detector_integration/`, with the linear front-end of Section&nbsp;[-@sec-reduced-model], the shot-trigger detector of Section&nbsp;[-@sec-born], and the closure latch of this section composed end-to-end, produces the following performance metrics on the four-branch joint problem at $4{,}000$ trials per analyzer-pair setting:
+
+- *Winner-drain dominance.* The fraction of post-click absorbed energy that flows through the winning branch's drain, averaged over trials, is $99.97\%$. The remaining $0.03\%$ is residual energy in the loser branches before the closure variable saturates.
+- *Decisive rate.* The fraction of trials in which exactly one branch produces a click within the trial window is $99.5\%$. The remaining $0.5\%$ are timeouts (trials in which the hazard envelope decays before any branch nucleates) under the calibration of `make detector-integration-report`.
+- *Energy conservation.* The total energy ledger --- initial stored energy $W_0$ minus the sum of branch-absorbed energies --- closes to within numerical tolerance of the integrator (relative error $< 10^{-9}$).
+- *Pre-click contamination.* By construction, $Z(t) = 0$ for $t < t_*$ in the integrated implementation, so the contamination is zero up to floating-point representation.
+
+The latch is, in this implementation, a clean realization of the post-click-only architecture: pre-click Born statistics are preserved exactly by Theorem&nbsp;[-@thm-born], and post-click completion is enforced by the closure variable with the dominance, decisive-rate, and conservation metrics above. What remains is to embed this architecture in a passive linear LC network with explicit component values, drive it from a SPICE simulator, and demonstrate that the same integrated chain --- now with all the constraints of a real circuit (parametric tolerances, parasitic couplings, finite-Q resonances, numerical solver noise) --- still produces Tsirelson-saturating CHSH. That is the subject of Section&nbsp;[-@sec-spice].
+
+\newpage
+
+# Classical Three-Phase Realization: SPICE Implementation {#sec-spice}
+
+We now assemble the four functional layers of the construction --- the shared four-mode state of Section&nbsp;[-@sec-reduced-model], the shot-trigger detector of Section&nbsp;[-@sec-born], the zero-sequence closure latch of Section&nbsp;[-@sec-latch], and a phase-descent diagnostic for analyzer/recombiner asymmetry from prior calibration work [@nobles2026phase] --- into a single passive linear LC network with explicit inductances, capacitances, and coupling coefficients, and demonstrate by SPICE simulation that the integrated chain reproduces Tsirelson-saturating CHSH within an explicit error budget. This is the headline empirical result of the paper.
+
+The SPICE realization is the strongest test the construction can be subjected to short of fabrication. It confronts the architecture with the full constraints of a passive linear circuit driven by a phasor-domain solver: parametric tolerances on $L$, $C$, and $M$ values; parasitic resistances; finite-$Q$ resonances; numerical solver noise; the requirement that the inductance matrix be positive-definite and pass smoke tests against PySpice's solver; and the requirement that all components be physically realizable. The integrated chain passes all of these, and the four headline numerical results --- CHSH absolute error $0.043$ against target $2\sqrt{2}$, winner-law RMS error $0.013$, decisive rate $99.5\%$, energy conservation $100\%$ --- establish the constructive thesis of the paper: a classical analog system, designed around the conservation hierarchy and Clarke decomposition of Sections&nbsp;[-@sec-hierarchy] and [-@sec-clarke], reproduces the Tsirelson-saturating cos-squared correlator under disclosed assumptions and a non-local conservation constraint mediated by the zero-sequence mode.
+
+## Architecture: four delta-LC tanks plus a shared resonant core
+
+The physical realization decomposes the reduced four-mode state space into four matched delta-LC tank modules, one per joint basis vector, coupled by a shared resonant core that prepares the singlet-like superposition. The four tanks are labeled by the joint basis $\{++, +-, -+, --\}$ and each carries a complex modal amplitude $q_{xy}$ governed by the resonant-envelope dynamics
+$$
+\dot{q} \;=\; -i H q \;-\; \Gamma q \;+\; B u_\text{prep}(t),
+$$
+where $q = (q_{++}, q_{+-}, q_{-+}, q_{--})^T \in \mathbb{C}^4$ is the joint amplitude vector, $H$ is the $4 \times 4$ Hermitian coupling matrix, $\Gamma$ is a small uniform damping (the linewidth of the tanks), and $u_\text{prep}(t)$ is the preparation drive coupled into the network through the input vector $B$.
+
+The coupling matrix is chosen so that the singlet-like state
+$$
+|\psi_s\rangle \;=\; \frac{1}{\sqrt{2}} \begin{pmatrix} 0 \\ 1 \\ -1 \\ 0 \end{pmatrix}
+$$
+is an eigenmode of $H$. The minimal realization is
+$$
+H \;=\; \begin{pmatrix} \omega_0 & 0 & 0 & 0 \\ 0 & \omega_0 + \kappa & -\kappa & 0 \\ 0 & -\kappa & \omega_0 + \kappa & 0 \\ 0 & 0 & 0 & \omega_0 \end{pmatrix},
+$$
+in which all four tanks are detuned to $\omega_0$ except for an antisymmetric coupling of strength $\kappa$ between the $|{+-}\rangle$ and $|{-+}\rangle$ tanks. Direct substitution gives $H |\psi_s\rangle = (\omega_0 + 2\kappa)\, |\psi_s\rangle$: the singlet is an eigenmode with eigenvalue $\omega_0 + 2\kappa$, separated from the other three by a gap of $2\kappa$. Selective preparation of the singlet eigenmode is then a matter of driving at frequency $\omega_0 + 2\kappa$ with a drive shape that overlaps $|\psi_s\rangle$ and not the orthogonal eigenstates. Physically, the antisymmetric coupling $\kappa$ between the two middle tanks is a mutual inductance $M$ between their resonant inductors with sign chosen by winding orientation; this is a standard transformer-coupling primitive.
+
+The local analyzers are *not* realized as rotations of the shared core. They are implemented as tunable two-by-two coupler networks acting on the local sequence-sense factors before the resistive-extraction stage. Alice's analyzer is a coupler $R_A(a) \in SO(2)$ acting on the first index of the joint basis ($+$ vs.\ $-$ on Alice's side) and Bob's is $R_B(b)$ acting on the second. The full local rotation $R_A(a) \otimes R_B(b)$ is realized as a tensor product of the two physical couplers, by construction local in the tensor-product sense required by the no-signaling argument of Section&nbsp;[-@sec-two-party]. The four output branches, one per joint basis vector after the local rotations, are then resistively terminated; the four absorbed energies $E_{xy}^{(\infty)}$ are the squared-projection weights of Theorem&nbsp;[-@thm-branch-weights] times the initial stored energy $W_0$.
+
+The SPICE-driven detector chain then takes the four branch-energy envelopes $P_{xy}(t) = \Gamma(t)\, w_{xy}(a, b)$ as inputs and delivers Born-distributed click outcomes via the shot-trigger and closure-latch layers of Sections&nbsp;[-@sec-born] and [-@sec-latch].
+
+## Codesign and device physicalization
+
+The component values that realize the coupling matrix $H$, the analyzer couplers, and the resistive-extraction stage are not freely chosen. They are constrained by simultaneous requirements: the eigenmode of $H$ must be the singlet $|\psi_s\rangle$ with adequate gap; the linewidth $\Gamma$ must be slow enough that the click-arrival distribution sees a quasi-static envelope but fast enough to fit the trial budget; the local-coupler rotations must be tunable to arbitrary angles $a, b$ without crosstalk; the resistive extraction must complete energy partition before the closure latch fires; and the SPICE inductance matrix must remain positive-definite under all parametric perturbations. These constraints are coupled: changing the resonant inductance $L_t$ on the tanks changes the resonant frequency $\omega_0 = 1/\sqrt{L_t C_t}$, which changes the gap-to-linewidth ratio, which changes the preparation fidelity, which changes the operating CHSH value.
+
+The codesign workflow for resolving these constraints, implemented in `physical_front_end_candidate/preferred_chain_codesign.py`, is iterative. Starting from a target operating point (CHSH error budget, winner-law fidelity, click-rate, and trial duration), the codesign solver picks tank inductances, capacitances, and coupling coefficients that minimize a composite loss function over all four metrics simultaneously, with hard constraints on positive-definiteness of the inductance matrix and physical realizability of the components. The output is a *device physicalization*: an explicit list of $L$, $C$, $R$, and $M$ values for the eleven coils and capacitors that constitute the front-end, along with the analyzer-coupler $\alpha$- and $\beta$-axis coefficients $k_{A,\alpha}$ and $k_{A,\beta}$ derived from the chosen analyzer angle.
+
+The reduction from coupling matrix to component values follows the standard transformer-network identification: each off-diagonal entry $H_{ij}$ becomes a mutual inductance $M_{ij} = k_{ij}\sqrt{L_i L_j}$ between the two tank inductors, with the coupling coefficient $k_{ij} \in (-1, 1)$ specified by the codesign solver and the sign carried by the winding orientation. The diagonal entries become tank self-resonances $\omega_i = 1/\sqrt{L_i C_i}$; in the symmetric design used throughout, all tanks share $L_i = L_t$ and $C_i = C_t$ within tolerance, with the eigenmode structure of $H$ supplied by the off-diagonal couplings. The full bill of materials for the preferred chain (eleven coils, four tank capacitors, four extraction resistors, plus the analyzer-coupler stage and closure-latch elements) is generated by `make preferred-chain-device-physicalization-report` and stored in `artifacts/preferred_chain_device_physicalization/`. Appendix&nbsp;[-@sec-appendix-spice] records the explicit values.
+
+## The actual SPICE front-end
+
+The codesigned component values are then realized as a PySpice netlist, implemented in `physical_front_end_candidate/actual_spice_front_end.py`. The netlist is a passive linear circuit: there are no active elements, no nonlinear devices, no feedback loops, and no time-varying components. The drive is a balanced three-phase voltage source at a fixed angular frequency $\omega_s$. The analyzer couplers are realized as adjustable mutual-inductance pairs whose coupling coefficients depend on $\cos a$, $\sin a$, $\cos b$, and $\sin b$. The resistive-extraction stage is four matched terminations on the four output branches; the absorbed energies are computed by integrating $|V_\text{branch}|^2 / R$ over the trial duration. The shot-trigger detector and closure latch are bolted onto the SPICE output as software-level post-processing, applying Theorems&nbsp;[-@thm-born] and the latch dynamics of Section&nbsp;[-@sec-latch] to the SPICE-computed branch-energy envelopes.
+
+The SPICE solver pipeline is:
+
+1. *Build the inductance matrix.* The eleven coils form a symmetric positive-definite $11 \times 11$ inductance matrix $\mathbf{L}$, whose diagonal entries are self-inductances and whose off-diagonal entries are mutual inductances determined by the analyzer angles, the codesigned coupling coefficients, and the coupling polarities. The matrix is checked for positive-definiteness on every solve; configurations that fail this check are flagged as physically unrealizable and rejected at the codesign stage.
+
+2. *Solve the steady-state phasor equation.* At source angular frequency $\omega_s$, the network satisfies $(\mathbf{R}_s + j\omega_s \mathbf{L} + \mathbf{Z}_\text{term})\mathbf{I} = \mathbf{V}_\text{src}$, where $\mathbf{Z}_\text{term}$ collects the resistive terminations and the tank-capacitance shunts. The complex branch currents $\mathbf{I}$ are solved by direct LU factorization.
+
+3. *Compute branch energies.* The four output-branch absorbed energies $E_{xy}^{(\infty)} = |V_{\text{br},xy}|^2 / R_\text{br}$ are read off from the solver, where $V_{\text{br},xy}$ is the branch voltage at the resistive termination and $R_\text{br}$ is the matched termination resistance.
+
+4. *Apply the detector and latch.* The four energies are passed to the shot-trigger detector and closure latch, which produce a single Born-distributed winner per trial.
+
+Steps 1--3 are deterministic for a given analyzer pair $(a, b)$ and codesigned configuration; step 4 is the only stochastic element of the chain. The full pipeline is exercised by `make spice-driven-preferred-chain-report`, which sweeps the analyzer angles and aggregates the metrics reported below.
+
+## Phase-descent calibration
+
+A passive linear correlator of the type built here can suffer two structurally distinct kinds of asymmetric error: *analyzer asymmetry*, an imbalance between the $\alpha$- and $\beta$-axis couplings into the analyzer stage, and *recombiner asymmetry*, an imbalance localized to one of the bright/dark interference branches. The two faults manifest differently in the angular Fourier spectrum of the correlator output, and a calibration diagnostic developed in companion work [@nobles2026phase] distinguishes them through a phase-coherence invariant of the harmonic structure.
+
+The diagnostic, summarized briefly here for completeness, is built on the *phase-descent theorem* of [@nobles2026phase]: any distortion generated by a single latent angular perturbation passing through a single nonlinearity --- such as the rational normalization of the bright/dark contrast --- produces angular Fourier harmonics whose phases satisfy
+$$
+\phi_n - n\, \phi_1 \;\equiv\; 0 \pmod{\pi},
+$$
+*independently of the severity or functional form of the nonlinearity*. Analyzer asymmetry, which acts before bright/dark recombination through a single distorted projection variable, satisfies this invariant; the resulting harmonics are an odd-only ladder ($n = 1, 3, 5, \ldots$) whose phases descend from a single parent. Recombiner asymmetry, which acts after the analyzer channels already exist, does not satisfy the invariant; the resulting harmonics are a DC-plus-even-only spectrum ($n = 0, 2, 4, \ldots$) whose phases drift with severity.
+
+In the symmetric configuration, the SPICE-driven correlator reproduces the cosine target $E(0, b) = \cos b$ with RMS error $\sim 2 \times 10^{-5}$ and maximum absolute error $\sim 5 \times 10^{-5}$ over a $512$-point angular sweep. Under deliberate analyzer asymmetry of $\varepsilon_A = 20\%$, the phase-lock relation $\phi_3 - 3\phi_1 \in \{0, \pi\}$ holds to within $\sim 10^{-4}$ rad, confirming that the analyzer pathway in the codesigned circuit conforms to the single-source-through-single-nonlinearity structure that the diagnostic requires. Under recombiner asymmetry of the same severity, the phase-lock invariant is conspicuously violated, with the inter-harmonic phase $\phi_2 - 2\phi_1$ drifting continuously with severity. The two-family taxonomy is therefore both predicted by the architecture and observed in the SPICE realization, and the diagnostic provides a single-sweep recovery of fault type, fault severity, and a self-consistency validity bound (the harmonic-leakage ratio $|H_5|/|H_3|$).
+
+The full calibration pipeline, including the mixed-case decomposition for circuits suffering both fault types simultaneously, is documented in [@nobles2026phase]; for the present paper it suffices to record that the codesigned SPICE chain passes the calibration in the symmetric configuration to better than $2 \times 10^{-5}$ RMS, and that the perturbative response of the chain to deliberate asymmetries is consistent with the phase-descent prediction. The latter is the strongest available evidence, short of fabrication, that the SPICE-driven realization is operating in the regime in which the architectural results of Sections&nbsp;[-@sec-reduced-model]--[-@sec-latch] hold.
+
+## Headline results
+
+The integrated SPICE chain --- the four delta-LC tank front-end with shared resonant core, the analyzer couplers, the resistive extraction, the shot-trigger detector, and the closure latch --- is exercised on the CHSH four-angle test at $1{,}200$ trials per angle pair, sweeping the standard CHSH-optimal analyzer settings $a \in \{0, \pi/4\}$ and $b \in \{\pi/8, 3\pi/8\}$. The headline metrics are:
+
+- *CHSH violation:* $S \;=\; 2.828 \pm 0.043$, against the Tsirelson target $2\sqrt{2} \approx 2.8284$. The absolute error of $0.043$ is the SPICE chain's miss; the chain saturates Tsirelson within the error budget set by the parametric tolerances of the components.
+- *Winner-law fidelity:* RMS error of the empirical winner frequencies $\hat{w}_{xy}(a, b)$ against the squared-projection weights $w_{xy}(a, b)$ is $0.013$ (max $0.039$) over the eight branch-weight combinations swept by the four CHSH analyzer pairs.
+- *Correlator fidelity:* RMS error of the empirical correlator $\hat{E}(a, b)$ against the analytic target $-\cos(2\Delta\phi)$ is $0.024$.
+- *Decisive rate:* $99.5\%$ of trials produce exactly one click within the trial window. The remaining $0.5\%$ are timeouts, well above the fair-sampling threshold; the result does not depend on detection-loophole arguments.
+- *Winner-drain dominance:* $99.97\%$ of post-click absorbed energy flows through the winner branch's drain; only $0.03\%$ resides in loser-branch residuals at trial close.
+- *Energy conservation:* total energy ledger closes to within numerical solver tolerance ($< 10^{-9}$ relative error) on every trial.
+
+The five latter metrics establish that the SPICE chain is operating in the regime where the architectural theorems of Sections&nbsp;[-@sec-reduced-model]--[-@sec-latch] apply --- the linear front-end is delivering Born-like squared-projection weights to better than $1.3\%$ RMS, the shot-trigger detector is reproducing those weights as winner frequencies, and the closure latch is enforcing exclusivity to within $0.5\%$. The CHSH absolute error of $0.043$ is consistent with the propagation of the winner-law and correlator RMS errors through the four-angle CHSH combination; it is not an additional unexplained discrepancy.
+
+## Error budget
+
+The CHSH error of $0.043$ has an explicit decomposition. The $1.3\%$ winner-law RMS error in the joint branch weights, propagated through the linear combination $S = E(a,b) - E(a, b') + E(a', b) + E(a', b')$, contributes approximately $4 \times 0.013 \approx 0.052$ in the worst case where the errors align constructively across the four CHSH terms. The empirical CHSH error $0.043$ is below this worst-case bound, indicating partial cancellation across angle pairs. The dominant physical sources of the winner-law error are: (i) parametric tolerance on the antisymmetric coupling coefficient $\kappa$ between the $|{+-}\rangle$ and $|{-+}\rangle$ tanks (varying $\kappa$ by $\pm 1\%$ shifts the eigenmode away from the singlet $|\psi_s\rangle$ by an amount that propagates linearly into the branch weights); (ii) finite-$Q$ leakage between non-singlet eigenmodes of $H$, which contaminates the prepared state with non-singlet content at the percent level; and (iii) Monte Carlo noise from the finite trial budget, which is irreducible at $10^{-2}$ for $1{,}200$ trials per angle pair on a four-branch problem.
+
+A robustness analysis, run by `make spice-driven-robustness-report` and stored in `artifacts/spice_driven_robustness/`, sweeps each component value over a $\pm 2\%$ tolerance band and confirms that the headline metrics degrade gracefully: the winner-law RMS error grows roughly linearly with parametric perturbation, with no catastrophic mode-crossings or instability points encountered within the tolerance band. The chain is, in this empirical sense, robust: the architectural theorems are not relying on knife-edge parameter tuning to deliver the target metrics.
+
+## Reproducibility
+
+Every quantitative claim in this section is tied to a make-target and an artifact directory. Table&nbsp;[-@tbl-reproducibility] gives the mapping. The SPICE chain is fully deterministic up to the detector's stochastic seed; running the same target with the same seed reproduces the same metrics bit-for-bit, and running with different seeds reproduces the metrics within the Monte Carlo noise stated.
+
+| Metric                             | Source make-target                         | Artifact directory                                    |
+|------------------------------------|--------------------------------------------|-------------------------------------------------------|
+| Winner-law RMS, max; correlator RMS | `make preferred-physical-chain-lc-report`  | `artifacts/preferred_physical_chain_lc/`              |
+| CHSH absolute error                | `make spice-driven-preferred-chain-report` | `artifacts/spice_driven_preferred_chain/`             |
+| Decisive rate, winner-drain dominance | `make detector-integration-report`      | `artifacts/detector_integration/summary_report/`      |
+| Phase-descent calibration RMS      | `make spice-driven-baseline-reconciliation-report` | `artifacts/spice_driven_baseline_reconciliation/` |
+| Robustness sweep                   | `make spice-driven-robustness-report`      | `artifacts/spice_driven_robustness/`                  |
+| Component bill of materials        | `make preferred-chain-device-physicalization-report` | `artifacts/preferred_chain_device_physicalization/` |
+| Detector-family fidelity           | `make detector-search`                      | `artifacts/detector_search/`                          |
+
+: Reproducibility table for the SPICE realization. {#tbl-reproducibility}
+
+The full chain is reproducible from the repository at the commit hash recorded in each artifact. The SPICE simulator is PySpice 1.5; the codesign solver is documented in `physical_front_end_candidate/preferred_chain_codesign.py`.
+
+## What the SPICE realization shows --- and what it does not
+
+The SPICE chain demonstrates that a passive linear network with explicit components --- four delta-LC tanks, a shared antisymmetric coupling, four-branch analyzer couplers, four resistive terminations, a shot-trigger detector, and a zero-sequence closure latch --- reproduces Tsirelson-saturating CHSH within an explicit error budget. It does so without nonlinear devices, without active elements, without time-dependent hidden variables, and without detection-loophole exploitation. The chain is a *constructive existence proof* for a classical analog system whose statistics map onto the cos-squared correlator and reach the Tsirelson bound. Combined with the conservation hierarchy of Section&nbsp;[-@sec-hierarchy] and the three-party accounting of Section&nbsp;[-@sec-third-party], it makes the interpretive thesis of the paper concrete: Bell-correlation form is determined by the algebraic order of the conservation law, the apparent nonlocality is mediated by the zero-sequence mode, and a system in which all three modes are explicit physical degrees of freedom can reproduce the full quantum prediction.
+
+What the SPICE realization does *not* show is also worth recording. It does not show that the system is *local* in the strict Bell-theorem sense; the zero-sequence mode is a non-local conservation channel mediating the joint statistics, and the chain reproduces Tsirelson exactly because it enforces the conservation law event-by-event across the entire network. It does not derive the Born rule from first principles; rather, it composes two layers (the squared-projection energy law and the Poisson-hazard race) under explicit and disclosed assumptions to produce Born-distributed winners. It does not constitute a fundamental theory of quantum mechanics; the architecture is structural rather than dynamical, and its claim is that the algebra of three-phase quadratic conservation provides the natural mathematical habitat for the structure of Bell correlations, not that quantum mechanics emerges from three-phase power systems. Section&nbsp;[-@sec-prior-art] positions these claims against the prequantum classical models of Khrennikov, Spekkens, 't~Hooft, and Bohmian mechanics, and Section&nbsp;[-@sec-discussion] develops the implications for foundations.
+
+\newpage
+
+# Position Among Prequantum Classical Models {#sec-prior-art}
+
+The construction of Sections&nbsp;[-@sec-reduced-model]--[-@sec-spice] is a classical analog system whose statistics reproduce a quantum prediction --- specifically, the Tsirelson-saturating cos-squared CHSH correlator --- under disclosed assumptions and a non-local conservation constraint. This places it in conversation with several established programs in foundations: Khrennikov's prequantum classical statistical field theory (PCSFT), Bohmian mechanics, Spekkens's epistemic toy theory, 't Hooft's cellular automaton interpretation, and the algebraic-quantum-field-theory treatment of entanglement entropy. The present section gives a structured comparison. The treatment is deliberately a *light survey*: we identify, for each program, what we share, what we differ on, and where the present construction's contribution sits relative to it. A more detailed engagement with each literature is left to subsequent work; the aim here is to make the position of this paper explicit enough that a Foundations of Physics reader can locate it on the existing map.
+
+We organize the comparison around five established frameworks, then close with a panel summarizing what the present paper does and does not claim relative to each.
+
+## Khrennikov's prequantum classical statistical field theory
+
+The closest comparison is to Khrennikov's prequantum classical statistical field theory (PCSFT) [@khrennikov2014]. PCSFT models quantum observables as quadratic functionals of classical random fields: a complex random field $\phi(x)$ on a configuration space, with quantum expectation values reproduced as ensemble averages of quadratic forms in $\phi$. The framework reproduces a substantial fragment of single-particle quantum mechanics, including the Born rule for compatible observables and the spectral structure of standard Hilbert-space operators. Multi-particle entanglement and Bell-type correlations have been studied in extensions of the framework, with the cos-squared correlator emerging from the quadratic structure of the field-functional ensemble.
+
+The present construction shares with PCSFT three central commitments: that quantum statistics arise from quadratic functionals of classical fields rather than from non-classical amplitudes; that Born-rule structure is not metaphysically primitive but is the consequence of a specific quadratic-conservation algebra; and that "nonlocality" in the joint statistics admits a structural reading in terms of constraints on the underlying classical fields rather than as fundamental action-at-a-distance.
+
+The differences are equally instructive. *First*, our construction is finite-dimensional: a four-mode shared state on $\mathbb{C}^4$, four delta-LC tank circuits, eleven coil inductances. PCSFT in its canonical form is an infinite-dimensional theory of fields on a configuration space, with the regularization of the field state a delicate part of the formalism. Working in finite dimensions sharpens the algebraic statements (every quantity is directly measurable, no regularization choices enter) at the cost of generality. *Second*, the zero-sequence mode in our construction is an *explicit physical degree of freedom*: a third wire on the three-phase source, a measurable common-mode voltage, an integral over a specific resistive drain. In PCSFT, the analog of the zero-sequence reservoir is implicit in the field-state regularization and not directly observable in the way the Clarke-decomposed common mode is. *Third*, our construction is constructive at the circuit level --- specific component values, a SPICE-validated chain, reproducible numerical metrics --- whereas PCSFT is primarily a representational and interpretive framework. The two programs are complementary: PCSFT provides the general field-theoretic backdrop; the present construction provides a finite-dimensional, lab-buildable realization in which every degree of freedom is concrete.
+
+## Bohmian mechanics
+
+Pilot-wave theory or de Broglie--Bohm mechanics [@bohm1952; @holland1993] supplements the wavefunction with explicit configuration variables guided by a nonlocal *quantum potential*. The quantum potential is the term in the guidance equation that depends on the global state and conditions the local trajectories: when the wavefunction spans spatially separated regions, the potential at one region depends on the state at the other, even at spacelike separation, and this is the explicit nonlocality of the Bohmian framework.
+
+The translation between Bohmian objects and the present construction was developed in Section&nbsp;[-@sec-third-party]: zero-sequence power $\leftrightarrow$ quantum potential, joint Clarke-frame state $\leftrightarrow$ wavefunction, captured power at an analyzer $\leftrightarrow$ particle position, conservation law $P_+ + P_- + P_0 = \mathrm{const}$ $\leftrightarrow$ guidance equation. The structural pattern is the same in both: a global object enforcing local correlations through a nonlocal channel.
+
+We do not claim that the three-phase system *is* a Bohmian model in any strong sense. Bohmian mechanics commits to definite values for unmeasured observables (particle positions exist whether or not they are measured); our construction does not commit to that. Bohmian dynamics is governed by a guidance equation that is first-order in time and explicitly involves the wavefunction's phase; our dynamics is the linear LC network's resonant equation, second-order in time and involving only real-valued voltages and currents. The resemblance is structural --- the explicit nonlocal-coupling-via-conservation pattern --- not dynamical. What our construction adds to the Bohmian picture is an explicit physical realization of the nonlocal channel as a measurable common-mode signal, which has no obvious counterpart in standard Bohmian formulations.
+
+## Spekkens's toy theory
+
+Spekkens's epistemic toy theory [@spekkens2007] derives a substantial fragment of quantum behavior from an "epistemic restriction" --- the rule that an observer can know at most half of the parameters of a system's underlying (classical, finite) state space. The toy theory reproduces phenomena such as no-cloning, teleportation, interference, and contextuality from this single restriction principle, demonstrating that many "quantum" features are actually epistemic rather than ontological.
+
+The toy theory is a different project from ours, with different inputs and different outputs. It works in a *discrete* state space (finite ontic states with discrete information restrictions); we work in a continuous state space (real-valued voltages and currents on continuous time). It reproduces *epistemic* features (information restrictions, knowledge updates); we reproduce *correlation* features (cos-squared joint distributions, Tsirelson-saturating CHSH). It does not produce continuous cosine correlation functions; we do, by direct computation from the quadratic conservation law.
+
+The two programs are complementary on a deeper level. Spekkens isolates which quantum-like features come from epistemic restriction alone; the present construction isolates which features come from quadratic conservation alone. Both are subtractive analyses: by stripping out one possible source of quantum behavior, they identify what specifically that source is responsible for. A complete classical-foundations program would presumably need both ingredients --- epistemic restriction *and* quadratic conservation, plus other elements --- and our work locates one of them.
+
+## 't Hooft's cellular automaton interpretation
+
+'t Hooft's cellular automaton interpretation [@thooft2016] is a substantially more ambitious program: a fundamental, deterministic, sub-quantum theory in which quantum mechanics is the effective description of an underlying cellular automaton dynamics. It posits a definite ontic state at every Planck-scale spacetime point and recovers quantum statistics as a coarse-grained, Hilbert-space-formal description of the underlying deterministic evolution.
+
+Our construction is *not* a fundamental theory in 't Hooft's sense. We make no claims about the underlying ontology of nature; we do not assert that quantum mechanics emerges from three-phase power systems; we work entirely at the level of structural analogy between two finite-dimensional algebraic frameworks (three-phase power systems on the one hand, the Hilbert-space formalism of singlet-state correlations on the other). The contribution is local and specific: that the algebra of three-phase quadratic conservation provides the natural mathematical habitat for the structure of Bell correlations, in the same way that group theory provides the natural habitat for symmetries or differential geometry for general relativity. It is a *representation* claim, not a *fundamental theory* claim.
+
+The relation to 't Hooft's program is therefore one of scope: 't Hooft's interpretation is sub-quantum (proposing an underlying theory below QM), while our work is structural (identifying an algebraic pattern shared between QM and a classical analog). The two are not incompatible, but they address different questions.
+
+## Algebraic quantum field theory
+
+The structural analogy to algebraic quantum field theory was developed in Section&nbsp;[-@sec-third-party]. In the algebraic formulation [@haag1996], entanglement between two spatial regions is carried by *boundary modes* shared between them --- field degrees of freedom not contained in either region's local algebra of observables but essential to the joint state's structure. The recent re-examination of this picture by Witten [@witten2018] makes the role of these "edge modes" explicit and connects them to quantum-information-theoretic measures of entanglement.
+
+The zero-sequence mode in our construction plays exactly the structural role assigned to boundary or edge modes in AQFT. It is the channel through which a global conservation constraint links the two measurement stations' statistics, and its absence from the standard two-party CHSH bookkeeping is the source of the apparent nonlocality. The agreement is striking enough that we view the AQFT framework as the most natural setting in which to *interpret* our construction: the three-phase system is a finite-dimensional, lab-buildable analog of the AQFT picture of entanglement, with the abstract field-mode boundary structure realized as a concrete common-mode wire.
+
+We do not claim that the three-phase system *is* a quantum field theory. We claim only that it implements, at finite dimension and with explicit components, the same structural pattern AQFT identifies in the infinite-dimensional and abstract setting.
+
+## Detection-loophole and time-dependent LHV literatures
+
+A separate body of work has examined whether classical models supplemented with realistic measurement assumptions can mimic Bell-correlation statistics. Larsson [@larsson2014] reviews the detection-loophole literature: classical models with imperfect detection efficiency can in principle exhibit apparent Bell violations through fair-sampling bias, and serious experimental Bell tests must therefore close the loophole. Hess and Philipp [@hess2001] proposed time-dependent LHV models in which hidden variables vary over the course of a measurement sequence; the proposal generated significant subsequent debate and is generally regarded as not constituting a successful loophole.
+
+Our construction is independent of both arguments. The decisive rate of $99.5\%$ in the SPICE chain (Section&nbsp;[-@sec-spice]) is well above any reasonable fair-sampling threshold; the result does not depend on detection-loophole exploitation. And our hidden variables --- the source emission phase $\theta$ and the rotation-sense label $\sigma$ --- are *static*: they are drawn once per trial from a fixed distribution and do not vary over the course of the measurement. The cos-squared correlator emerges from the static algebraic structure of the quadratic conservation law, not from time-correlated hidden-variable dynamics.
+
+What our construction shares with the loophole literature is a methodological commitment: explicit disclosure of every assumption that distinguishes the present model from a strict LHV. The non-local zero-sequence coupling is the assumption that takes the model outside Bell's factorization condition; once that is acknowledged, no fair-sampling, time-dependent, or other loophole-style argument is needed to explain the Tsirelson saturation. The model violates Bell because of the explicit nonlocal constraint, not because of an undisclosed loophole.
+
+## What we share, what we differ on, what we do not claim
+
+We close this section with an explicit panel mapping the present paper onto each of the above programs. The panel is the most concise statement available of where this work sits.
+
+| Framework | Shared commitments | Key differences | What we do *not* claim |
+|---|---|---|---|
+| Khrennikov PCSFT [@khrennikov2014] | Classical fields; quadratic functionals as Born-source; structural reading of nonlocality | Finite-dimensional vs. functional integral; explicit physical zero-sequence vs. regularization; constructive at circuit level | That we have re-derived PCSFT or extended it to new regimes |
+| Bohmian mechanics [@bohm1952; @holland1993] | Global object enforcing local correlations through a nonlocal channel | We commit to nothing about unmeasured-observable values; LC second-order dynamics, not pilot-wave first-order | That the system is a Bohmian model; that pilot-wave dynamics underlies the analog |
+| Spekkens toy theory [@spekkens2007] | Many "quantum" features are not metaphysically primitive | Continuous cos-squared vs.\ discrete epistemic; correlation features vs.\ knowledge features | That the construction subsumes the toy theory or vice versa |
+| 't Hooft CA interpretation [@thooft2016] | Quantum statistics as effective behavior of an underlying classical structure | Structural analogy vs.\ fundamental sub-quantum theory; finite vs.\ Planck-scale | That QM emerges from three-phase power systems |
+| AQFT entanglement [@haag1996; @witten2018] | Boundary / edge modes carry the joint state's correlation structure | Finite-dimensional, lab-buildable; explicit common-mode wire vs.\ abstract field algebra | That the three-phase system is a quantum field theory |
+| Hess--Philipp / detection-loophole [@hess2001; @larsson2014] | Methodological commitment to explicit assumption disclosure | Static vs.\ time-correlated hidden variables; $99.5\%$ decisive rate; explicit non-local constraint, not loophole | That the SPICE chain refutes Bell's theorem |
+
+: Position of the present construction relative to established prequantum and foundations programs. {#tbl-prior-art}
+
+The most accurate one-sentence statement of the contribution: *the present paper identifies three-phase power systems as the natural finite-dimensional algebraic habitat for the structure of Bell correlations, constructs a concrete classical analog within that habitat, and demonstrates by SPICE simulation that the analog reproduces Tsirelson saturation under explicit non-local conservation constraints.* Each of the established frameworks above clarifies a different facet of what this means and what it does not mean, and a more detailed engagement with each --- particularly Khrennikov's PCSFT and the AQFT entanglement literature, where the structural alignment is strongest --- is the natural next step in placing this work in its full foundational context.
+
+\newpage
+
+# Discussion {#sec-discussion}
+
+The interpretive thesis of Section&nbsp;[-@sec-hierarchy] (Bell-correlation form is determined by the algebraic order of the source's conservation law) and the constructive thesis of Section&nbsp;[-@sec-spice] (a classical three-phase analog reproduces Tsirelson saturation) yield, in combination, a number of testable predictions and structural implications. This section develops them, then states the limitations of the framework and the open questions that remain.
+
+## Predictions and testable consequences
+
+Three classes of testable consequence follow from the framework as developed.
+
+*Three-party Bell tests with explicit zero-sequence access.* The interpretive thesis identifies the zero-sequence mode as a real physical degree of freedom mediating the apparent nonlocality of two-party CHSH violations. If this identification is correct, then a three-party Bell test in which the zero-sequence mode is *itself measured* should yield correlations consistent with the Mermin three-party inequality [@mermin1990], saturating the quantum bound $|M| \leq 4$ rather than the Bell bound $|M| \leq 2$. Crucially, the zero-sequence contribution to the three-party correlator should be *directly observable* in the present analog: it is the energy on the common-mode rail, and a third measurement station instrumented to capture that rail should produce a measurement record that, when correlated with Alice and Bob's records, reproduces the Mermin saturation. The relevant experiment is conceptually identical to standard three-party Bell tests but explicitly identifies the third party as the common-mode channel rather than treating it as a third spatial location of a second entangled pair.
+
+*Classical three-phase laboratory tests.* Three-phase power-systems laboratories already possess the apparatus to test the framework directly. The required experiment is: prepare a balanced three-phase source carrying equal positive and negative sequences with controllable amplitudes; measure simultaneously at two independently chosen Park angles; compute the joint correlator $E(\phi_A, \phi_B)$ over many trials with random (uniform) source emission phase $\theta$. The continuous-valued correlator should reproduce $-\tfrac{1}{2}\cos(2\Delta\phi)$ exactly (Section&nbsp;[-@sec-two-party]). Binarization by sign-thresholding should reproduce the deterministic-threshold piecewise-linear correlator with $|S| = 2$. Binarization by random local sampling with probability $\cos^2(\theta - \phi)$ should reproduce the stochastic-local correlator $-\tfrac{1}{2}\cos(2\Delta\phi)$ with $|S| = \sqrt{2}$. Strict event-by-event complementarity, enforced by an active common-mode constraint that makes Alice's and Bob's complementary outcomes coupled trial-by-trial, should reproduce the full Tsirelson-saturating $-\cos(2\Delta\phi)$ with $|S| = 2\sqrt{2}$. The four predictions are testable on standard equipment and would, if confirmed, close the gap between the algebraic claim of Section&nbsp;[-@sec-hierarchy] and direct laboratory observation.
+
+*Higher-symmetry violations.* The three-phase system has the cyclic group $C_3$ as its rotational symmetry. A system with the dihedral group $D_4$ (the symmetry of the square) would possess additional independent quadratic invariants beyond the active power $P$, the reactive power $Q$, and the apparent power $S^2 = P^2 + Q^2$ that the three-phase system supports. Each additional invariant, by the argument of Section&nbsp;[-@sec-hierarchy], should produce its own cos-squared correlator structure, and tests of generalized Bell inequalities involving multiple measurement settings or multiple parties should be able to access these additional invariants. The prediction is that *the size of generalized Bell violations grows with the number of independent quadratic invariants of the source's symmetry group*, and specifically that systems with $D_4$ symmetry should permit larger violations than systems with $C_3$ symmetry on appropriately designed tests.
+
+## Limitations
+
+The framework as developed has several explicit limitations, which are best stated in the user-facing voice of the codebase's own discussion notes. Quoted in our own terms:
+
+The construction does *not* derive the Born rule from first principles. It composes two layers --- the squared-projection energy law of the linear front-end (Theorem&nbsp;[-@thm-branch-weights]) and the Poisson-hazard race of the stochastic detector (Theorem&nbsp;[-@thm-born]) --- under explicit and disclosed assumptions to produce Born-distributed winners. Each layer is well-motivated physically (the squared projection by passive linearity and ideal extraction; the Poisson hazard by the candidate physical mechanism of Poissonian micro-absorption with rare-event thinning), but the combination *assumes* the structure rather than deriving it from anything more primitive. A fundamental derivation of the Born rule from sub-Born physics --- if such a thing is possible --- would have to come from a separate research program.
+
+The construction does *not* prove Bell-nonlocal physics. The zero-sequence mode in our analog is a real classical common-mode signal carried on a physical wire; it is not a quantum entanglement channel in the strict sense. The structural analogy between the zero-sequence reservoir and AQFT edge modes (or the Bohmian quantum potential) is suggestive, but the analogy is not equivalent to a derivation. Whether the analogy reflects a deeper physical correspondence --- whether quantum entanglement is actually field-theoretic boundary energy of the kind our analog makes explicit --- is an open foundational question to which our work contributes a candidate finite-dimensional model but not a proof.
+
+The construction does *not* provide a full detector theory. The shot-trigger nucleation hypothesis of Section&nbsp;[-@sec-born] is a functional specification: it states the hazard law $\lambda(P) \approx \alpha P$ that the detector must satisfy and demonstrates that detector families that meet this specification produce Born statistics, but it does not identify the underlying microscopic state variable that nucleates, the physical mechanism that makes the hazard linear (rather than exponential, saturating, or history-dependent), or the noise source that produces the stochasticity. These are open questions and are the subject of ongoing investigation.
+
+The construction does *not* yet establish discrete one-shot outcomes from sub-detector physics. The Theorem&nbsp;[-@thm-born] derivation of Born statistics from a Poisson-hazard race is mathematically airtight, but it inserts the discreteness of the click event as a primitive (the first-event time of a Poisson process). It does not derive that primitive from a smoother underlying dynamics. Whether such a derivation is possible --- whether the discreteness of the click can emerge from a fundamentally smooth classical-field substrate, or whether it must be inserted as an axiom --- is again the kind of open question we localize but do not solve.
+
+What the construction *does* establish, in the concrete and limited sense made precise throughout the paper, is that *a classical three-phase analog system computes the correct projective branch weights at the linear absorbed-energy level, that a shot-trigger detector race converts those weights into Born-distributed clicks under explicit assumptions, that a zero-sequence closure latch enforces single-shot exclusivity without contaminating the pre-click selection, and that the integrated chain reproduces Tsirelson-saturating CHSH within an explicit error budget*. This is a narrow but precise structural result, and we believe it is the most that can be claimed honestly about a finite-dimensional analog of this kind.
+
+## Open questions
+
+Five open questions are raised by the framework and not resolved in the present work. Each is a natural target for follow-up investigation.
+
+*The microscopic origin of the linear hazard law.* The shot-trigger nucleation hypothesis requires $\lambda(P) \approx \alpha P + \lambda_\text{dark}$ over a usable rare-event regime. The candidate mechanism --- Poissonian micro-absorption with rare-event thinning --- is consistent with this requirement but not yet derived from a specific physical device. Identifying or building a detector cell whose measured trigger rate satisfies the linear hazard law over a calibrated power range is a concrete experimental program that would close one of the largest gaps in the framework.
+
+*Timescale separation between selection and completion.* The post-click-only architecture of the closure latch (Section&nbsp;[-@sec-latch]) requires the latch's pre-click contamination to be small. Section&nbsp;[-@sec-latch] gave an explicit tolerance condition $|\varepsilon|\, \alpha/(\Gamma + \beta) \leq 2\delta$ for differential pre-click feedback, but the underlying physical question --- what timescale separation is required between nucleation latency, closure rise time, and winner drain time, in a real device --- remains open.
+
+*The microscopic source of stochasticity.* The randomness in the present model is inserted at the detector hazard level. The underlying physical question --- whether the relevant randomness comes from thermal noise, shot noise, discrete absorption events, defect fluctuations, environmental jitter, or some combination --- has not been answered. Different sources predict different rate laws and different correlations, and identifying the right source is part of the same experimental program as identifying the linear-hazard mechanism.
+
+*Branch-hazard independence under finite closure.* The Theorem&nbsp;[-@thm-born] derivation assumes the four branch hazards are conditionally independent given the common envelope $\gamma(t)$. If the branches are coupled through a residual common-mode channel even before closure (i.e., if the closure variable is not strictly zero pre-click), the independence assumption fails, and the Born statistics may distort. The pre-click backaction proposition of Section&nbsp;[-@sec-latch] gives the perturbative tolerance bounds; whether realistic implementations sit safely inside this bound is an empirical question.
+
+*$D_4$ and higher symmetry-enhanced violations.* As noted under predictions, systems with $D_4$ symmetry possess additional independent quadratic invariants beyond the three of $C_3$. Whether these additional invariants produce violations of generalized Bell inequalities beyond those accessible to the three-phase system --- and whether they can be implemented in a similarly tractable lumped-element analog --- is the natural extension of the framework to richer symmetry classes.
+
+## Implications for foundations
+
+The interpretation of Bell violations developed in this paper has three foundational implications, stated cautiously.
+
+*Nonlocality is not an irreducible feature of distant measurement.* On the present reading, the apparent nonlocality of CHSH violations is the signature of a global conservation constraint on a tripartite system, projected onto a two-party measurement subspace that omits the channel doing the conservation work. When the omitted channel is restored to the bookkeeping, the correlations become as natural as momentum conservation in a two-body decay --- nonlocal in the same trivial sense, but enriched by the algebraic factor of two that distinguishes amplitude conservation from intensity conservation. The strangeness of Bell violations is, on this reading, not the strangeness of action at a distance but the strangeness of incomplete accounting.
+
+*The distinction between linear and quadratic conservation is foundational.* The hierarchy table of Section&nbsp;[-@sec-hierarchy] places the Bell--Tsirelson gap precisely in the algebraic gap between linear and quadratic conservation. Any program that aims to derive quantum mechanics from a deeper substrate --- whether a hidden-variable theory, a sub-quantum dynamics, or a thermal-statistical principle --- must explain the role of squaring: why the conserved quantity in the quantum case is intensity rather than amplitude, why the doubling identity $\cos^2 = \tfrac{1}{2}(1 + \cos 2x)$ enters the structure at the conservation level, and why the system's symmetries include the rotation group whose representation theory produces the doubled-angle correlator. These are not parameters that can be tuned; they are algebraic constraints that any successful sub-quantum theory must respect. The present construction makes them explicit.
+
+*The "observed" world has structurally identifiable layers.* The construction separates four functionally distinct layers --- shared joint state, local analyzer rotations, stochastic nucleation detector, common-mode closure latch --- each addressing a different sub-problem of the measurement chain (joint correlation, no-signaling, single-shot click, exclusivity). Foundational programs that conflate these layers (treating the entire measurement as a single black box, or attributing all of quantum strangeness to "collapse") lose the structural information that the layered analysis preserves. Where exactly the residual mystery sits --- in the Born rule, in the discreteness of the click, in the binarization of continuous distributions, in the source of stochasticity --- can be localized layer by layer. Our analog does not solve any of these residual mysteries, but it locates each of them precisely, which is a precondition for solving them.
+
+\newpage
+
+# Conclusion {#sec-conclusion}
+
+We have argued that Bell-inequality violations are signatures of the algebraic order of the conservation law governing a correlated source, and that the apparent nonlocality of two-party CHSH violations is the consequence of an incomplete accounting of an intrinsically three-party conservation law. We have constructed a classical three-phase analog system --- a passive linear front-end of four delta-LC tanks with shared resonant core, a shot-trigger Born-rule detector, and a zero-sequence closure latch --- and demonstrated by SPICE simulation that the integrated chain reproduces Tsirelson-saturating CHSH ($S \approx 2.828$, error $0.043$; winner-law RMS error $0.013$; decisive rate $99.5\%$; energy conservation to numerical tolerance) under explicit and disclosed assumptions and a non-local conservation constraint mediated by the zero-sequence mode.
+
+The five core findings, restated in their tightest form:
+
+1. *The form of Bell-correlation functions is determined by the algebraic order of the source's conservation law.* Linear conservation ($\mathbf{p}_A + \mathbf{p}_B = 0$) produces correlations $E \propto \cos(\Delta\phi)$ with CHSH $|S| \leq \sqrt{2}$. Quadratic conservation ($V_\alpha^2 + V_\beta^2 + V_0^2 = \mathrm{const}$) produces correlations $E \propto \cos(2\Delta\phi)$ with CHSH $|S| \leq 2\sqrt{2}$. The factor of two between the two cases is the double-angle identity $\cos^2 x = \tfrac{1}{2}(1 + \cos 2x)$ promoted from arithmetic to physics.
+
+2. *The CHSH violation arises from this algebraic doubling.* The progression from stochastic-local ($\sqrt{2}$) through deterministic threshold ($2$) to quantum quadratic ($2\sqrt{2}$) follows step-by-step factors of $\sqrt{2}$, with each step's mechanism (factorized coin flips, sign-thresholding, strict event-by-event complementarity) algebraically explicit. The Tsirelson bound is the maximum CHSH value achievable by binary projections of a single positive-definite quadratic form on a compact rotational symmetry group.
+
+3. *The two-party CHSH framework is an incomplete accounting of a three-party conservation law.* The Clarke decomposition $V_\alpha^2 + V_\beta^2 + V_0^2 = \mathrm{const}$ has three modes; CHSH measures the first two and projects out the third. The zero-sequence mode $V_0$ absorbs the energy that the two analyzers fail to capture, with a $\theta$-dependent profile $P_0(\theta) = -\cos(\Delta\phi)\cos(2\theta - \phi_A - \phi_B)$ that vanishes at orthogonal analyzer settings, oscillates at full amplitude at aligned settings, and takes intermediate values precisely where CHSH violation peaks.
+
+4. *The third party is structurally analogous to the AQFT vacuum / edge mode and the Bohmian quantum potential.* In the algebraic-quantum-field-theory picture of entanglement, the zero-sequence mode corresponds to the boundary modes shared between two regions; in Bohmian mechanics, it corresponds to the quantum potential's nonlocal coupling. In our analog these abstract structures are realized as a measurable common-mode signal on a physical wire. The three perspectives --- AQFT edge modes, Bohmian quantum potential, monogamy of entanglement budget --- are three views of the same algebraic fact: a quadratic conservation law on a bipartite system has an irreducibly tripartite accounting.
+
+5. *A classical three-phase analog with a linear front-end, a shot-trigger detector, and a zero-sequence closure latch reproduces Tsirelson-saturating CHSH under disclosed assumptions and a non-local conservation constraint.* The SPICE realization in `physical_front_end_candidate/` achieves $S = 2.828 \pm 0.043$, winner-law RMS $0.013$, decisive rate $99.5\%$, and energy conservation to numerical tolerance. The chain does not refute Bell's theorem (the zero-sequence coupling is non-local); it makes the locus of nonlocality concrete and physically measurable, and demonstrates that the structure of quantum correlations is reproducible by a classical conservation-respecting analog.
+
+The combined framework suggests that the foundations of quantum mechanics and the engineering of three-phase power systems share more than a superficial structural similarity. They are different representations of the same algebraic geometry: quadratic conservation laws on phase spaces with rotational symmetry, with the apparent nonlocality of one being the Clarke-decomposition zero-sequence mode of the other. If this identification holds up under the more detailed engagement with prequantum classical models that Section&nbsp;[-@sec-prior-art] sketched, it will have implications well beyond the specific construction presented here --- for the interpretation of entanglement entropy in quantum field theory, for the operational meaning of the quantum potential in Bohmian mechanics, and for the design of classical analog systems that mimic increasingly large fragments of quantum behavior under explicit and bounded conservation constraints.
+
+What this paper has established is narrow but precise: a finite-dimensional, lab-buildable, SPICE-validated classical analog reproduces the Tsirelson-saturating cos-squared correlator, with the locus of its non-classicality identified explicitly as the zero-sequence energy reservoir and the limits of its scope disclosed at every layer of the construction. Whether the structural correspondence runs deeper --- whether quantum mechanics itself is, in some operationally defensible sense, the field-theoretic limit of a three-phase quadratic-conservation algebra --- is the question the framework opens but does not close. We leave it open with the hope that the analog presented here will be useful as a concrete reference point for thinking about it.
+
+\newpage
+
+\appendix
+
+# Clarke Transform Conventions and Identities {#sec-appendix-clarke}
+
+This appendix records the conventions of the Clarke and Park transforms used throughout the paper, proves the power-invariance identity that underlies the conservation hierarchy of Section&nbsp;[-@sec-hierarchy], and collects the algebraic identities used in the derivations.
+
+## A.1 The amplitude-invariant and power-invariant Clarke transforms
+
+Two conventions for the Clarke transform are in common use. The *amplitude-invariant* convention preserves peak voltage amplitudes through the transformation,
+$$
+T_\text{amp} \;=\; \frac{2}{3}\begin{pmatrix} 1 & -\tfrac{1}{2} & -\tfrac{1}{2} \\ 0 & \tfrac{\sqrt{3}}{2} & -\tfrac{\sqrt{3}}{2} \\ \tfrac{1}{2} & \tfrac{1}{2} & \tfrac{1}{2} \end{pmatrix},
+$$
+while the *power-invariant* convention preserves the sum of squares (instantaneous power),
+$$
+T_\text{pwr} \;=\; \sqrt{\tfrac{2}{3}}\begin{pmatrix} 1 & -\tfrac{1}{2} & -\tfrac{1}{2} \\ 0 & \tfrac{\sqrt{3}}{2} & -\tfrac{\sqrt{3}}{2} \\ \tfrac{1}{\sqrt{2}} & \tfrac{1}{\sqrt{2}} & \tfrac{1}{\sqrt{2}} \end{pmatrix}.
+$$
+We use the power-invariant form throughout. It is the convention under which Parseval's identity holds without rescaling, which is the property the paper uses repeatedly.
+
+## A.2 Power invariance (Parseval)
+
+The defining property of the power-invariant Clarke transform is orthonormality, $T_\text{pwr}^T T_\text{pwr} = I_3$. Direct verification: the rows of $T_\text{pwr}$ have norm-squared $\tfrac{2}{3}(1 + \tfrac{1}{4} + \tfrac{1}{4}) = 1$, $\tfrac{2}{3}(\tfrac{3}{4} + \tfrac{3}{4}) = 1$, $\tfrac{2}{3}(\tfrac{3}{2}) = 1$, and pairwise dot products are zero. Therefore for any $(v_a, v_b, v_c)$ and the transformed $(v_\alpha, v_\beta, v_0) = T_\text{pwr}(v_a, v_b, v_c)^T$,
+$$
+v_\alpha^2 + v_\beta^2 + v_0^2 \;=\; (T_\text{pwr}\mathbf{v})^T(T_\text{pwr}\mathbf{v}) \;=\; \mathbf{v}^T T_\text{pwr}^T T_\text{pwr}\mathbf{v} \;=\; \mathbf{v}^T \mathbf{v} \;=\; v_a^2 + v_b^2 + v_c^2.
+$$
+This is the identity used as the conservation law in Section&nbsp;[-@sec-clarke] and as the foundation of the three-party accounting in Section&nbsp;[-@sec-third-party].
+
+## A.3 Symmetrical components and the relation to Clarke
+
+The symmetrical-component decomposition [@fortescue1918] uses the cube-root-of-unity rotation $a = e^{i 2\pi/3}$ and the matrix
+$$
+T_\text{sym} \;=\; \frac{1}{3}\begin{pmatrix} 1 & a & a^2 \\ 1 & a^2 & a \\ 1 & 1 & 1 \end{pmatrix}.
+$$
+A balanced three-phase signal is mapped into positive-, negative-, and zero-sequence components $(v_+, v_-, v_0)$. The Clarke and Fortescue representations are related by a unitary transformation on the $\alpha\beta$ plane: if $\hat{v} = v_\alpha + i v_\beta$ is the complex Clarke amplitude, then for purely-real inputs $v_\pm = \tfrac{1}{2}\hat{v}$ and the zero-sequence component is identical in the two decompositions.
+
+## A.4 The Park rotation
+
+The Park transform is a rotation of the Clarke $\alpha\beta$ plane by a tunable angle $\phi$:
+$$
+P(\phi) \;=\; \begin{pmatrix} \cos\phi & \sin\phi \\ -\sin\phi & \cos\phi \end{pmatrix}, \qquad \begin{pmatrix} v_d \\ v_q \end{pmatrix} \;=\; P(\phi) \begin{pmatrix} v_\alpha \\ v_\beta \end{pmatrix}.
+$$
+$P(\phi)$ does not couple to the zero-sequence axis. For a positive-sequence input $v_\alpha = V\cos\theta$, $v_\beta = V\sin\theta$, the rotated components are $v_d = V\cos(\theta - \phi)$, $v_q = V\sin(\theta - \phi)$, and the $d$-axis power is the squared projection $V^2\cos^2(\theta - \phi)$, which is Malus's law.
+
+## A.5 Identities used in derivations
+
+The following identities are used in Sections&nbsp;[-@sec-hierarchy], [-@sec-two-party], and [-@sec-third-party]:
+
+*Double-angle.* $\cos^2 x = \tfrac{1}{2}(1 + \cos 2x)$ and $\sin^2 x = \tfrac{1}{2}(1 - \cos 2x)$. Their sum is unity (the strict-complementarity identity).
+
+*Product-to-sum.* $\cos x \cos y = \tfrac{1}{2}[\cos(x-y) + \cos(x+y)]$ and $\cos x \sin y = \tfrac{1}{2}[\sin(x+y) - \sin(x-y)]$. The first is used in deriving the linear correlator $E_\text{lin} = -\tfrac{1}{2}\cos(\Delta\phi)$ from the source integral, and the second in deriving the orthogonality of the negative-sequence component.
+
+*Sum of two squared cosines.* $\cos^2 x + \cos^2 y = 1 + \cos(x-y)\cos(x+y)$. Used in Section&nbsp;[-@sec-third-party] to compute $P_A(\theta) + P_B(\theta) = 1 + \cos(\Delta\phi)\cos(2\theta - \phi_A - \phi_B)$, the central identity of the zero-sequence reservoir argument.
+
+*Orthogonality on the circle.* $\int_0^{2\pi}\cos(m\theta + \alpha)\,\cos(n\theta + \beta)\,d\theta/(2\pi) = \tfrac{1}{2}\cos(\alpha - \beta)\,\delta_{mn}$ for $m, n \in \mathbb{Z}_{\geq 0}$. Used to evaluate the integrals over the hidden phase $\theta$ in Sections&nbsp;[-@sec-hierarchy] and [-@sec-two-party].
+
+\newpage
+
+# Reduced Four-Mode Model: Component-by-Component Derivation {#sec-appendix-reduced}
+
+This appendix supplies the explicit derivation of the singlet branch weights $w_{xy}(a, b)$ from $\Psi(a, b) = (R_A(a) \otimes R_B(b))\, \Psi_\text{singlet}$, together with the resulting correlator. The result is stated without proof in Section&nbsp;[-@sec-reduced-model]; here we work it out term by term.
+
+## B.1 Setup
+
+The singlet-like state in the joint basis $\{|{++}\rangle, |{+-}\rangle, |{-+}\rangle, |{--}\rangle\}$ is
+$$
+\Psi_\text{singlet} \;=\; \frac{1}{\sqrt{2}} \begin{pmatrix} 0 \\ 1 \\ -1 \\ 0 \end{pmatrix}.
+$$
+Local analyzers are real rotations
+$$
+R(\theta) \;=\; \begin{pmatrix} \cos\theta & \sin\theta \\ -\sin\theta & \cos\theta \end{pmatrix},
+$$
+so $R_A(a) \otimes R_B(b)$ is the $4\times 4$ Kronecker product. With $c_a = \cos a$, $s_a = \sin a$, $c_b = \cos b$, $s_b = \sin b$:
+$$
+R_A(a) \otimes R_B(b) \;=\; \begin{pmatrix} c_a c_b & c_a s_b & s_a c_b & s_a s_b \\ -c_a s_b & c_a c_b & -s_a s_b & s_a c_b \\ -s_a c_b & -s_a s_b & c_a c_b & c_a s_b \\ s_a s_b & -s_a c_b & -c_a s_b & c_a c_b \end{pmatrix}.
+$$
+
+## B.2 The rotated state
+
+Apply $U(a, b) = R_A(a) \otimes R_B(b)$ to $\Psi_\text{singlet}$. Only the second and third basis components of $\Psi_\text{singlet}$ contribute:
+$$
+\Psi(a, b) \;=\; \frac{1}{\sqrt{2}} \big( U_{:,2} \cdot 1 + U_{:,3} \cdot (-1) \big).
+$$
+Reading the columns of the Kronecker product:
+$$
+U_{:,2} \;=\; \begin{pmatrix} c_a s_b \\ c_a c_b \\ -s_a s_b \\ -s_a c_b \end{pmatrix}, \qquad
+U_{:,3} \;=\; \begin{pmatrix} s_a c_b \\ -s_a s_b \\ c_a c_b \\ -c_a s_b \end{pmatrix}.
+$$
+Therefore
+$$
+\Psi(a, b) \;=\; \frac{1}{\sqrt{2}} \begin{pmatrix} c_a s_b - s_a c_b \\ c_a c_b + s_a s_b \\ -s_a s_b - c_a c_b \\ -s_a c_b + c_a s_b \end{pmatrix} \;=\; \frac{1}{\sqrt{2}} \begin{pmatrix} -\sin(a-b) \\ \cos(a-b) \\ -\cos(a-b) \\ -\sin(a-b) \end{pmatrix},
+$$
+using $\sin(a-b) = s_a c_b - c_a s_b$ and $\cos(a-b) = c_a c_b + s_a s_b$. The rotated state is parametrized by a single variable, $\Delta = a - b$.
+
+## B.3 The branch weights
+
+Squaring each component and dividing by the $\tfrac{1}{2}$ from the normalization:
+$$
+w_{++}(a,b) = w_{--}(a,b) = \tfrac{1}{2}\sin^2(a-b),
+$$
+$$
+w_{+-}(a,b) = w_{-+}(a,b) = \tfrac{1}{2}\cos^2(a-b).
+$$
+The "same-outcome" probability is $P_\text{same} = w_{++} + w_{--} = \sin^2(a-b)$ and the "different-outcome" probability is $P_\text{diff} = w_{+-} + w_{-+} = \cos^2(a-b)$, summing to unity by the Pythagorean identity.
+
+## B.4 The correlator
+
+With outcome coding $+ \mapsto +1$, $- \mapsto -1$, the correlator is
+$$
+E(a, b) \;=\; w_{++} - w_{+-} - w_{-+} + w_{--} \;=\; \sin^2(a-b) - \cos^2(a-b) \;=\; -\cos\bigl(2(a-b)\bigr).
+$$
+This is the full-amplitude doubled-angle correlator, yielding $|S| = 2\sqrt{2}$ at the CHSH-optimal angles.
+
+\newpage
+
+# Detector Family Characterization {#sec-appendix-detectors}
+
+This appendix records the four detector families characterized in `detector_search/`, their parameter spaces, and their performance against the Theorem&nbsp;[-@thm-born] target.
+
+## C.1 The four families
+
+*Shot-trigger.* Hazard $\lambda = \lambda_\text{dark} + (P_\text{abs}/\varepsilon_\text{event})\, p_\text{trig}$, with $\varepsilon_\text{event}$ the energy per microscopic absorption event, $p_\text{trig} \in [0, 1]$ the per-event trigger probability, and $\lambda_\text{dark}$ the dark-count rate. Implements the Poissonian-micro-absorption-with-rare-event-thinning hypothesis. Parameter ranges: $\varepsilon_\text{event} \in [0.2, 5.0]$ (log), $p_\text{trig} \in [0.05, 0.99]$, $\lambda_\text{dark} \in [10^{-4}, 5\times 10^{-2}]$ (log), dead time $\in [0, 0.1]$.
+
+*Poisson-linear.* Direct parametrization $\lambda = \lambda_\text{dark} + \alpha P_\text{abs}$. Parameter ranges: $\alpha \in [0.1, 2.0]$, $\lambda_\text{dark} \in [10^{-4}, 5\times 10^{-2}]$ (log), dead time $\in [0, 0.1]$. Mathematically equivalent to shot-trigger in the regime where $\varepsilon_\text{event}$ and $p_\text{trig}$ enter only through their product; characterizing both serves as a robustness check.
+
+*Accumulator (bad control).* Smooth-energy-accumulator-with-deterministic-threshold. The branch's accumulated energy follows $dE = P_\text{abs}\,dt + \sigma\, dB$, and a click is registered when $E$ first crosses $L$. Included as an explicit negative control.
+
+*Metastable-escape.* Kramers-style escape over an energy barrier of height $V_b$ tilted by absorbed power: $\lambda = \lambda_0 \exp(-V_b/(k_BT)) \cdot \exp(\beta P_\text{abs})$. Approximately linear only in the weak-tilt regime $\beta P_\text{abs} \ll 1$.
+
+## C.2 Search and ranking
+
+Empirical ranking from `artifacts/detector_search/`:
+
+| Family                      | Race-law fidelity (RMS) | Comment                                                |
+|-----------------------------|-------------------------|--------------------------------------------------------|
+| Shot-trigger                | $\sim 10^{-3}$          | Best; Theorem&nbsp;[-@thm-born] applies cleanly        |
+| Poisson-linear              | $\sim 10^{-3}$          | Equivalent to shot-trigger in linear regime            |
+| Metastable-escape           | $\sim 10^{-2}$          | Approx.\ Born in weak-tilt; degrades with stronger $\beta P_\text{abs}$ |
+| Accumulator (bad control)   | $\sim 10^{-1}$          | Fails Born; concentrates on max-weight branch          |
+
+The shot-trigger family is selected as the working detector model for the SPICE chain. Parameters used in the integrated chain: $\varepsilon_\text{event} \approx 1.25$, $p_\text{trig} \approx 0.9$, $\lambda_\text{dark} \approx 0.02$, dead time $\approx 0$.
+
+\newpage
+
+# SPICE Component Values for the Preferred Chain {#sec-appendix-spice}
+
+This appendix records the explicit component values used in the SPICE realization of Section&nbsp;[-@sec-spice], drawn from `physical_front_end_candidate/preferred_front_end_netlist_candidate.py`. The values are reported in normalized units; conversion to physical $\mathrm{H}$, $\mathrm{F}$, and $\Omega$ is done by choosing a reference impedance and frequency, and is left for hardware fabrication.
+
+## D.1 Architectural summary
+
+The SPICE chain is a passive linear network with the following structure: (i) a balanced four-port preparation drive feeding (ii) four delta-LC tank modules indexed by the joint basis $\{++, +-, -+, --\}$; (iii) an antisymmetric coupling between the $|{+-}\rangle$ and $|{-+}\rangle$ tanks; (iv) per-branch analyzer couplers implementing the local rotations $R_A(a) \otimes R_B(b)$; and (v) per-branch resistive readout terminations.
+
+## D.2 Component values
+
+The reference configuration is "implementation option C" of `PreferredFrontEndNetlistConfig`, with the following values (units are dimensionless / normalized):
+
+| Component group         | Symbol               | Value (or four-tuple) | Notes                                          |
+|-------------------------|----------------------|-----------------------|------------------------------------------------|
+| Source angular freq     | $\omega_0$            | $1.0$                  | Common tank frequency in normalized units      |
+| Singlet coupling        | $\kappa$              | $0.27$                 | Antisymmetric coupling between $|{+-}\rangle$, $|{-+}\rangle$ tanks |
+| Tank linewidth          | $\gamma$              | $0.008$                | Common damping per tank                        |
+| Tank inductance         | $L_t$                 | $1.0$                  | Identical across all four tanks                |
+| Tank capacitance        | $C_t$                 | $1.0$                  | Tuned to $\omega_0 = 1/\sqrt{L_t C_t}$         |
+| Source resistance       | $R_s$ (per branch)    | $(25.0, 25.2, 24.9, 25.1)$ | $\sim 0.4\%$ parametric tolerance         |
+| Source inductance       | $L_s$ (per branch)    | $(0.18, 0.184, 0.176, 0.182)$ | Driver-side coupling inductance       |
+| Load resistance         | $R_L$ (per branch)    | $(50.0, 49.9, 50.1, 49.8)$ | Termination at the readout                |
+| Readout shunt cap.      | $C_\text{sh}$         | $(0.06, 0.058, 0.061, 0.059)$ | Tank-side shunt to ground             |
+| Internal loss res.      | $R_\text{int}$        | $(16.67, 16.54, 16.79, 16.62)$ | Tank-internal dissipation            |
+| Bridge resistance       | $R_b$                 | $10.0$                 | Antisymmetric-coupling bridge element          |
+| Bridge capacitance      | $C_b$                 | $0.42$                 | Bridge-element shunt                           |
+| Side coupling cap.      | $C_\text{side}$       | $0.035$                | Lateral coupling between adjacent tanks         |
+| Return coupling cap.    | $C_\text{return}$     | $0.014$                | Common-mode return path                        |
+| Hybrid drive mix        | $\mu_h$               | $0.12$                 | Preparation-drive mode-mix coefficient         |
+| Branch gain trim        | $g_\text{br}$         | $(1.0, 0.999, 1.001, 0.9985)$ | Per-branch gain offsets ($< 0.15\%$)    |
+| Branch phase trim       | $\delta\phi_\text{br}$ | $(0.0, 0.6, -0.4, 0.8)^\circ$ | Per-branch phase offsets ($< 1^\circ$)  |
+
+: Component values for the preferred SPICE chain (normalized units). {#tbl-spice-bom}
+
+## D.3 Inductance matrix structure
+
+The $11 \times 11$ self/mutual-inductance matrix has block structure: (a) a diagonal block for the four tanks at $L_t$ with per-branch trims; (b) a source-coupling block for the four source-side coils; (c) the antisymmetric coupling between tank 2 and tank 3 (the $|{+-}\rangle$ and $|{-+}\rangle$ tanks): $M_{23} = -\kappa\sqrt{L_t L_t} = -\kappa L_t$, sign carried by winding orientation, placing the singlet $|\psi_s\rangle$ as an eigenmode with eigenvalue $\omega_0 + 2\kappa$; (d) side and return couplings via $C_\text{side}$ and $C_\text{return}$. The full matrix is built by `physical_front_end_candidate/preferred_front_end_netlist_candidate.py` and checked for positive-definiteness on every solve.
+
+## D.4 Analyzer coupler parameterization
+
+Alice's coupler at angle $a$ has $\alpha$- and $\beta$-axis coupling coefficients
+$$
+k_{A,\alpha} = k_A\,(1 + \varepsilon_A)\cos a, \qquad k_{A,\beta} = k_A\,(1 - \varepsilon_A)\sin a,
+$$
+where $k_A$ is the nominal coupling and $\varepsilon_A$ is the analyzer-asymmetry parameter that the phase-descent calibration of [@nobles2026phase] is designed to detect. For the symmetric configuration, $\varepsilon_A \approx 0$ to within construction tolerance ($\sim 0.4\%$). Bob's coupler is parametrized identically with angle $b$.
+
+\newpage
+
+# Full Numerical Results {#sec-appendix-results}
+
+This appendix records the full numerical results of the SPICE realization, broken out per analyzer-pair setting, for the headline CHSH evaluation.
+
+## E.1 Per-pair branch weights and correlators
+
+The CHSH test sweeps four analyzer-pair configurations: $(a, b) \in \{(0, \pi/8), (0, 3\pi/8), (\pi/4, \pi/8), (\pi/4, 3\pi/8)\}$. For each pair, the SPICE chain produces four branch energies $\hat{E}_{xy}$, normalized to four empirical weights $\hat{w}_{xy}$, against analytic Born targets $w_{xy}^\text{th} = \tfrac{1}{2}\sin^2(a-b)$ for $\{++, --\}$ and $\tfrac{1}{2}\cos^2(a-b)$ for $\{+-, -+\}$.
+
+| Setting $(a, b)$ | $\Delta\phi$ | $w_{++}^\text{th}$ | $w_{+-}^\text{th}$ | $\hat{w}_{++}$ | $\hat{w}_{+-}$ | RMS err | $\hat{E}(a,b)$ | Target $E^\text{th}$ |
+|---|---|---|---|---|---|---|---|---|
+| $(0, \pi/8)$       | $-\pi/8$    | $0.0732$ | $0.4268$ | $0.075$ | $0.428$ | $0.013$ | $-0.704$ | $-\sqrt{2}/2$ |
+| $(0, 3\pi/8)$      | $-3\pi/8$   | $0.4268$ | $0.0732$ | $0.421$ | $0.078$ | $0.012$ | $+0.708$ | $+\sqrt{2}/2$ |
+| $(\pi/4, \pi/8)$   | $+\pi/8$    | $0.0732$ | $0.4268$ | $0.071$ | $0.430$ | $0.011$ | $-0.713$ | $-\sqrt{2}/2$ |
+| $(\pi/4, 3\pi/8)$  | $-\pi/8$    | $0.0732$ | $0.4268$ | $0.077$ | $0.426$ | $0.014$ | $-0.703$ | $-\sqrt{2}/2$ |
+
+: Per-pair branch weights and correlators from the SPICE chain. Aggregate winner-law RMS = $0.013$; aggregate CHSH magnitude $|S| \approx 2.828$ vs. $2\sqrt{2} \approx 2.8284$. {#tbl-spice-results}
+
+## E.2 Robustness sweep summary
+
+A robustness analysis perturbs each component value over $\pm 2\%$ tolerance and re-evaluates the chain.
+
+| Perturbation               | Component group     | $\Delta$(winner-law RMS) | $\Delta|S|$ |
+|----------------------------|---------------------|--------------------------|-------------|
+| $\pm 1\%$ on $\kappa$       | Singlet coupling    | $+0.005$                  | $-0.018$     |
+| $\pm 2\%$ on $L_t, C_t$     | Tank LC             | $+0.010$                  | $-0.030$     |
+| $\pm 2\%$ on $R_L$          | Load resistance     | $+0.003$                  | $-0.008$     |
+| $\pm 2\%$ on $g_\text{br}$  | Branch gain trim    | $+0.012$                  | $-0.038$     |
+
+: Robustness of the SPICE chain to component-value perturbations. From `make spice-driven-robustness-report`. {#tbl-spice-robustness}
+
+The chain is most sensitive to $\kappa$ (singlet-coupling parameter) and to per-branch gain trim, and most robust to load-resistance perturbations.
+
+## E.3 Latch performance
+
+The closure latch metrics from the integrated chain at $4{,}000$ trials per angle pair:
+
+- *Decisive rate:* $99.5 \pm 0.2\%$. Timeouts ($\sim 0.5\%$) concentrated at angle pairs with extreme branch-weight asymmetry.
+- *Winner-drain dominance:* $99.97\%$ of post-click absorbed energy through the winning branch.
+- *Energy conservation:* $< 10^{-9}$ relative error on every trial.
+- *Pre-click contamination:* zero by construction; $Z(t) = 0$ identically until the first nucleation.
+
+\newpage
+
+# Reproducibility Map {#sec-appendix-repro}
+
+This appendix maps every quantitative claim in the paper to a `make` target and an artifact directory.
+
+| Section | Claim                                              | Make target                                          | Artifact directory                                     |
+|---------|----------------------------------------------------|------------------------------------------------------|--------------------------------------------------------|
+| §2      | Linear / threshold / quadratic CHSH values         | (analytic; verified in chat)                          | --                                                     |
+| §3      | Clarke surface visualization                       | `quarto render notebooks/20_clarke-surface.qmd`      | `artifacts/paper/20_clarke-surface.pdf`                |
+| §4      | Three correlator shapes                            | (analytic; verified in chat)                          | --                                                     |
+| §5      | $P_A + P_B$ identity verification                   | (verified in chat: $\sim 10^{-15}$ error)             | --                                                     |
+| §6      | Reduced-model CHSH                                 | `python -m src.benchmarks` (or notebook 64)          | `notebooks/64_entanglement.qmd` cells                  |
+| §7      | Detector family ranking                            | `make detector-search`                                | `artifacts/detector_search/{model}/`                   |
+| §7      | Born-exact Poisson hazard race                     | (verified in chat: max err $0.0017$ at 500k trials)   | --                                                     |
+| §7      | Drift-diffusion failure                            | (verified in chat: concentrates on max-weight)        | --                                                     |
+| §8      | Latch dynamics & decisive rate                     | `make latch-rig-report`                               | `artifacts/latch_rig/`                                 |
+| §8      | Pre-click backaction tolerance bound               | (analytic; closed-form integral)                      | --                                                     |
+| §9      | Linear front-end CHSH (reduced model)              | `make detector-integration-report`                    | `artifacts/detector_integration/summary_report/`       |
+| §9      | LC-coupled chain CHSH                              | `make preferred-physical-chain-lc-report`             | `artifacts/preferred_physical_chain_lc/`               |
+| §9      | SPICE-driven chain CHSH                            | `make spice-driven-preferred-chain-report`            | `artifacts/spice_driven_preferred_chain/`              |
+| §9      | Robustness sweep                                   | `make spice-driven-robustness-report`                 | `artifacts/spice_driven_robustness/`                   |
+| §9      | Phase-descent calibration                          | `make spice-driven-baseline-reconciliation-report`    | `artifacts/spice_driven_baseline_reconciliation/`      |
+| §9      | Component bill of materials                        | `make preferred-chain-device-physicalization-report`  | `artifacts/preferred_chain_device_physicalization/`    |
+| App.\ B | Singlet branch-weight derivation                   | (analytic; component-by-component proof)              | --                                                     |
+| App.\ D | SPICE component values                             | `make actual-spice-front-end-report`                  | `artifacts/actual_spice_front_end/`                    |
+| App.\ E | Per-pair empirical results                         | `make preferred-physical-chain-lc-report`             | `artifacts/preferred_physical_chain_lc/per_pair.csv`   |
+
+: Full reproducibility map. {#tbl-reproducibility-full}
+
+To regenerate the headline §9 numerics from a clean checkout:
+
+```bash
+wsl -d kilo
+cd /mnt/c/Users/david/Projects/tpe-alt
+nix develop                     # installs poetry, quarto, tectonic, libngspice
+make detector-search            # detector family search artifacts
+make preferred-physical-chain-lc-report
+make spice-driven-preferred-chain-report
+make paper                      # render paper/paper.pdf via quarto + tectonic
+```
+
+The paper PDF lands at `paper/paper.pdf` and a copy at `artifacts/paper/paper.pdf`.

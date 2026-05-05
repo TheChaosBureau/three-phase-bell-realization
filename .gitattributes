@@ -1,0 +1,39 @@
+# Line-ending policy for the three-phase-entanglement repository.
+#
+# This project is developed and run inside Linux/WSL via `nix develop`.
+# Several files are interpreted by bash (the flake.nix shellHook, the
+# .githooks scripts, the Makefile recipes); CRLF line endings break those
+# interpreters with `bash: $'\r': command not found` and similar. Pin all
+# text files to LF so Windows tools (CRLF default) cannot reintroduce the
+# problem on future commits.
+
+* text=auto eol=lf
+
+# Explicit LF for files we know must be LF.
+flake.nix      text eol=lf
+flake.lock     text eol=lf
+Makefile       text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+.githooks/*    text eol=lf
+*.sh           text eol=lf
+*.py           text eol=lf
+*.qmd          text eol=lf
+*.md           text eol=lf
+*.toml         text eol=lf
+*.lock         text eol=lf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+*.bib          text eol=lf
+*.tex          text eol=lf
+
+# Binary files — never touch.
+*.pdf          binary
+*.docx         binary
+*.pptx         binary
+*.xlsx         binary
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.ipynb        text eol=lf
