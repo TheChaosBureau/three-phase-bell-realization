@@ -95,7 +95,7 @@ SPICE_DRIVEN_ROBUSTNESS_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.
 SPICE_DRIVEN_BASELINE_RECONCILIATION_OUTDIR ?= artifacts/spice_driven_baseline_reconciliation
 SPICE_DRIVEN_BASELINE_RECONCILIATION_NEXT_SUMMARY ?= artifacts/detector_next/results_summary.csv
 
-.PHONY: paper paper-docx paper-clean qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report preferred-front-end-netlist-candidate-report preferred-chain-codesign-report preferred-chain-device-physicalization-report actual-spice-front-end-report spice-driven-preferred-chain-report spice-driven-robustness-report spice-driven-baseline-reconciliation-report
+.PHONY: paper paper-docx paper-clean deliverables figures figures-analytic figures-data figures-clean qmd ipynb pdf pdf-all test test-pdf detector-search detector-next-report detector-integration-report latch-rig-report front-end-integration-report front-end-surrogate-report physical-front-end-candidate-report physical-front-end-handoff-report physical-front-end-boundary-diagnosis-report physical-front-end-boundary-calibration-report physical-front-end-boundary-repro-check-report physical-front-end-four-branch-candidate-report physical-front-end-four-branch-refined-report physical-front-end-four-branch-resonant-report post-click-closure-spec-report physical-closure-drain-candidate-report physical-closure-drain-tuning-report physical-closure-drain-tuning-refresh-summary preferred-physical-chain-report preferred-physical-chain-lc-report preferred-front-end-netlist-candidate-report preferred-chain-codesign-report preferred-chain-device-physicalization-report actual-spice-front-end-report spice-driven-preferred-chain-report spice-driven-robustness-report spice-driven-baseline-reconciliation-report
 
 qmd:
 	quarto convert notebooks/20_clarke-surface.ipynb -o qmd
@@ -167,6 +167,101 @@ paper-clean:
 	rm -f paper/paper.pdf paper/paper.docx
 	rm -f artifacts/paper/paper.pdf artifacts/paper/paper.docx
 	rm -rf paper/.quarto paper/_files paper/paper_files
+
+# ----------------------------------------------------------------------
+# Paper figures (paper/figures/*.{pdf,png})
+#
+# fig01-fig05 are pure analytic (numpy + matplotlib) — they always run.
+# fig06, fig09 expect prior `make detector-search` and
+# `make spice-driven-preferred-chain-report` artifacts; they degrade
+# gracefully and emit a "no artifact found" placeholder if missing.
+# fig10-fig12 fall back to schematic illustrations from the paper
+# inventory when their data sources are unavailable.
+# ----------------------------------------------------------------------
+
+figures: figures-analytic figures-data
+	@printf '\a'
+	@echo "[figures] done"
+
+# Pure-analytic figures: numpy + matplotlib only, no repo runtime needed.
+# Always succeed.
+figures-analytic:
+	@mkdir -p paper/figures
+	@echo "[figures] running pure-analytic scripts (fig01-fig05)..."
+	poetry run python paper/figures/scripts/fig01_correlator_hierarchy.py
+	poetry run python paper/figures/scripts/fig02_clarke_surface.py
+	poetry run python paper/figures/scripts/fig03_hierarchy.py
+	poetry run python paper/figures/scripts/fig04_zero_sequence.py
+	poetry run python paper/figures/scripts/fig05_reduced_chsh_sweep.py
+
+# Data-driven figures: read live artifacts written by the repo's report
+# builders. Each script exits non-zero with a clear message if the required
+# artifact directory is missing — there is no schematic fallback.
+# Run the upstream `make` targets first:
+#   make detector-search DETECTOR_MODEL=shot_trigger
+#   make detector-search DETECTOR_MODEL=poisson_linear
+#   make detector-search DETECTOR_MODEL=metastable_escape
+#   make detector-search DETECTOR_MODEL=accumulator_bad_control
+#   make spice-driven-preferred-chain-report
+figures-data:
+	@mkdir -p paper/figures
+	@echo "[figures] running data-driven scripts (fig06, fig09, fig10, fig12)..."
+	poetry run python paper/figures/scripts/fig06_detector_families.py
+	poetry run python paper/figures/scripts/fig09_spice_chsh.py
+	poetry run python paper/figures/scripts/fig10_fidelity_table.py
+	poetry run python paper/figures/scripts/fig12_closure_dynamics.py
+
+figures-clean:
+	rm -f paper/figures/*.pdf paper/figures/*.png
+
+# ----------------------------------------------------------------------
+# Final-deliverables bundle (artifacts/release/$(DATE)/)
+#
+# Produces a date-stamped, immutable submission package containing both
+# the rendered PDF and DOCX, all current figures from paper/figures/,
+# and a SHA-256 manifest. Always cleans first so the release cannot
+# pull in stale .quarto caches or old figures.
+#
+# Pure-analytic figures (fig01-fig05) are regenerated on every run so
+# they're guaranteed in sync with the paper. Data-driven figures
+# (fig06, fig09, fig10, fig12) are bundled if they exist in
+# paper/figures/ at the time `make deliverables` runs; if you want
+# them refreshed against fresh SPICE/detector-search artifacts, run
+# `make figures-data` explicitly before this target.
+#
+# Override RELEASE_DIR, PAPER_BASENAME, or DATE on the command line
+# to override defaults:
+#   make deliverables DATE=2026-05-10
+#   make deliverables PAPER_BASENAME=paper-r2
+# ----------------------------------------------------------------------
+
+RELEASE_DIR ?= artifacts/release/$(DATE)
+PAPER_BASENAME ?= paper-$(DATE)
+
+deliverables: paper-clean figures-clean figures-analytic
+	@echo "[deliverables] rendering PDF..."
+	quarto render paper/paper.qmd \
+		--to pdf \
+		--no-cache \
+		--pdf-engine=tectonic \
+		--metadata date="$(DATE)"
+	@echo "[deliverables] rendering DOCX..."
+	quarto render paper/paper.qmd \
+		--to docx \
+		--no-cache \
+		--metadata date="$(DATE)"
+	@echo "[deliverables] assembling release bundle in $(RELEASE_DIR)/..."
+	mkdir -p "$(RELEASE_DIR)/figures"
+	cp paper/paper.pdf  "$(RELEASE_DIR)/$(PAPER_BASENAME).pdf"
+	cp paper/paper.docx "$(RELEASE_DIR)/$(PAPER_BASENAME).docx"
+	@if ls paper/figures/*.pdf 1>/dev/null 2>&1; then cp paper/figures/*.pdf "$(RELEASE_DIR)/figures/"; fi
+	@if ls paper/figures/*.png 1>/dev/null 2>&1; then cp paper/figures/*.png "$(RELEASE_DIR)/figures/"; fi
+	@echo "[deliverables] writing SHA-256 manifest..."
+	cd "$(RELEASE_DIR)" && \
+		find . -type f -not -name MANIFEST.sha256 | sort | xargs sha256sum > MANIFEST.sha256
+	@printf '\a'
+	@echo "[deliverables] wrote $(RELEASE_DIR)/"
+	@ls -la "$(RELEASE_DIR)"
 
 test:
 	@set +e; \
