@@ -52,3 +52,6 @@ Interactive pedagogical paper for exploring quantum entanglement as modeled by t
     --jsonl artifacts/detector_search/shot_trigger/results.jsonl \
     --csv artifacts/detector_search/shot_trigger/results.csv \
     --outdir artifacts/detector_search/shot_trigger
+---
+
+*Spun off from [`three-phase-entanglement`](https://github.com/TheChaosBureau/three-phase-entanglement) on 2026-06-29 during a branch consolidation (source branch `born-exploration`); the `wavepool` simulator is vendored under `sim/`. Full git history is preserved here, and the original branch tip is tagged `archive/born-exploration` on the parent repo.*
