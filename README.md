@@ -1,9 +1,9 @@
-# three-phase-entanglement
-Interactive pedagogical paper for exploring quantum entanglement as modeled by three-phase power systems
+# three-phase-bell-realization
+Classical three-phase Bell-violation realization (SPICE + detector chain) — paper: *Bell Violations as Three-Party Quadratic Conservation*. Spun off from three-phase-entanglement.
 
 ## Quickstart
 
-**NixOS (reccomended)**
+**NixOS (recommended)**
 - `nix develop`
 - drops you into a poetry shell with the python deps installed
 
