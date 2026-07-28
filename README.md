@@ -15,8 +15,8 @@ Classical three-phase Bell-violation realization (SPICE + detector chain) — pa
 - `paper/paper.qmd` or `paper/paper.ipynb` (same thing, different formats)
 
 ## Context
-- This is not a package, but the folowing files capture env dependencies for deterministic reproducibility
-- There are **two layers** of environment and dependcy management:
+- This is not a package, but the following files capture env dependencies for deterministic reproducibility
+- There are **two layers** of environment and dependency management:
     - `flake.nix` for shell packages (eg poetry, python)
     - `pyproject.toml` once inside shell, for python deps (eg matplotlib, numpy)
 

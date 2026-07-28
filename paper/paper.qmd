@@ -1344,8 +1344,8 @@ This appendix maps every quantitative claim in the paper to a `make` target and 
 To regenerate the headline §9 numerics from a clean checkout:
 
 ```bash
-wsl -d kilo
-cd /mnt/c/Users/david/Projects/tpe-alt
+git clone https://github.com/TheChaosBureau/three-phase-bell-realization.git
+cd three-phase-bell-realization
 nix develop                     # installs poetry, quarto, tectonic, libngspice
 make detector-search            # detector family search artifacts
 make preferred-physical-chain-lc-report
