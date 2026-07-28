@@ -3,7 +3,7 @@ name = "three-phase-bell-realization"
 version = "0.1.0"
 description = "Interactive pedagogical paper relating three-phase power systems to quantum entanglement"
 authors = [
-    {name = "David",email = "david.nobles@sontric.org"}
+    {name = "David Nobles",email = "davidnobles.eng@gmail.com"}
 ]
 license = {text = "Apache-2.0"}
 readme = "README.md"

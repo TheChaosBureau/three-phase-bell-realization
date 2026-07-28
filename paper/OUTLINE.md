@@ -264,7 +264,7 @@ User to add: Adenier, Hess–Philipp, Khrennikov canonical refs, any specific PC
 
 ## Open questions for author before drafting prose
 
-1. **Authorship line.** Currently `[TBD]`. The pyproject lists "David, david.nobles@sontric.org." Use "David Nobles, Sontric"? Add affiliation/ORCID later?
+1. **Authorship line.** The pyproject and `paper.qmd` now list "David Nobles, davidnobles.eng@gmail.com" with affiliation "Independent Researcher". Add ORCID later?
 2. **Ordering of §6 (reduced model) vs. §3–§5 (Clarke / CHSH / zero-sequence).** Current order: physics-up — derive correlator shapes from conservation, then identify the third party, then introduce the reduced 4-mode model that operationalizes both. Alternative: introduce the reduced model first as the formal target. I recommend current ordering for FoP.
 3. **Length of §10 (prior art).** Currently allocated 3–4 pages with you doing the deep engagement. If you want me to expand it, that flips to 6–8 pages. Recommend keeping it tight.
 4. **Phase-descent calibration (§9.4).** This is methodologically independent and could be its own paper. Keeping it as a §9 subsection signals "we know how to instrument this." Alternative: relegate to Appendix C.
