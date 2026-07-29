@@ -1,13 +1,12 @@
 # three-phase-bell-realization
 Classical three-phase Bell-violation realization (SPICE + detector chain) — paper: *Bell Violations as Three-Party Quadratic Conservation*. Spun off from three-phase-entanglement.
 
-## Published paper
+## Research note
 
-**[Bell Violations as Three-Party Quadratic Conservation: A Classical Three-Phase Realization](https://davidnobles-eng.github.io/papers/three-phase-bell-realization.html)**
-— [direct PDF](https://davidnobles-eng.github.io/assets/three-phase-bell-realization.pdf), 64 pp.
+**[Bell Violations as Three-Party Quadratic Conservation: A Classical Three-Phase Realization](https://davidnobles-eng.github.io/papers/three-phase-bell-realization.html)** — [direct PDF](https://davidnobles-eng.github.io/assets/three-phase-bell-realization.pdf), 64 pp.
 
-That PDF is built from this repo: `nix develop -c make paper`, which writes
-`paper/paper.pdf` and `artifacts/paper/paper.pdf`.
+A working note: not peer-reviewed, and not submitted anywhere. It is built
+from this repo with `nix develop -c make paper`, which writes `paper/paper.pdf` and `artifacts/paper/paper.pdf`.
 
 Scope: the construction requires a non-local conservation constraint and
 therefore does **not** refute Bell's theorem, and is not offered as a local
